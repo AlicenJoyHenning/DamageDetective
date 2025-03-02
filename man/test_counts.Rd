@@ -7,8 +7,8 @@
 \format{
 A sparse matrix with 10 009 features and 500 cells.
 \describe{
-  \item{features}{Numeric. The number of features (genes) in the dataset.}
-  \item{cells}{Numeric. The number of cells in the dataset.}
+\item{features}{Numeric. The number of features (genes) in the dataset.}
+\item{cells}{Numeric. The number of cells in the dataset.}
 }
 }
 \source{
@@ -21,7 +21,6 @@ test_counts
 This dataset contains a sparse matrix for testing purposes.
 }
 \examples{
-data(test_counts)
-test_counts
+data("test_counts", package = "DamageDetective")
 }
 \keyword{datasets}

@@ -9,10 +9,5 @@
 #' }
 #' @source Generated for testing purposes
 #' @examples
-#' \donttest{
-#' # Load an example count matrix
-#'  data("test_counts", package = "DamageDetective")
-#'
-#' # Simulate 10 % with the se
-#'
+#' data("test_counts", package = "DamageDetective")
 "test_counts"

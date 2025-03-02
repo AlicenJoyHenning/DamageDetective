@@ -86,16 +86,20 @@
 #'  statistics, and, if specified, a 'ggplot2' object of the quality control
 #'  metrics of the alteration.
 #' @import ggplot2
-#' @import cowplot
+#' @import stats
 #' @import patchwork
-#' @import rlang
-#' @import Matrix
+#' @importFrom ggpubr get_legend
+#' @importFrom cowplot ggdraw draw_label plot_grid
 #' @export
-#'data("test_counts", package = "DamageDetective")
 #' @examples
+#' data("test_counts", package = "DamageDetective")
 #'
-#'
-#'
+#' simulated_damage <- simulate_counts(
+#' count_matrix = test_counts,
+#' damage_proportion = 0.5,
+#' ribosome_penalty = 0.5,
+#' target_damage = c(0.5, 0.9)
+#' )
 simulate_counts <- function(
     count_matrix,
     damage_proportion,
@@ -137,7 +141,7 @@ simulate_counts <- function(
     stop("Please ensure 'organism' is one of 'Hsap' or 'Mmus', see documentation for non-standard organisms.")
   }
 
-  # Convert sparse if necessary
+  # Ensure matrix is of 'matrix' form
   count_matrix <- as.matrix(count_matrix)
 
   # Calculate the total number of damaged cells given the target proportion
@@ -244,7 +248,7 @@ simulate_counts <- function(
   damage_label <- rbind(damage_label, undamaged_cell_number)
 
   # Consolidate into target beta distribution
-  damage_levels <- rbeta(length(damaged_cell_selections), shape1 = a, shape2 = b)
+  damage_levels <- stats::rbeta(length(damaged_cell_selections), shape1 = a, shape2 = b)
 
   # Scale values to lie within target range
   damage_levels <- target_damage[1] + (target_damage[2] - target_damage[1]) * damage_levels
@@ -316,44 +320,35 @@ simulate_counts <- function(
   if (!is.null(save_plot)){
 
     # Generate individual plots
-    mito_ribo_old <- plot_outcome(qc_summary, x = "Original_RiboProp", y = "Original_MitoProp") +
-      scale_x_continuous(limits = c(0, 1), labels = scales::number_format(accuracy = 0.1)) +
-      labs(x = "Ribosomal proportion", y = "Mitochondrial proportion")
-
-    mito_ribo_new <- plot_outcome(qc_summary, x = "New_RiboProp", y = "New_MitoProp", altered = TRUE) +
-      scale_x_continuous(limits = c(0, 1), labels = scales::number_format(accuracy = 0.1))  +
-      labs(x = "Ribosomal proportion", y = "Mitochondrial proportion")
-
-    mito_features_old <- plot_outcome(qc_summary, x = "Original_Features", y = "Original_MitoProp") +
-      labs(x = "Features expressed", y = "Mitochondrial proportion")
-
-    mito_features_new <- plot_outcome(qc_summary, x = "New_Features", y = "New_MitoProp", altered = TRUE) +
-      labs(x = "Features expressed", y = "Mitochondrial proportion")
+    mito_ribo_old <- plot_outcome(qc_summary, x = "Original_RiboProp", y = "Original_MitoProp", mito_ribo = TRUE)
+    mito_ribo_new <- plot_outcome(qc_summary, x = "New_RiboProp", y = "New_MitoProp", altered = TRUE, mito_ribo = TRUE)
+    mito_features_old <- plot_outcome(qc_summary, x = "Original_Features", y = "Original_MitoProp")
+    mito_features_new <- plot_outcome(qc_summary, x = "New_Features", y = "New_MitoProp", altered = TRUE)
 
     # Extract the legend from mito_ribo_new
     legend <- ggpubr::get_legend(mito_ribo_new)
 
     # Create titles for the plots
-    title_original <- ggdraw() +
-      draw_label("Original count_matrix", fontface = 'bold', hjust = 0.5)
+    title_original <- cowplot::ggdraw() +
+      cowplot::draw_label("Original count_matrix", fontface = 'bold', hjust = 0.5)
 
-    title_altered <- ggdraw() +
-      draw_label("Altered count_matrix", fontface = 'bold', hjust = 0.5)
+    title_altered <- cowplot::ggdraw() +
+      cowplot::draw_label("Altered count_matrix", fontface = 'bold', hjust = 0.5)
 
     # Arrange original plots in a single row
-    original_plots <- plot_grid(mito_features_old, mito_ribo_old, ncol = 2)
+    original_plots <- cowplot::plot_grid(mito_features_old, mito_ribo_old, ncol = 2)
 
     # Arrange altered plots in a single row
-    mito_ribo_new_no_legend <- mito_ribo_new + theme(legend.position = "none")
-    mito_features_new_no_legend <- mito_features_new + theme(legend.position = "none")
-    altered_plots <- plot_grid(mito_features_new_no_legend, mito_ribo_new_no_legend, ncol = 2)
+    mito_ribo_new_no_legend <- mito_ribo_new + ggplot2::theme(legend.position = "none")
+    mito_features_new_no_legend <- mito_features_new + ggplot2::theme(legend.position = "none")
+    altered_plots <- cowplot::plot_grid(mito_features_new_no_legend, mito_ribo_new_no_legend, ncol = 2)
 
     # Combine the original and altered rows with their titles
-    original_with_title <- plot_grid(title_original, original_plots, ncol = 1, rel_heights = c(0.2, 1))
-    altered_with_title <- plot_grid(title_altered, altered_plots, ncol = 1, rel_heights = c(0.2, 1))
+    original_with_title <- cowplot::plot_grid(title_original, original_plots, ncol = 1, rel_heights = c(0.2, 1))
+    altered_with_title <- cowplot::plot_grid(title_altered, altered_plots, ncol = 1, rel_heights = c(0.2, 1))
 
     # Combine the original and altered rows, and position the legend in its own row
-    final_plot <- plot_grid(
+    final_plot <- cowplot::plot_grid(
       original_with_title,
       altered_with_title,
       legend,
@@ -363,10 +358,10 @@ simulate_counts <- function(
 
     # Increase margins around the total plot area
     final_plot <- final_plot +
-      theme(
-        plot.margin = margin(10, 20, 20, 20),  # top, right, bottom, left
-        panel.background = element_rect(fill = "white", color = "white"),  # Set white background
-        plot.background = element_rect(fill = "white", color = "white")  # Ensure the plot background is white
+      ggplot2::theme(
+        plot.margin = ggplot2::margin(10, 20, 20, 20),  # top, right, bottom, left
+        panel.background = ggplot2::element_rect(fill = "white", color = "white"),
+        plot.background = ggplot2::element_rect(fill = "white", color = "white")  # Ensure the plot background is white
       )
 
     # Display the final plot
@@ -377,7 +372,7 @@ simulate_counts <- function(
 
     # Use ggsave to save the plot
     if (plot_type == "png") {
-      ggsave(
+      ggplot2::ggsave(
         output_file,
         plot = final_plot,
         width = 8,
@@ -386,7 +381,7 @@ simulate_counts <- function(
         units = "in"
       )
     } else if (plot_type == "svg") {
-      ggsave(
+      ggplot2::ggsave(
         output_file,
         plot = final_plot,
         width = 8,
