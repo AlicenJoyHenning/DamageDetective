@@ -44,6 +44,13 @@
 #'  * "steep"
 #'
 #'  * Default is "moderate"
+#' @param beta_shape_parameters Numeric vector that allows for the shape
+#'   parameters of the beta distribution to defined explicitly. This offers
+#'   greater flexibility than allowed by the 'damage_distribution' and
+#'   'damage_steepness' parameters and will override the defaults they
+#'   offer.
+#'
+#'   * Default is 'NULL'
 #' @param ribosome_penalty Numeric specifying the factor by which the
 #'  probability of loosing a transcript from a ribosomal gene is multiplied by.
 #'  Here, values closer to 0 represent a greater penalty. We highly recommend
@@ -107,6 +114,7 @@ simulate_counts <- function(
     target_damage = c(0.1, 0.8),
     damage_distribution = "right_skewed",
     damage_steepness = "moderate",
+    beta_shape_parameters = NULL,
     ribosome_penalty = 0.01,
     save_plot = tempdir(),
     plot_type = "png",
@@ -170,6 +178,12 @@ simulate_counts <- function(
   } else if (damage_distribution == "symmetric") {
     a <- steepness_value * 0.5
     b <- steepness_value * 0.5
+  }
+
+  # Retrieve exact beta distribution shapes if present
+  if (!is.null(beta_shape_parameters)){
+    a <- beta_shape_parameters[[1]]
+    b <- beta_shape_parameters[[2]]
   }
 
   # Retrieve genes corresponding to the organism of interest
@@ -320,10 +334,10 @@ simulate_counts <- function(
   if (!is.null(save_plot)){
 
     # Generate individual plots
-    mito_ribo_old <- plot_outcome(qc_summary, x = "Original_RiboProp", y = "Original_MitoProp", mito_ribo = TRUE)
-    mito_ribo_new <- plot_outcome(qc_summary, x = "New_RiboProp", y = "New_MitoProp", altered = TRUE, mito_ribo = TRUE)
-    mito_features_old <- plot_outcome(qc_summary, x = "Original_Features", y = "Original_MitoProp")
-    mito_features_new <- plot_outcome(qc_summary, x = "New_Features", y = "New_MitoProp", altered = TRUE)
+    mito_ribo_old <- plot_outcome(qc_summary, x = "Original_RiboProp", y = "Original_MitoProp", mito_ribo = TRUE, target_damage = target_damage)
+    mito_ribo_new <- plot_outcome(qc_summary, x = "New_RiboProp", y = "New_MitoProp", altered = TRUE, mito_ribo = TRUE, target_damage = target_damage)
+    mito_features_old <- plot_outcome(qc_summary, x = "Original_Features", y = "Original_MitoProp", target_damage = target_damage)
+    mito_features_new <- plot_outcome(qc_summary, x = "New_Features", y = "New_MitoProp", altered = TRUE, target_damage = target_damage)
 
     # Extract the legend from mito_ribo_new
     legend <- ggpubr::get_legend(mito_ribo_new)

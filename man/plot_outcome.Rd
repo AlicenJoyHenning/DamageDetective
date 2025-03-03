@@ -11,6 +11,7 @@ plot_outcome(
   altered = FALSE,
   mito_ribo = FALSE,
   damage_column = "Damaged_Level",
+  target_damage = c(0.1, 0.8),
   palette = c("grey", "#7023FD", "#E60006")
 )
 }
@@ -35,8 +36,11 @@ proportions are being plotted.}
 \item{damage_column}{Column name of the input data frame containing the
 values to use for colouring each point in the plot.}
 
+\item{target_damage}{Numeric vector specifying the range of target damage
+levels that}
+
 \item{palette}{String specifying the three colours that will be used to
-create the continous colour palette for colouring the 'damage_column'.}
+create the continuous colour palette for colouring the 'damage_column'.}
 }
 \value{
 'ggplot2' object

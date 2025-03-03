@@ -11,6 +11,7 @@ simulate_counts(
   target_damage = c(0.1, 0.8),
   damage_distribution = "right_skewed",
   damage_steepness = "moderate",
+  beta_shape_parameters = NULL,
   ribosome_penalty = 0.01,
   save_plot = tempdir(),
   plot_type = "png",
@@ -63,6 +64,15 @@ apparent skewness.There are three valid options:
 \item "moderate"
 \item "steep"
 \item Default is "moderate"
+}}
+
+\item{beta_shape_parameters}{Numeric vector that allows for the shape
+parameters of the beta distribution to defined explicitly. This offers
+greater flexibility than allowed by the 'damage_distribution' and
+'damage_steepness' parameters and will override the defaults they
+offer.
+\itemize{
+\item Default is 'NULL'
 }}
 
 \item{ribosome_penalty}{Numeric specifying the factor by which the

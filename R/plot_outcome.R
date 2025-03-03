@@ -16,8 +16,10 @@
 #'  proportions are being plotted.
 #' @param damage_column Column name of the input data frame containing the
 #'   values to use for colouring each point in the plot.
+#' @param target_damage Numeric vector specifying the range of target damage
+#'   levels that
 #' @param palette String specifying the three colours that will be used to
-#'  create the continous colour palette for colouring the 'damage_column'.
+#'  create the continuous colour palette for colouring the 'damage_column'.
 #'
 #' @return 'ggplot2' object
 #' @export
@@ -48,6 +50,7 @@ plot_outcome <- function(
     altered = FALSE,
     mito_ribo = FALSE,
     damage_column = "Damaged_Level",
+    target_damage =  c(0.1, 0.8),
     palette = c("grey", "#7023FD", "#E60006")
 ) {
 
@@ -56,7 +59,7 @@ plot_outcome <- function(
     p <- ggplot2::ggplot(data, ggplot2::aes(x = .data[[x]], y = .data[[y]], colour = .data[[damage_column]])) +
       ggplot2::scale_color_gradientn(
         colours = palette,
-        values = scales::rescale(c(0, 0.3, 1)),
+        values = scales::rescale(c(0, target_damage[[1]], 1)),
         limits = c(0, 1)
       ) +
       ggplot2::scale_y_continuous(labels = scales::number_format(accuracy = 0.1)) +
@@ -94,3 +97,5 @@ plot_outcome <- function(
   return(p)
 
 }
+
+
