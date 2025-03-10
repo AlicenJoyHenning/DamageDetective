@@ -84,7 +84,7 @@
 #'  retained in the nucleus, such as in nuclear speckles, must also
 #'  be specified. An example for humans is below,
 #'
-#'  - organism = c(mito_pattern = "^MT-",
+#'  * organism = c(mito_pattern = "^MT-",
 #'                 ribo_pattern = "^(RPS|RPL)",
 #'                 nuclear <- c("NEAT1","XIST", "MALAT1")
 #'

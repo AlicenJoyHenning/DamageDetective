@@ -117,8 +117,6 @@ be specified. An example for humans is below,
 \item organism = c(mito_pattern = "^MT-",
 ribo_pattern = "^(RPS|RPL)",
 nuclear <- c("NEAT1","XIST", "MALAT1")
-}
-\itemize{
 \item Default is "Hsap"
 }}
 }
