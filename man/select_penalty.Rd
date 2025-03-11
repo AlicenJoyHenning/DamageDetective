@@ -5,25 +5,101 @@
 \title{select_penalty}
 \usage{
 select_penalty(
-  matrix,
+  count_matrix,
+  organism = "Hsap",
   mito_quantile = 0.75,
   penalty_range = c(0.001, 0.5),
   penalty_step = 0.005,
-  damage_proportion = 0.15,
-  target_damage = c(0.1, 0.99),
   stability_limit = 3,
-  damage_distribution = "symmetric",
   return_output = "penalty",
-  damage_steepness = "steep",
   generate_plot = FALSE,
-  verbose = TRUE
+  verbose = TRUE,
+  ...
 )
 }
 \arguments{
-\item{verbose}{}
+\item{count_matrix}{Matrix or dgCMatrix containing the counts from
+single cell RNA sequencing data.}
+
+\item{organism}{String specifying the organism of origin of the input
+data where there are two standard options,
+\itemize{
+\item "Hsap"
+\item "Mmus"
+}
+
+If a user wishes to use a non-standard organism they must input a list
+containing strings for the patterns to match mitochondrial and ribosomal
+genes of the organism. If available, nuclear-encoded genes that are likely
+retained in the nucleus, such as in nuclear speckles, must also
+be specified. An example for humans is below,
+\itemize{
+\item organism = c(mito_pattern = "^MT-",
+ribo_pattern = "^(RPS|RPL)",
+nuclear <- c("NEAT1","XIST", "MALAT1")
+\item Default is "Hsap"
+}}
+
+\item{mito_quantile}{Numeric specifying below what proportion of
+mitochondrial content cells are used for sampling for simulation.
+\itemize{
+\item Default is 0.75, meaning only cells with less than 0.75 proportion of
+mitochondrial counts are sampled for simulated.
+}}
+
+\item{penalty_range}{Numerical vector of length 2 specifying the lower
+and upper limit of values tested for the ribosomal penalty.
+\itemize{
+\item Default is c(0.001, 0.5).
+}}
+
+\item{penalty_step}{Numeric specifying the value added to each increment
+of penalty tested.
+\itemize{
+\item Default is 0.005.
+}}
+
+\item{stability_limit}{Numeric specifying the number of additional iterations
+allotted after the median minimum distance of the artificial cells to the
+true cells is greater than the previous minimum distance.
+
+The idea here is that if a higher penalty is not causing an improvement
+in the output, there is little need to continue testing with larger
+penalties.
+\itemize{
+\item Default is 3.
+}}
+
+\item{return_output}{String specifying what form the output of the function
+should take where the options are either,
+\itemize{
+\item "penalty"
+\item "full"
+}
+
+"Penalty" will return only the ribosomal penalty that resulted in the
+best performance (the smallest median distance between artificial and
+true cells). While "full" will return the ideal ribosomal penalty and
+the median distance between artificial and true cells for each penalty
+tested. This allows insight into how the penalty was seleected.
+\itemize{
+\item Default is "penalty".
+}}
+
+\item{generate_plot}{Boolean specifying whether the quality control plots
+of each penalty tested should be stored for viewing.
+\itemize{
+\item Default is FALSE.
+}}
+
+\item{verbose}{Boolean specifying whether messages and function progress
+should be displayed in the console.
+\itemize{
+\item Default is TRUE.
+}}
 }
 \value{
-numeric the value of the ideal ribosomal penalty
+Numeric representing the ideal ribosomal penalty for an input dataset.
 }
 \description{
 select_penalty

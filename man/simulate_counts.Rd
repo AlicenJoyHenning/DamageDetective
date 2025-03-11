@@ -77,10 +77,7 @@ offer.
 
 \item{ribosome_penalty}{Numeric specifying the factor by which the
 probability of loosing a transcript from a ribosomal gene is multiplied by.
-Here, values closer to 0 represent a greater penalty. We highly recommend
-using values less than or equal to the suggested default as being more
-permissing of ribosomal loss leads to extensive reduction in ribosomal
-proportions that are not observed in real single cell data.
+Here, values closer to 0 represent a greater penalty.
 \itemize{
 \item Default is 0.01.
 }}

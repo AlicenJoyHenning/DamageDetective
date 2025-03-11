@@ -3,22 +3,43 @@
 \name{detect_damage}
 \alias{detect_damage}
 \title{detect_damage
-Estimate the level of cytoplasmic RNA loss in a cell, a fundamental
-proxy for damage in single cell RNA sequencing, through comparison
-to cells of the input data where RNA loss, ranging from 0 to 100 \%, has
-been simulated. The true and simulated cells are merged and processed
-before the quality control metrics,}
+Estimate the level of damage experienced by cells through comparison
+to}
 \usage{
 detect_damage(
   count_matrix,
+  ribosome_penalty,
   organism = "Hsap",
-  filter_threshold = 0.4,
-  verbose = TRUE
+  project_name = "Project_name",
+  filter_threshold = 0.5,
+  damage_levels = 5,
+  mito_quantile = 0.75,
+  kN = NULL,
+  include_pANN = FALSE,
+  filter_counts = FALSE,
+  verbose = TRUE,
+  ...
 )
 }
 \arguments{
 \item{count_matrix}{Matrix or dgCMatrix containing the counts from
 single cell RNA sequencing data.}
+
+\item{ribosome_penalty}{Numeric specifying the factor by which the
+probability of loosing a transcript from a ribosomal gene is multiplied by.
+
+Values closer to 0 represent a greater penalty. We recommend using values
+around the suggested default as being more permissive of ribosomal loss
+leads to extensive reduction in ribosomal proportions and being overly
+restrictive of ribosomal loss leads to ribosomal proportions being
+relatively unchanged or even increased by the damage simulation, neither
+of which are observed in real single cell data.
+
+The ideal penalty for your data can be found using the \code{select_penalty}
+function.
+\itemize{
+\item Default is 0.01.
+}}
 
 \item{organism}{String specifying the organism of origin of the input
 data where there are two standard options,
@@ -39,11 +60,84 @@ nuclear <- c("NEAT1","XIST", "MALAT1")
 \item Default is "Hsap"
 }}
 
+\item{project_name}{String containing an identifier of the data being
+investigated to be used in the output plot titles.}
+
 \item{filter_threshold}{Numeric between 0 and 1 specifying above what
 proportion of estimated cytoplasmic RNA loss a cell should be regarded
-as damaged. We recommend not going lower than 0.4.
+as damaged. It is recommended not going lower than 0.4 as there is often no
+considerable difference to true cells when less than 0.4 of the total
+cytoplasmic RNA is lost.
 \itemize{
-\item Default 0.4
+\item Default 0.75.
+}}
+
+\item{damage_levels}{Specification of how many sets of artificial damaged
+cells are created. The true cells will be compared to cells from each
+set and the set with which it has the greatest proportion of nearest
+neighbours will become the estimated level of damage for the true cell.
+
+There are 3 default options provided,
+\itemize{
+\item 3
+\item 5
+\item 7
+}
+
+Which include the following sets of damaged cells,
+\itemize{
+\item 3: c(0.00001, 0.08), c(0.1, 0.4), c(0.5, 0.9)
+\item 5: c(0.00001, 0.08), c(0.1, 0.3), c(0.3, 0.5), c(0.5, 0.7), c(0.7, 0.9)
+\item 7: c(0.00001, 0.08), c(0.1, 0.3), c(0.3, 0.4), c(0.4, 0.5), c(0.5, 0.7),
+c(0.7, 0.9), c(0.9, 0.99999)
+}
+
+Else, a user is also able to specify their own sets as follows, though
+we highly recommend the use of the defaults.
+damage_levels = list(
+pANN_50 = c(0.01, 0.5),
+pANN_90 = c(0.5, 0.9)
+)
+\itemize{
+\item Default is 5.
+}}
+
+\item{mito_quantile}{Numeric specifying below what proportion of
+mitochondrial content cells are used for sampling for simulation.
+\itemize{
+\item Default is 0.75, meaning only cells with less than 0.75 proportion of
+mitochondrial counts are sampled for simulated.
+}}
+
+\item{kN}{Numeric specifying the number of neighbours counted when
+calculating the proportion of artificial nearest neighbours of each
+true cell. It is recommended for this value to correspond to
+the number of cells present in your data.
+\itemize{
+\item Default is a third of the number of cells present in the input matrix.
+}}
+
+\item{include_pANN}{Boolean specifying whether the function output
+should include the proportion of nearest neighbours for every cell
+to each set of artificially damaged cells. This can be used to
+override the selection of the most suitable set of artificial cells
+to describe each true cell.
+\itemize{
+\item Default is FALSE.
+}}
+
+\item{filter_counts}{Boolean specifying whether to output only the true
+cells whose proportion of artificial nearest neighbours showed them
+to be most similar to artificially damaged cells that had lost less RNA
+than that specified in the filter_threshold. This automatically filters
+the data for a user.
+
+If FALSE, the output provided is a data frame containing the barcodes
+of the input data alongside their estimated levels of damage and a
+classification as either 'damaged' or 'cell' based on the filter_threshold.
+This allows a user control over filtering decisions.
+\itemize{
+\item Default is FALSE.
 }}
 
 \item{verbose}{Boolean specifying whether messages and function progress
@@ -52,7 +146,19 @@ should be displayed in the console.
 \item Default is TRUE.
 }}
 }
+\value{
+Either a filtered count matrix or a data frame with annotations
+of estimated damage level for each cell and a classification as either
+'damaged' or 'cell'.
+}
 \description{
+cytoplasmic RNA loss in a cell, a fundamental
+proxy for damage in single cell RNA sequencing, through comparison
+to cells of the input data where RNA loss, ranging from 0 to 100 \%, has
+been simulated. The true and simulated cells are merged and processed
+before the quality control metrics,
+}
+\details{
 \itemize{
 \item log(non-zero features)
 \item log(total counts)
@@ -60,8 +166,7 @@ should be displayed in the console.
 \item ribosomal proportion
 \item MALAT1 expression
 }
-}
-\details{
+
 are computed and compared through principal component analysis (PCA) to
 generate a distance matrix. The top related cells, or nearest neighbours
 (NNs), defined by the matrix are retrieved for each cell. For true cells,
@@ -70,4 +175,17 @@ are found for each level of loss simulated.The level of loss where the pANNs
 is highest is used to assign a predicted level of loss to each true cell.
 Damage labels are then assigned to true cells if the predicted level of
 loss is greater than or equal to 40 \% or a user specified threshold.
+}
+\examples{
+data("test_counts", package = "DamageDetective")
+
+test <- detect_damage(
+  count_matrix = test_counts,
+  ribosome_penalty = 0.05,
+  filter_threshold = 0.75,
+  damage_levels = 3,
+  kN = 100,
+   project_name = "Test data",
+   save_plot = temp_dir*()
+   )
 }
