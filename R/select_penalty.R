@@ -68,7 +68,7 @@
 #' data("test_counts", package = "DamageDetective")
 #'
 #' penalty <- select_penalty(
-#' matrix = test_counts
+#'  count_matrix = test_counts
 #' )
 #' @importFrom dplyr %>% mutate if_else
 #' @importFrom stats quantile
@@ -83,10 +83,8 @@ select_penalty <- function(
     stability_limit = 3,
     return_output = "penalty",
     generate_plot = FALSE,
-    verbose = TRUE,
-    ...
-)
-{
+    verbose = TRUE
+){
   # Phase One: Data preparations ----
 
   # Retrieve genes corresponding to the organism of interest
@@ -110,6 +108,7 @@ select_penalty <- function(
   }
 
   # Isolate gene set indices (consistent across cells, not subsetting the matrix)
+  count_matrix <- as.matrix(count_matrix)
   mito_idx <- grep(mito_pattern, rownames(count_matrix), ignore.case = FALSE)
   ribo_idx <- grep(ribo_pattern, rownames(count_matrix), ignore.case = FALSE)
   mito <- colSums(count_matrix[mito_idx, , drop = FALSE]) / colSums(count_matrix)
@@ -165,12 +164,13 @@ select_penalty <- function(
       ribosome_penalty = penalty,
       damage_distribution = "symmetric",
       damage_steepness = "steep",
-      save_plot = NULL
+      generate_plot = FALSE
     )
 
     # Extract QC metrics from output
     df_damaged <- penalty_output$qc_summary
-    df_damaged <- subset(df_damaged, Damaged_Level != 0)
+    df_damaged <- df_damaged %>%
+      dplyr::filter(Damaged_Level != 0)
 
     # Rename columns
     colnames(df_damaged)[colnames(df_damaged) == "New_RiboProp"] <- "ribo"
@@ -187,7 +187,6 @@ select_penalty <- function(
     # Combine true and artificial cells
     combined_df <- rbind(df, df_damaged)
 
-
     # Phase Three: PCA to compare penalty iterations ----
     # Best iteration must minimise the PC distance between artificial cells and true cells
 
@@ -197,8 +196,10 @@ select_penalty <- function(
     combined_df$pca2 <- pca_result$x[, 2]
 
     # Separate true and artificial cells for distance calculation
-    true_cells <- subset(combined_df, damage_label == "cell")
-    artificial_cells <- subset(combined_df, damage_label == "artificial")
+    true_cells <- combined_df %>%
+      dplyr::filter(damage_label == "cell")
+    artificial_cells <- combined_df %>%
+      dplyr::filter(damage_label == "artificial")
 
     # Compute the nearest true cell for each artificial cell
     dists <- sqrt((outer(artificial_cells$pca1, true_cells$pca1, "-")^2) +
@@ -223,11 +224,10 @@ select_penalty <- function(
 
     # Plot the mito vs ribo for true and artificial cells, colored by dTNN
     if (generate_plot){
-      plot <- ggplot(combined_df, aes(x = ribo, y = mito)) +
-        geom_point(aes(color = nearest_distance)) +
+      plot <- ggplot(combined_df, aes(x = .data$ribo, y = .data$mito)) +
+        geom_point(aes(color = .data$nearest_distance)) +
         scale_color_gradientn(
           colours = c("lightgray", "#7023FD", "#E60006"),
-          values = scales::rescale(c(0, 0.1, 1)),
           limits = c(0, max(combined_df$nearest_distance, na.rm = TRUE))
         ) +
         labs(title = paste("Penalty:", penalty, ", Median dTNN:", round(current_median_dTNN, 4)),
@@ -246,14 +246,13 @@ select_penalty <- function(
         dTNN_medians = dTNN_medians,
         plot = plot
       )
+    } else {
+      # Else skip plot
+      penalty_results[[paste0("penalty_", penalty)]] <- list(
+        median = current_median_dTNN,
+        dTNN_medians = dTNN_medians
+      )
     }
-
-    # Else skip plot
-    penalty_results[[paste0("penalty_", penalty)]] <- list(
-      median = current_median_dTNN,
-      dTNN_medians = dTNN_medians
-    )
-
 
     # Phase Four: Stop if dTNN has stabilized ----
 
@@ -285,13 +284,12 @@ select_penalty <- function(
 
   # Return the selected penalty along with penalty results
   if (return_output == "penalty"){
-    return(selected_penalty = best_penalty)
+    return(best_penalty)
   }
 
   if (return_output == "full"){
     return(list(penalty_results = penalty_results,
                 selected_penalty = best_penalty))
   }
-
 }
 

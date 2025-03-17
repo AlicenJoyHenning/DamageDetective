@@ -18,7 +18,11 @@ Depends:
 Roxygen: list(markdown = TRUE)
 Imports: 
     cowplot,
+    dplyr,
+    fields,
     ggplot2,
     ggpubr,
     patchwork,
-    scales
+    Seurat,
+    scales,
+    rlang

@@ -13,8 +13,7 @@ select_penalty(
   stability_limit = 3,
   return_output = "penalty",
   generate_plot = FALSE,
-  verbose = TRUE,
-  ...
+  verbose = TRUE
 )
 }
 \arguments{
@@ -108,6 +107,6 @@ select_penalty
 data("test_counts", package = "DamageDetective")
 
 penalty <- select_penalty(
-matrix = test_counts
+ count_matrix = test_counts
 )
 }

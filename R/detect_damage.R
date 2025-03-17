@@ -1,44 +1,11 @@
 #' detect_damage
-#
-#' Estimate the level of damage experienced by cells to inform the filtering
-#' of cells that are most likely damaged where the amount of cytoplasmic RNA
-#' lost is used as a proxy for damage. through comparison
-#' to cells of the input data where RNA loss, ranging from 0 to 100 %, has
-#' been simulated. The true and simulated cells are merged and processed
-#' before the quality control metrics,
-#'
-#' * log(non-zero features)
-#' * log(total counts)
-#' * mitochondrial proportion
-#' * ribosomal proportion
-#' * MALAT1 expression
-#'
-#' are computed and compared through principal component analysis (PCA) to
-#' generate a distance matrix. The top related cells, or nearest neighbours
-#' (NNs), defined by the matrix are retrieved for each cell. For true cells,
-#' the proportion of NNs that are artificial (pANNs), i.e. simulated cells,
-#' are found for each level of loss simulated.The level of loss where the pANNs
-#' is highest is used to assign a predicted level of loss to each true cell.
-#' Damage labels are then assigned to true cells if the predicted level of
-#' loss is greater than or equal to 40 % or a user specified threshold.
-#'
 #'
 #' @param count_matrix Matrix or dgCMatrix containing the counts from
 #'  single cell RNA sequencing data.
+#'
 #' @param ribosome_penalty Numeric specifying the factor by which the
 #'  probability of loosing a transcript from a ribosomal gene is multiplied by.
-#'
-#'  Values closer to 0 represent a greater penalty. We recommend using values
-#'  around the suggested default as being more permissive of ribosomal loss
-#'  leads to extensive reduction in ribosomal proportions and being overly
-#'  restrictive of ribosomal loss leads to ribosomal proportions being
-#'  relatively unchanged or even increased by the damage simulation, neither
-#'  of which are observed in real single cell data.
-#'
-#'  The ideal penalty for your data can be found using the `select_penalty`
-#'  function.
-#'
-#'  * Default is 0.01.
+#'  Here, values closer to 0 represent a greater penalty.
 #' @param organism String specifying the organism of origin of the input
 #'  data where there are two standard options,
 #'
@@ -56,76 +23,46 @@
 #'                 nuclear <- c("NEAT1","XIST", "MALAT1")
 #'
 #' * Default is "Hsap"
-#' @param project_name String containing an identifier of the data being
-#'  investigated to be used in the output plot titles.
-#' @param filter_threshold Numeric between 0 and 1 specifying above what
-#'   proportion of estimated cytoplasmic RNA loss a cell should be regarded
-#'   as damaged. It is recommended not going lower than 0.4 as there is often no
-#'   considerable difference to true cells when less than 0.4 of the total
-#'   cytoplasmic RNA is lost.
+#' @param project_name String specificying a project identifier
+#' @param filter_threshold Numeric
+#' @param damage_levels Numeric
+#' @param mito_quantile Numeric between 0 and 1 specifying below what
+#'  level cells are sampled for simulated.
 #'
-#'  * Default 0.75.
-#' @param damage_levels Specification of how many sets of artificial damaged
-#'  cells are created. The true cells will be compared to cells from each
-#'  set and the set with which it has the greatest proportion of nearest
-#'  neighbours will become the estimated level of damage for the true cell.
+#'  * Default is 0.75.
 #'
-#'  There are 3 default options provided,
-#'  - 3
-#'  - 5
-#'  - 7
-#'
-#' Which include the following sets of damaged cells,
-#' - 3: c(0.00001, 0.08), c(0.1, 0.4), c(0.5, 0.9)
-#' - 5: c(0.00001, 0.08), c(0.1, 0.3), c(0.3, 0.5), c(0.5, 0.7), c(0.7, 0.9)
-#' - 7: c(0.00001, 0.08), c(0.1, 0.3), c(0.3, 0.4), c(0.4, 0.5), c(0.5, 0.7),
-#' c(0.7, 0.9), c(0.9, 0.99999)
-#'
-#' Else, a user is also able to specify their own sets as follows, though
-#' we highly recommend the use of the defaults.
-#'     damage_levels = list(
-#'     pANN_50 = c(0.01, 0.5),
-#'     pANN_90 = c(0.5, 0.9)
-#' )
-#'
-#' * Default is 5.
-#' @param mito_quantile Numeric specifying below what proportion of
-#'  mitochondrial content cells are used for sampling for simulation.
-#'
-#' * Default is 0.75, meaning only cells with less than 0.75 proportion of
-#' mitochondrial counts are sampled for simulated.
-#' @param kN Numeric specifying the number of neighbours counted when
-#'  calculating the proportion of artificial nearest neighbours of each
-#'  true cell. It is recommended for this value to correspond to
-#'  the number of cells present in your data.
-#'
-#' * Default is a third of the number of cells present in the input matrix.
-#' @param include_pANN Boolean specifying whether the function output
-#'    should include the proportion of nearest neighbours for every cell
-#'    to each set of artificially damaged cells. This can be used to
-#'    override the selection of the most suitable set of artificial cells
-#'    to describe each true cell.
+#' @param kN Numeric describing how many neighbours are considered. The
+#'    default uses a third of the total number of cells.
+#' @param include_pANN Boolean specifying whether output should contain
+#'  columns from each level of damage or not and only include the top
+#'  result.
 #'
 #'  * Default is FALSE.
-#' @param filter_counts Boolean specifying whether to output only the true
-#'  cells whose proportion of artificial nearest neighbours showed them
-#'  to be most similar to artificially damaged cells that had lost less RNA
-#'  than that specified in the filter_threshold. This automatically filters
-#'  the data for a user.
+#' @param generate_plot Boolean specifying whether the output QC plot should
+#'  be outputted. QC plots will be generated by default as we recommend
+#'  verifying the perturbed data retains characteristics of true
+#'  single cell data.
 #'
-#'  If FALSE, the output provided is a data frame containing the barcodes
-#'  of the input data alongside their estimated levels of damage and a
-#'  classification as either 'damaged' or 'cell' based on the filter_threshold.
-#'  This allows a user control over filtering decisions.
+#' * Default is FALSE.
+#' @param filter_counts Whether the output matrix should be returned containing
+#'  only cells that pass qualuity control threshold. Else a data frame
+#'  containing the cell barcodes and label as either 'damaged' or 'cell'.
 #'
 #'  * Default is FALSE.
 #' @param verbose Boolean specifying whether messages and function progress
 #'  should be displayed in the console.
 #'
 #'  * Default is TRUE.
-#' @return Either a filtered count matrix or a data frame with annotations
-#'  of estimated damage level for each cell and a classification as either
-#'  'damaged' or 'cell'.
+#' @return Filtered matrix or data frame containing damage labels
+#' @importFrom fields rdist
+#' @importFrom dplyr %>% group_by summarise mutate case_when first pull
+#' @importFrom ggplot2 ggsave theme element_rect margin
+#' @importFrom cowplot ggdraw draw_label plot_grid
+#' @importFrom ggpubr get_legend
+#' @importFrom Seurat CreateSeuratObject NormalizeData FindVariableFeatures
+#' @importFrom Seurat ScaleData PercentageFeatureSet FetchData
+#' @importFrom rlang expr !!!
+#' @importFrom stats prcomp
 #' @export
 #' @examples
 #' data("test_counts", package = "DamageDetective")
@@ -136,17 +73,9 @@
 #'   filter_threshold = 0.75,
 #'   damage_levels = 3,
 #'   kN = 100,
-#'    project_name = "Test data",
-#'    save_plot = temp_dir*()
-#'    )
-#' @importFrom dplyr %>% group_by summarise mutate case_when
-#' @importFrom ggplot2 ggsave theme element_rect margin
-#' @importFrom cowplot ggdraw draw_label plot_grid
-#' @importFrom ggpubr get_legend
-#' @importFrom Seurat CreateSeuratObject NormalizeData FindVariableFeatures
-#' @importFrom Seurat ScaleData PercentageFeatureSet FetchData
-#' @importFrom rlang expr !!!
-#' @importFrom stats prcomp
+#'   project_name = "Test data",
+#'   generate_plot = FALSE
+#' )
 detect_damage <- function(
     count_matrix,
     ribosome_penalty,
@@ -157,9 +86,9 @@ detect_damage <- function(
     mito_quantile = 0.75,
     kN = NULL,
     include_pANN = FALSE,
+    generate_plot = TRUE,
     filter_counts = FALSE,
-    verbose = TRUE,
-    ...
+    verbose = TRUE
 ){
   # Phase One: data preparations for simulation ----
 
@@ -188,6 +117,7 @@ detect_damage <- function(
   }
 
   # Collect mito & ribo information of all true cells
+  count_matrix <- as.matrix(count_matrix)
   mito_idx <- grep(mito_pattern, rownames(count_matrix), ignore.case = FALSE)
   ribo_idx <- grep(ribo_pattern, rownames(count_matrix), ignore.case = FALSE)
   mito <- colSums(count_matrix[mito_idx, , drop = FALSE]) / colSums(count_matrix)
@@ -263,12 +193,16 @@ detect_damage <- function(
       ribosome_penalty = ribosome_penalty,
       damage_distribution = "symmetric",
       damage_steepness = "steep",
-      save_plot = NULL
+      generate_plot = FALSE
     )
 
-    # Isolate counts of artificial cells (newly damaged)
-    barcodes <- subset(damaged_cells$qc_summary, Damaged_Level != 0)$Cell
+    # Correct way to refer to columns and avoid global variable warning
+    barcodes <- damaged_cells$qc_summary %>%
+      dplyr::filter(.data$Damaged_Level != 0) %>%
+      dplyr::pull(.data$Cell)
+
     damaged_matrix <- damaged_cells$matrix[, barcodes]
+
 
     # Append the level of damage to the barcodes
     colnames(damaged_matrix) <- paste0(colnames(damaged_matrix), "_", gsub("pANN_", "", level))
@@ -335,7 +269,7 @@ detect_damage <- function(
   }
 
   # Proportion of damage level-specific artificial nearest neighbours (pANNs)
-  compute_pANN <- function(barcode_set) {
+   compute_pANN <- function(barcode_set) {
     sapply(rownames(dist_mat), function(cell) {
       # Find indices of the nearest neighbors (excluding itself)
       kNN <- kN + 1
@@ -363,7 +297,8 @@ detect_damage <- function(
 
   # Find which damage population a cell is most frequently neighboring
   # Isolate  true cells & define relevant columns
-  metadata <- subset(metadata, Damage_level == 0)
+  metadata <- metadata %>%
+    dplyr::filter(Damage_level == 0)
 
   # Find the column name with the maximum value for each true cell
   metadata$max_pANN_col <- apply(metadata[pANN_names], 1, function(row) {
@@ -383,27 +318,27 @@ detect_damage <- function(
     mutate(
       lower_scale = case_when(
         !!!lapply(names(ranges), function(name) {
-          rlang::expr(max_pANN_col == !!name ~ ranges[[!!name]][[1]])
+          expr(max_pANN_col == !!name ~ ranges[[!!name]][[1]])
         })
       ),
       upper_scale = case_when(
         !!!lapply(names(ranges), function(name) {
-          rlang::expr(max_pANN_col == !!name ~ ranges[[!!name]][[2]])
+          expr(max_pANN_col == !!name ~ ranges[[!!name]][[2]])
         })
       ),
       min = case_when(
         !!!lapply(names(ranges), function(name) {
-          rlang::expr(max_pANN_col == !!name ~ pANN_summary_stats$min_value[pANN_summary_stats$max_pANN_col == !!name])
+          expr(max_pANN_col == !!name ~ pANN_summary_stats$min_value[pANN_summary_stats$max_pANN_col == !!name])
         })
       ),
       max = case_when(
         !!!lapply(names(ranges), function(name) {
-          rlang::expr(max_pANN_col == !!name ~ pANN_summary_stats$max_value[pANN_summary_stats$max_pANN_col == !!name])
+          expr(max_pANN_col == !!name ~ pANN_summary_stats$max_value[pANN_summary_stats$max_pANN_col == !!name])
         })
       ),
       value = case_when(
         !!!lapply(names(ranges), function(name) {
-          rlang::expr(max_pANN_col == !!name ~ get(!!name))
+          expr(max_pANN_col == !!name ~ get(!!name))
         })
       )
     )
@@ -426,7 +361,7 @@ detect_damage <- function(
   }
 
   # Visualise cells according to damage level
-  if (!is.null(save_plot)){
+  if (generate_plot){
 
     # Generate QC plots with cells coloured by scaled pANN
     plot_mito_ribo <- plot_outcome(
@@ -473,29 +408,6 @@ detect_damage <- function(
     # Display the final plot
     print(final_plot)
 
-    # Save the final plot to a specified directory
-    output_file <- file.path(save_plot, paste0("DamageDetective.", plot_type))
-
-    # Use ggsave to save the plot
-    if (plot_type == "png") {
-      ggplot2::ggsave(
-        output_file,
-        plot = final_plot,
-        width = 8,
-        height = 5,
-        dpi = 300,
-        units = "in"
-      )
-    } else if (plot_type == "svg") {
-      ggplot2::ggsave(
-        output_file,
-        plot = final_plot,
-        width = 8,
-        height = 5,
-        units = "in"
-      )
-    }
-
     output <- list(
       metadata = metadata_output,
       plot = final_plot
@@ -505,12 +417,18 @@ detect_damage <- function(
 
   # If specified, filter and return the count matrix only
   if (filter_counts){
-    metadata_filtered <- subset(metadata, DamageDetective == "cell")
+    metadata_filtered <- metadata %>%
+      dplyr::filter(DamageDetective == "cell")
     final_filtered_cells <- metadata_filtered$Cells
     final_filtered_matrix <- count_matrix[, final_filtered_cells]
     output <- final_filtered_matrix
+  } else {
+    # Else just output
+    output <- metadata_output
+
   }
 
   return(output)
 
 }
+
