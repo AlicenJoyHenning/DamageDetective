@@ -154,7 +154,6 @@ simulate_counts <- function(
   damaged_cell_number <- round(total_cells * damage_proportion)
 
   # Assign damage levels to the selected cells based on beta distribution
-
   # Assign the steepness (peak height) to meet target
   steepness_levels <- list(
     shallow = 4,
@@ -272,42 +271,38 @@ simulate_counts <- function(
   # Phase Three: Perturb selected cells ----
 
   # Initialize for storing modified count_matrix
-  damaged_count_matrix <- count_matrix
+  damaged_count_matrix <- as.matrix(count_matrix)
 
-  # Determine number of transcripts to lose based on target damage levels
-  cell_damage_levels <- damage_label$damage_level[match(colnames(count_matrix)[damaged_cell_selections], damage_label$barcode)]
-  total_counts <- colSums(damaged_count_matrix[non_mito_idx, damaged_cell_selections])
-  total_loss <- round(cell_damage_levels * total_counts)
-
-  # Expand genes into individual transcript-level representations
-  transcript_df <- lapply(damaged_cell_selections, function(cell) rep(non_mito_idx, times = damaged_count_matrix[non_mito_idx, cell]))
-
-  # Assign probability of loss based on gene abundance
-  gene_totals <- damaged_count_matrix[non_mito_idx, damaged_cell_selections]
-  probabilities <- sweep(gene_totals, 2, total_counts, "/")
-
-  # Apply penalty to ribosomal genes
-  probabilities[ribo_idx, ] <- probabilities[ribo_idx, ] * ribosome_penalty
-
-  # Normalize probabilities so that the total sums to 1
-  probabilities <- sweep(probabilities, 2, colSums(probabilities), "/")
-
-  # We replicate the probabilities for the number of transcripts each gene has in this cell
-  prob_repeated <- lapply(seq_along(damaged_cell_selections), function(i) rep(probabilities[, i], times = gene_totals[, i]))
-
-  # Sample transcripts to be lost based on probability of loss
-  lost_transcripts <- mapply(function(transcripts, probs, loss) {
-    sample(transcripts, size = loss, replace = FALSE, prob = probs)
-  }, transcript_df, prob_repeated, total_loss, SIMPLIFY = FALSE)
-
-  # Sum remaining transcripts per gene
-  remaining_count_matrix <- mapply(function(transcripts, lost) {
-    table(factor(transcripts[!transcripts %in% lost], levels = non_mito_idx))
-  }, transcript_df, lost_transcripts, SIMPLIFY = FALSE)
-
-  # Assign updated count_matrix to non-mito genes
   for (i in seq_along(damaged_cell_selections)) {
-    damaged_count_matrix[non_mito_idx, damaged_cell_selections[i]] <- as.integer(remaining_count_matrix[[i]])
+    cell <- damaged_cell_selections[i]
+
+    # Determine number of transcripts to lose
+    cell_damage_level <- damage_label$damage_level[match(colnames(count_matrix)[cell], damage_label$barcode)]
+    total_count <- sum(damaged_count_matrix[non_mito_idx, cell])
+    total_loss <- round(cell_damage_level * total_count)
+
+    # Expand genes into transcript-level representations
+    transcripts <- rep(non_mito_idx, times = damaged_count_matrix[non_mito_idx, cell])
+
+    # Assign probability of loss based on gene abundance
+    gene_totals <- damaged_count_matrix[non_mito_idx, cell]
+    probabilities <- gene_totals / total_count
+
+    # Apply penalty to ribosomal genes and normalize
+    probabilities[ribo_idx] <- probabilities[ribo_idx] * ribosome_penalty
+    probabilities <- probabilities / sum(probabilities)
+
+    # Replicate probabilities for each transcript
+    prob_repeated <- rep(probabilities, times = gene_totals)
+
+    # Sample transcripts to be lost
+    lost_transcripts <- sample(transcripts, size = total_loss, replace = FALSE, prob = prob_repeated)
+
+    # Sum remaining transcripts per gene
+    remaining_counts <- table(factor(transcripts[!transcripts %in% lost_transcripts], levels = non_mito_idx))
+
+    # Update count matrix
+    damaged_count_matrix[non_mito_idx, cell] <- as.integer(remaining_counts)
   }
 
   # Phase Four: Organise & plot output ----
