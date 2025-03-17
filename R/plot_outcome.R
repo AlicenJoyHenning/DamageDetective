@@ -51,7 +51,7 @@ plot_outcome <- function(
     mito_ribo = FALSE,
     damage_column = "Damaged_Level",
     target_damage =  c(0.1, 0.8),
-    palette = c("grey", "#7023FD", "#78C2AD") # "#E60006",
+    palette = c("grey", "#7023FD", "#E60006")
 ) {
 
   # Altered counts are plotted with damaged cells coloured
