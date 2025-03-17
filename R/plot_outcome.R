@@ -93,7 +93,7 @@ plot_outcome <- function(
       ggplot2::labs(x = "Ribosomal proportion", y = "Mitochondrial proportion")
   } else {
     p <- p + ggplot2::labs(x = "Features expressed", y = "Mitochondrial proportion") +
-      + ggplot2::scale_y_continuous(limits = c(0, 1), labels = scales::number_format(accuracy = 0.1))
+      ggplot2::scale_y_continuous(limits = c(0, 1), labels = scales::number_format(accuracy = 0.1))
   }
 
   return(p)
