@@ -252,10 +252,13 @@ simulate_counts <- function(
   }
 
   # Storage of damage labels for the cell barcodes for plotting
-  damage_label <- data.frame(barcode = colnames(count_matrix)[damaged_cell_selections], status = rep("damaged", length(damaged_cell_selections)))
-  undamaged_cell_number_cells <- setdiff(seq_len(total_cells), damaged_cell_selections)
-  undamaged_cell_number <- data.frame(barcode = colnames(count_matrix)[undamaged_cell_number_cells], status = rep("control", length(undamaged_cell_number_cells)))
-  damage_label <- rbind(damage_label, undamaged_cell_number)
+  damage_status <- rep("control", total_cells)
+  damage_status[damaged_cell_selections] <- "damaged"
+  damage_label <- data.frame(
+    barcode = colnames(count_matrix),
+    status = damage_status,
+    stringsAsFactors = FALSE
+  )
 
   # Consolidate into target beta distribution
   damage_levels <- stats::rbeta(length(damaged_cell_selections), shape1 = a, shape2 = b)
