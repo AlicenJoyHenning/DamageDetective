@@ -12,7 +12,7 @@ plot_outcome(
   mito_ribo = FALSE,
   damage_column = "Damaged_Level",
   target_damage = c(0.1, 0.8),
-  palette = c("grey", "#7023FD", "#78C2AD")
+  palette = c("grey", "#7023FD", "#E60006")
 )
 }
 \arguments{
@@ -47,7 +47,7 @@ create the continuous colour palette for colouring the 'damage_column'.}
 }
 \description{
 Generates a scatter plot using the summary statistics of the damage
-perturbation.
+simulation.
 }
 \examples{
 set.seed(42)  # For reproducibility

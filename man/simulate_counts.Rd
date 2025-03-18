@@ -124,9 +124,9 @@ extensively damaged than cells where little RNA has been lost.
 data("test_counts", package = "DamageDetective")
 
 simulated_damage <- simulate_counts(
-count_matrix = test_counts,
-damage_proportion = 0.5,
-ribosome_penalty = 0.5,
-target_damage = c(0.5, 0.9)
+  count_matrix = test_counts,
+  damage_proportion = 0.5,
+  ribosome_penalty = 0.01,
+  target_damage = c(0.5, 0.9)
 )
 }

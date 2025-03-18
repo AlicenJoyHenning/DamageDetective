@@ -8,9 +8,15 @@ detect_damage(
   count_matrix,
   ribosome_penalty,
   organism = "Hsap",
+  annotated_celltypes = FALSE,
+  target_damage = c(0.1, 0.8),
+  damage_distribution = "right_skewed",
+  damage_steepness = "moderate",
+  beta_shape_parameters = NULL,
   project_name = "Project_name",
-  filter_threshold = 0.5,
+  filter_threshold = 0.75,
   damage_levels = 5,
+  damage_proportion = 0.15,
   mito_quantile = 0.75,
   kN = NULL,
   include_pANN = FALSE,
@@ -25,7 +31,10 @@ single cell RNA sequencing data.}
 
 \item{ribosome_penalty}{Numeric specifying the factor by which the
 probability of loosing a transcript from a ribosomal gene is multiplied by.
-Here, values closer to 0 represent a greater penalty.}
+Here, values closer to 0 represent a greater penalty.
+\itemize{
+\item Default is 0.01.
+}}
 
 \item{organism}{String specifying the organism of origin of the input
 data where there are two standard options,
@@ -46,23 +55,115 @@ nuclear <- c("NEAT1","XIST", "MALAT1")
 \item Default is "Hsap"
 }}
 
-\item{project_name}{String specificying a project identifier}
+\item{annotated_celltypes}{Boolean specifying whether input matrix has
+cell type information stored.
+\itemize{
+\item Default is FALSE
+}}
 
-\item{filter_threshold}{Numeric}
+\item{target_damage}{Double numeric specifying the upper and lower range of
+the level of damage that will be introduced.
 
-\item{damage_levels}{Numeric}
+Here, damage refers to the amount of cytoplasmic RNA lost by a cell where
+values closer to 1 indicate more loss and therefore more heavily damaged
+cells.
+\itemize{
+\item Default is c(0.1, 0.8)
+}}
 
-\item{mito_quantile}{Numeric between 0 and 1 specifying below what
-level cells are sampled for simulated.
+\item{damage_distribution}{String specifying whether the distribution of
+damage levels among the damaged cells should be shifted towards the
+upper or lower range of damage specified in 'target_damage' or follow
+a symmetric distribution between them. There are three valid options:
+\itemize{
+\item "right_skewed"
+\item "left_skewed"
+\item "symmetric"
+\item Default is c(0.1, 0.8)
+}}
+
+\item{damage_steepness}{String specifying how concentrated the spread of
+damaged cells are about the mean of the target distribution specified in
+'target_damage'. Here, an increase in steepness manifests in a more
+apparent skewness.There are three valid options:
+\itemize{
+\item "shallow"
+\item "moderate"
+\item "steep"
+\item Default is "moderate"
+}}
+
+\item{beta_shape_parameters}{Numeric vector that allows for the shape
+parameters of the beta distribution to defined explicitly. This offers
+greater flexibility than allowed by the 'damage_distribution' and
+'damage_steepness' parameters and will override the defaults they
+offer.
+\itemize{
+\item Default is 'NULL'
+}}
+
+\item{project_name}{String specifying a project identifier. Intended
+for generating quality control plots that are distinct across samples.
+However, is otherwise not relevant to the function.
+\itemize{
+\item Default is "Project"
+}}
+
+\item{filter_threshold}{Numeric specifying the proportion of RNA loss
+above which a cell should be considered damaged.
 \itemize{
 \item Default is 0.75.
 }}
 
-\item{kN}{Numeric describing how many neighbours are considered. The
-default uses a third of the total number of cells.}
+\item{damage_levels}{Numeric specifying the number of distinct sets of
+artificial damaged cells simulated, each with a defined range of loss.
+Default ptions include,
+\itemize{
+\item 3 : c(0.00001, 0.08), c(0.1, 0.4), c(0.5, 0.9)
+\item 5 : c(0.00001, 0.08), c(0.1, 0.3), c(0.3, 0.5), c(0.5, 0.7), c(0.7, 0.9)
+\item 7 : c(0.00001, 0.08), c(0.1, 0.3), c(0.3, 0.4), c(0.4, 0.5), c(0.5, 0.7),
+c(0.7, 0.9), c(0.9, 0.99999).
+}
+
+A user can also provide a list specifying sets with their own ranges of loss,
+\itemize{
+\item damage_levels = list(
+pANN_50 = c(0.1, 0.5),
+pANN_100 = c(0.5, 1)
+)
+}
+
+By introducing more sets of damage a user can improve the accuracy of
+loss estimations (scaled_pANN) as they are found through scaling the pANN
+within each set according to the lower and upper boundary of the set's
+damage level. However, introducing more sets increases the computational
+time for the function.
+\itemize{
+\item Default is 5.
+}}
+
+\item{damage_proportion}{Numeric describing what proportion
+of the input data should be altered to resemble damaged data.
+\itemize{
+\item Must range between 0 and 1.
+}}
+
+\item{mito_quantile}{Numeric between 0 and 1 specifying below what
+level of mitochondrial proportion cells are sampled for simulations.
+This step is done to protect against simulating damaged cell profiles
+from cells that are likely damaged.
+\itemize{
+\item Default is 0.75.
+}}
+
+\item{kN}{Numeric describing how many nearest neighbours are considered
+for pANN calculations. kN cannot exceed the total cell number.
+\itemize{
+\item Default is one third of the total cell number.
+}}
 
 \item{include_pANN}{Boolean specifying whether output should contain
-columns from each level of damage or not and only include the top
+columns from each level of damage or only include the top
 result.
 \itemize{
 \item Default is FALSE.
@@ -73,12 +174,14 @@ be outputted. QC plots will be generated by default as we recommend
 verifying the perturbed data retains characteristics of true
 single cell data.
 \itemize{
-\item Default is FALSE.
+\item Default is TRUE.
 }}
 
-\item{filter_counts}{Whether the output matrix should be returned containing
-only cells that pass qualuity control threshold. Else a data frame
-containing the cell barcodes and label as either 'damaged' or 'cell'.
+\item{filter_counts}{Boolean specifying whether the output matrix
+should be filtered, returned containing only cells that fall below
+the filter threshold. Alternatively, a data frame containing cell
+barcodes and their associated label as either 'damaged' or 'cell'
+is returned.
 \itemize{
 \item Default is FALSE.
 }}
@@ -90,10 +193,32 @@ should be displayed in the console.
 }}
 }
 \value{
-Filtered matrix or data frame containing damage labels
+Filtered matrix or data frame containing damage labels.
 }
 \description{
-detect_damage
+Quality control function to identify and filter damaged cells from an
+input count matrix, where 'damage' is approximated by the loss of
+cytoplasmic RNA.
+}
+\details{
+Utilizing the simulation framework from simulate_counts(), detect_damage()
+generates artificially damaged cell profiles by introducing known levels
+of RNA loss into the input data. Both true and artificial cells are then
+pre-processed to compute the following quality control metrics:
+\itemize{
+\item Log-normalized feature count
+\item Log-normalized total counts
+\item Mitochondrial proportion
+\item Ribosomal proportion
+\item Log-normalized MALAT1 gene expression
+}
+
+Principal component analysis (PCA) is performed on these metrics,
+and a Euclidean distance matrix is constructed from the PC embeddings.
+For each true cell, the proportion of nearest neighbors that are
+artificial cells (pANN) is calculated across all damage levels.
+The damage level with the highest pANN is assigned to the true cell,
+and cells exceeding a specified damage threshold are marked as damaged.
 }
 \examples{
 data("test_counts", package = "DamageDetective")
@@ -104,7 +229,7 @@ test <- detect_damage(
   filter_threshold = 0.75,
   damage_levels = 3,
   kN = 100,
-  project_name = "Test data",
+  project_name = "Project",
   generate_plot = FALSE
 )
 }

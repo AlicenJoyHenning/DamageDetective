@@ -10,7 +10,12 @@ select_penalty(
   mito_quantile = 0.75,
   penalty_range = c(0.001, 0.5),
   penalty_step = 0.005,
+  max_penalty_trials = 10,
+  target_damage = c(0.1, 0.99),
+  damage_distribution = "symmetric",
+  damage_steepness = "steep",
   stability_limit = 3,
+  damage_proportion = 0.15,
   return_output = "penalty",
   generate_plot = FALSE,
   verbose = TRUE
@@ -58,6 +63,44 @@ of penalty tested.
 \item Default is 0.005.
 }}
 
+\item{max_penalty_trials}{Numeric specifying the maximum number of
+iterations for the ribosomal penalty value.
+\itemize{
+\item Default is 10.
+}}
+
+\item{target_damage}{Double numeric specifying the upper and lower range of
+the level of damage that will be introduced.
+
+Here, damage refers to the amount of cytoplasmic RNA lost by a cell where
+values closer to 1 indicate more loss and therefore more heavily damaged
+cells.
+\itemize{
+\item Default is c(0.1, 0.99)
+}}
+
+\item{damage_distribution}{String specifying whether the distribution of
+damage levels among the damaged cells should be shifted towards the
+upper or lower range of damage specified in 'target_damage' or follow
+a symmetric distribution between them. There are three valid options:
+\itemize{
+\item "right_skewed"
+\item "left_skewed"
+\item "symmetric"
+\item Default is c(0.1, 0.8)
+}}
+
+\item{damage_steepness}{String specifying how concentrated the spread of
+damaged cells are about the mean of the target distribution specified in
+'target_damage'. Here, an increase in steepness manifests in a more
+apparent skewness.There are three valid options:
+\itemize{
+\item "shallow"
+\item "moderate"
+\item "steep"
+\item Default is "moderate"
+}}
+
 \item{stability_limit}{Numeric specifying the number of additional iterations
 allotted after the median minimum distance of the artificial cells to the
 true cells is greater than the previous minimum distance.
@@ -67,6 +110,12 @@ in the output, there is little need to continue testing with larger
 penalties.
 \itemize{
 \item Default is 3.
+}}
+
+\item{damage_proportion}{Numeric describing what proportion
+of the input data should be altered to resemble damaged data.
+\itemize{
+\item Must range between 0 and 1.
 }}
 
 \item{return_output}{String specifying what form the output of the function
@@ -101,7 +150,7 @@ should be displayed in the console.
 Numeric representing the ideal ribosomal penalty for an input dataset.
 }
 \description{
-select_penalty
+Based on observation of true single cell data, we find that the
 }
 \examples{
 data("test_counts", package = "DamageDetective")

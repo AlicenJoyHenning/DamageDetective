@@ -1,7 +1,7 @@
 #' plot_outcome
 #'
 #' Generates a scatter plot using the summary statistics of the damage
-#' perturbation.
+#' simulation.
 #'
 #' @param data Data frame containing summary statistics
 #' @param x Column name of the input data frame containing the values to be

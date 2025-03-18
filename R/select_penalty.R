@@ -1,5 +1,7 @@
 #' select_penalty
 #'
+#' Based on observation of true single cell data, we find that the
+#'
 #' @param count_matrix Matrix or dgCMatrix containing the counts from
 #'  single cell RNA sequencing data.
 #' @param organism  String specifying the organism of origin of the input
@@ -32,6 +34,18 @@
 #'  of penalty tested.
 #'
 #'  * Default is 0.005.
+#' @param max_penalty_trials Numeric specifying the maximum number of
+#'   iterations for the ribosomal penalty value.
+#'
+#'   * Default is 10.
+#' @param target_damage Double numeric specifying the upper and lower range of
+#'  the level of damage that will be introduced.
+#'
+#'  Here, damage refers to the amount of cytoplasmic RNA lost by a cell where
+#'  values closer to 1 indicate more loss and therefore more heavily damaged
+#'  cells.
+#'
+#'  * Default is c(0.1, 0.99)
 #' @param stability_limit Numeric specifying the number of additional iterations
 #'  allotted after the median minimum distance of the artificial cells to the
 #'  true cells is greater than the previous minimum distance.
@@ -41,6 +55,30 @@
 #'  penalties.
 #'
 #'  * Default is 3.
+#' @param damage_proportion Numeric describing what proportion
+#'  of the input data should be altered to resemble damaged data.
+#'
+#'  * Must range between 0 and 1.
+#' @param damage_steepness String specifying how concentrated the spread of
+#'  damaged cells are about the mean of the target distribution specified in
+#'  'target_damage'. Here, an increase in steepness manifests in a more
+#'  apparent skewness.There are three valid options:
+#'
+#'  * "shallow"
+#'  * "moderate"
+#'  * "steep"
+#'
+#'  * Default is "moderate"
+#' @param damage_distribution String specifying whether the distribution of
+#'  damage levels among the damaged cells should be shifted towards the
+#'  upper or lower range of damage specified in 'target_damage' or follow
+#'  a symmetric distribution between them. There are three valid options:
+#'
+#'  * "right_skewed"
+#'  * "left_skewed"
+#'  * "symmetric"
+#'
+#'  * Default is c(0.1, 0.8)
 #' @param return_output String specifying what form the output of the function
 #'  should take where the options are either,
 #'
@@ -80,7 +118,12 @@ select_penalty <- function(
     mito_quantile = 0.75,
     penalty_range = c(0.001, 0.5),
     penalty_step = 0.005,
+    max_penalty_trials = 10,
+    target_damage = c(0.1, 0.99),
+    damage_distribution = "symmetric",
+    damage_steepness = "steep",
     stability_limit = 3,
+    damage_proportion = 0.15,
     return_output = "penalty",
     generate_plot = FALSE,
     verbose = TRUE
@@ -138,10 +181,9 @@ select_penalty <- function(
   best_dTNN_median <- Inf  # Initialize best dTNN median to a very high value
 
   # Define stopping criteria
-  # improvement_threshold <- 0.01  # Minimum improvement needed
   stability_counter <- 0  # Counter for consecutive non-improving iterations
-  max_penalty_trials <- 10  # Reduce maximum penalty values to test
-  penalty_count <- 0  # Track number of trials
+  max_penalty_trials <- max_penalty_trials
+  penalty_count <- 0
 
   for (penalty in penalties) {
 
@@ -159,18 +201,18 @@ select_penalty <- function(
     # Run simulation
     penalty_output <- simulate_counts(
       count_matrix = filtered_matrix,
-      damage_proportion = 0.15,
-      target_damage = c(0.1, 0.99),
+      damage_proportion = damage_proportion,
+      target_damage = target_damage,
       ribosome_penalty = penalty,
-      damage_distribution = "symmetric",
-      damage_steepness = "steep",
+      damage_distribution = damage_distribution,
+      damage_steepness = damage_steepness,
       generate_plot = FALSE
     )
 
     # Extract QC metrics from output
     df_damaged <- penalty_output$qc_summary
     df_damaged <- df_damaged %>%
-      dplyr::filter(Damaged_Level != 0)
+      dplyr::filter(.data$Damaged_Level != 0)
 
     # Rename columns
     colnames(df_damaged)[colnames(df_damaged) == "New_RiboProp"] <- "ribo"
@@ -197,9 +239,9 @@ select_penalty <- function(
 
     # Separate true and artificial cells for distance calculation
     true_cells <- combined_df %>%
-      dplyr::filter(damage_label == "cell")
+      dplyr::filter(.data$damage_label == "cell")
     artificial_cells <- combined_df %>%
-      dplyr::filter(damage_label == "artificial")
+      dplyr::filter(.data$damage_label == "artificial")
 
     # Compute the nearest true cell for each artificial cell
     dists <- sqrt((outer(artificial_cells$pca1, true_cells$pca1, "-")^2) +

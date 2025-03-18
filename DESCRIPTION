@@ -1,11 +1,10 @@
 Package: DamageDetective
 Type: Package
-Title: Detect Damaged Cells in Single Cell RNA Sequencing Data
+Title:  Explore Damage in Single Cell RNA Sequencing Data
 Version: 0.0.1
 Authors@R: 
     person("Alicen", "Henning", email = "alicen.jhb@gmail.com", role = c("aut", "cre", "cph"))
-Description: 
-    Simulate datasets containing a specified proportion of damaged cells, 
+Description:  Simulate datasets containing a specified proportion of damaged cells, 
     estimate the distribution of damage in a dataset and detect the cells in 
     a dataset that are most likely to be damaged given the similarity to 
     simulated damaged cells. 
