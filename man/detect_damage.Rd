@@ -13,7 +13,7 @@ detect_damage(
   damage_distribution = "right_skewed",
   damage_steepness = "moderate",
   beta_shape_parameters = NULL,
-  project_name = "Project_name",
+  project_name = "Project",
   filter_threshold = 0.75,
   damage_levels = 5,
   damage_proportion = 0.15,
@@ -201,10 +201,10 @@ input count matrix, where 'damage' is approximated by the loss of
 cytoplasmic RNA.
 }
 \details{
-Utilizing the simulation framework from simulate_counts(), detect_damage()
-generates artificially damaged cell profiles by introducing known levels
-of RNA loss into the input data. Both true and artificial cells are then
-pre-processed to compute the following quality control metrics:
+Using the simulation framework of \code{simulate_counts()}, \code{detect_damage()}
+generates artificially damaged cell profiles by introducing defined levels
+of RNA loss into the input data. True and artificial cells are then
+merged and pre-processed to compute the following quality control metrics:
 \itemize{
 \item Log-normalized feature count
 \item Log-normalized total counts
@@ -216,9 +216,14 @@ pre-processed to compute the following quality control metrics:
 Principal component analysis (PCA) is performed on these metrics,
 and a Euclidean distance matrix is constructed from the PC embeddings.
 For each true cell, the proportion of nearest neighbors that are
-artificial cells (pANN) is calculated across all damage levels.
-The damage level with the highest pANN is assigned to the true cell,
-and cells exceeding a specified damage threshold are marked as damaged.
+artificial cells (pANN) is calculated across all damage levels and the
+damage level with the highest pANN is assigned to the true cell.
+Finally, cells exceeding a specified damage threshold, \code{filter_threshold},
+are marked as damaged.
+
+This filtering method is inspired by approaches developed for DoubletFinder
+(McGinnis et al., 2019) to detect doublets in single-cell data.
+\code{Seurat}
 }
 \examples{
 data("test_counts", package = "DamageDetective")
@@ -232,4 +237,9 @@ test <- detect_damage(
   project_name = "Project",
   generate_plot = FALSE
 )
+}
+\references{
+McGinnis, C. S., Murrow, L. M., & Gartner, Z. J. (2019). DoubletFinder:
+Doublet Detection in Single-Cell RNA Sequencing Data Using Artificial
+Nearest Neighbors. \emph{Cell Systems, 8}(4), 329-337.e4. \doi{10.1016/j.cels.2019.03.003}
 }

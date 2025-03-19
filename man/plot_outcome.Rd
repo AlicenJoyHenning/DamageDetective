@@ -40,14 +40,21 @@ values to use for colouring each point in the plot.}
 levels that}
 
 \item{palette}{String specifying the three colours that will be used to
-create the continuous colour palette for colouring the 'damage_column'.}
+create the continuous colour palette for colouring the 'damage_column'.
+\itemize{
+\item Default is a range from purple to red,
+c("grey", "#7023FD", "#E60006").
+}}
 }
 \value{
 'ggplot2' object
 }
 \description{
-Generates a scatter plot using the summary statistics of the damage
-simulation.
+Function to generates a scatter plot using the summary statistics.
+}
+\details{
+While this is primarily a helper function used by \code{detect_damage},
+\code{select_penalty}, and \code{simulate_counts} to visualise the output
 }
 \examples{
 set.seed(42)  # For reproducibility

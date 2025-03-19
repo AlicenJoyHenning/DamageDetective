@@ -1,7 +1,25 @@
 #' plot_outcome
 #'
-#' Generates a scatter plot using the summary statistics of the damage
-#' simulation.
+#' Helper function to generate a scatter plot of summary statistics.
+#'
+#' Provides customizable visualization of the distribution of quality control
+#' metrics of cells. Used by `detect_damage`, `select_penalty`, and
+#' `simulate_counts` to visualise the output of damage simulation.
+#'
+#' In all instances of use in this package, `plot_outcome` plots the y axis as
+#' the proportion of counts originating from the mitochondrial genome. This
+#' provides a rough estimate of damage where we anticipate that most cells
+#' cluster near a common mitochondrial proportion and fewer, likely damaged,
+#' outliers will lie at higher points. The x axis is either the number of
+#' non-zero genes expressed or the proportion of counts coming from ribosomal
+#' genes.
+#'
+#' Based on observations of true single-cell data, we anticipate these plots
+#' to follow the same shape—an exponential decay—where cells with high
+#' mitochondrial proportions have fewer expressed features and low
+#' ribosomal proportions. Any egregious deviation from this shape indicates
+#' that the simulated data poorly represents true data, especially when
+#' compared directly to unaltered cells.
 #'
 #' @param data Data frame containing summary statistics
 #' @param x Column name of the input data frame containing the values to be
@@ -21,11 +39,13 @@
 #' @param palette String specifying the three colours that will be used to
 #'  create the continuous colour palette for colouring the 'damage_column'.
 #'
+#'  * Default is a range from purple to red,
+#'  c("grey", "#7023FD", "#E60006").
 #' @return 'ggplot2' object
-#' @export
 #' @import ggplot2
 #' @import patchwork
 #' @import scales
+#' @export
 #' @examples
 #' set.seed(42)  # For reproducibility
 #' library(ggplot2)
@@ -56,7 +76,7 @@ plot_outcome <- function(
 
   # Altered counts are plotted with damaged cells coloured
   if (altered) {
-    p <- ggplot2::ggplot(data, ggplot2::aes(x = .data[[x]], y = .data[[y]], colour = .data[[damage_column]])) +
+    p <- ggplot2::ggplot(data, aes(x = .data[[x]], y = .data[[y]], colour = .data[[damage_column]])) +
       ggplot2::scale_color_gradientn(
         colours = palette,
         values = scales::rescale(c(0, target_damage[[1]], 1)),
@@ -66,23 +86,23 @@ plot_outcome <- function(
       ggplot2::geom_point(size = 0.2) +
       ggplot2::theme_classic() +
       ggplot2::theme(
-        plot.title = ggplot2::element_text(hjust = 0.5),
-        panel.border = ggplot2::element_rect(fill = NA, color = "black"),
+        plot.title = element_text(hjust = 0.5),
+        panel.border = element_rect(fill = NA, color = "black"),
         legend.position = "bottom",
         legend.justification = "center",
-        legend.title = ggplot2::element_text(face = "bold", hjust = 0.5) # Center and bold the legend title
+        legend.title = element_text(face = "bold", hjust = 0.5)
       ) +
       ggplot2::guides(color = ggplot2::guide_colorbar(title = "Damage Level", title.position = "top"))
 
   } else {
     # Unaltered counts are plotted without damaged cells coloured
-    p <- ggplot2::ggplot(data, ggplot2::aes(x = .data[[x]], y = .data[[y]])) +
+    p <- ggplot2::ggplot(data, aes(x = .data[[x]], y = .data[[y]])) +
       ggplot2::scale_y_continuous(labels = scales::number_format(accuracy = 0.1)) +
       ggplot2::geom_point(size = 0.2, color = "gray") +
       ggplot2::theme_classic() +
       ggplot2::theme(
-        plot.title = ggplot2::element_text(hjust = 0.5),
-        panel.border = ggplot2::element_rect(fill = NA, color = "black"),
+        plot.title = element_text(hjust = 0.5),
+        panel.border = element_rect(fill = NA, color = "black"),
         legend.position = "none"
       )
   }

@@ -114,11 +114,16 @@ statistics, and, if specified, a 'ggplot2' object of the quality control
 metrics of the alteration.
 }
 \description{
+Function to generate simulated damage cells.
+}
+\details{
 Introduce cells with a damage-like gene expression profile into
 existing single cell data by perturbing a target proportion of the existing
 cells. Here, we define a damaged cell as that which has experienced a loss
 in cytoplasmic RNA. Cells with a greater loss are assumed to be more
-extensively damaged than cells where little RNA has been lost.
+extensively damaged than cells where little RNA has been lost.\if{html}{\out{
+<probability>
+}}
 }
 \examples{
 data("test_counts", package = "DamageDetective")

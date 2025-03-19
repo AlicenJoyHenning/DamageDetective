@@ -1,10 +1,26 @@
 #' simulate_counts
 #'
-#' Introduce cells with a damage-like gene expression profile into
-#' existing single cell data by perturbing a target proportion of the existing
-#' cells. Here, we define a damaged cell as that which has experienced a loss
-#' in cytoplasmic RNA. Cells with a greater loss are assumed to be more
-#' extensively damaged than cells where little RNA has been lost.
+#' Function to simulate damaged cells by perturbing the gene expression of
+#' existing cells.
+#'
+#' `DamageDetective` models damage in single-cell RNA sequencing data as the
+#' loss of cytoplasmic RNA, where cells experiencing greater RNA loss are assumed
+#' to be more extensively damaged, while those with minimal loss are considered
+#' largely intact. The perturbation process introduces RNA loss into existing
+#' cells and is controlled by three key parameters: the **target proportion of
+#' damage**,  which specifies the fraction of cells to be perturbed; the
+#' **target level of damage**, which defines the extent of RNA loss across
+#' cells; and the **target distribution of damage**, which determines how the
+#' different levels of RNA loss are distributed across cells.
+#'
+#' Based on these parameters, cells are randomly selected and assigned a target
+#' proportion of RNA loss. The total number of transcripts to be removed is
+#' determined, and perturbation is applied through weighted sampling without
+#' replacement from cytoplasmic gene counts. Here, the probability of
+#' transcript loss is determined by gene abundance, with highly expressed genes
+#' more likely to lose transcripts. Once the target RNA loss is reached, the
+#' cell's expression profile is updated, and the process repeats for all
+#' selected cells.
 #'
 #' @param count_matrix Matrix or dgCMatrix containing the counts from
 #'  single cell RNA sequencing data.
@@ -33,7 +49,7 @@
 #'  * "left_skewed"
 #'  * "symmetric"
 #'
-#'  * Default is c(0.1, 0.8)
+#'  * Default is "right_skewed"
 #' @param damage_steepness String specifying how concentrated the spread of
 #'  damaged cells are about the mean of the target distribution specified in
 #'  'target_damage'. Here, an increase in steepness manifests in a more

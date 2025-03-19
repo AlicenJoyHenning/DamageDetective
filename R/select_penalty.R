@@ -1,26 +1,26 @@
 #' select_penalty
 #'
-#' Based on observation of true single cell data, we find that the
+#' Recommended prerequisite function to `detect_damage()` that estimates the
+#' ideal `ribosome_penalty` value for the input data.
 #'
-#' @param count_matrix Matrix or dgCMatrix containing the counts from
-#'  single cell RNA sequencing data.
-#' @param organism  String specifying the organism of origin of the input
-#'  data where there are two standard options,
+#' Based on observations of true single cell data, we find that ribosomal RNA
+#' loss occurs less frequently than expected based on abundance alone. To
+#' adjust for this, the probability scores of ribosomal gene loss are multiplied
+#' by a numerical value (`ribosome_penalty`) between 0 and 1. Lower values
+#' (closer to zero) better approximate true data, with a default of 0.01,
+#' though this can often be greatly refined for the input data.
 #'
-#'  * "Hsap"
-#'  * "Mmus"
+#' Refinement follows a similar workflow to `detect_damage`, but rather than
+#' evaluating the similarity of true cells to sets of artificial cells to
+#' infer their level of damage, we evaluate the similarity of artificial cells
+#' to true cells to infer the effectiveness of their approximation to true
+#' data. This is calculated using the distance to the nearest true cell (dTNN)
+#' taken for each artificial cell found using the Euclidean distance matrix.
+#' The median dTNN is computed iteratively until stabilization or a worsening
+#' trend. The ideal `ribosomal_penalty` is then selected as that which
+#' generated the lowest dTNN.
 #'
-#'  If a user wishes to use a non-standard organism they must input a list
-#'  containing strings for the patterns to match mitochondrial and ribosomal
-#'  genes of the organism. If available, nuclear-encoded genes that are likely
-#'  retained in the nucleus, such as in nuclear speckles, must also
-#'  be specified. An example for humans is below,
-#'
-#'  * organism = c(mito_pattern = "^MT-",
-#'                 ribo_pattern = "^(RPS|RPL)",
-#'                 nuclear <- c("NEAT1","XIST", "MALAT1")
-#'
-#' * Default is "Hsap"
+#' @inheritParams simulate_counts
 #' @param mito_quantile Numeric specifying below what proportion of
 #'  mitochondrial content cells are used for sampling for simulation.
 #'
@@ -38,14 +38,6 @@
 #'   iterations for the ribosomal penalty value.
 #'
 #'   * Default is 10.
-#' @param target_damage Double numeric specifying the upper and lower range of
-#'  the level of damage that will be introduced.
-#'
-#'  Here, damage refers to the amount of cytoplasmic RNA lost by a cell where
-#'  values closer to 1 indicate more loss and therefore more heavily damaged
-#'  cells.
-#'
-#'  * Default is c(0.1, 0.99)
 #' @param stability_limit Numeric specifying the number of additional iterations
 #'  allotted after the median minimum distance of the artificial cells to the
 #'  true cells is greater than the previous minimum distance.
@@ -55,30 +47,6 @@
 #'  penalties.
 #'
 #'  * Default is 3.
-#' @param damage_proportion Numeric describing what proportion
-#'  of the input data should be altered to resemble damaged data.
-#'
-#'  * Must range between 0 and 1.
-#' @param damage_steepness String specifying how concentrated the spread of
-#'  damaged cells are about the mean of the target distribution specified in
-#'  'target_damage'. Here, an increase in steepness manifests in a more
-#'  apparent skewness.There are three valid options:
-#'
-#'  * "shallow"
-#'  * "moderate"
-#'  * "steep"
-#'
-#'  * Default is "moderate"
-#' @param damage_distribution String specifying whether the distribution of
-#'  damage levels among the damaged cells should be shifted towards the
-#'  upper or lower range of damage specified in 'target_damage' or follow
-#'  a symmetric distribution between them. There are three valid options:
-#'
-#'  * "right_skewed"
-#'  * "left_skewed"
-#'  * "symmetric"
-#'
-#'  * Default is c(0.1, 0.8)
 #' @param return_output String specifying what form the output of the function
 #'  should take where the options are either,
 #'
@@ -89,29 +57,26 @@
 #'  best performance (the smallest median distance between artificial and
 #'  true cells). While "full" will return the ideal ribosomal penalty and
 #'  the median distance between artificial and true cells for each penalty
-#'  tested. This allows insight into how the penalty was seleected.
+#'  tested. This allows insight into how the penalty was selected.
 #'
 #' * Default is "penalty".
-#' @param generate_plot Boolean specifying whether the quality control plots
-#'  of each penalty tested should be stored for viewing.
-#'
-#' * Default is FALSE.
 #' @param verbose Boolean specifying whether messages and function progress
 #'  should be displayed in the console.
 #'
 #'  * Default is TRUE.
 #' @return Numeric representing the ideal ribosomal penalty for an input dataset.
+#' @importFrom dplyr %>% mutate if_else
+#' @importFrom stats quantile
+#' @importFrom ggplot2 ggplot aes geom_point scale_color_gradientn labs theme_classic theme element_rect element_text
+#' @importFrom scales rescale
 #' @export
 #' @examples
 #' data("test_counts", package = "DamageDetective")
 #'
 #' penalty <- select_penalty(
-#'  count_matrix = test_counts
+#'  count_matrix = test_counts,
+#'  generate_plot = FALSE
 #' )
-#' @importFrom dplyr %>% mutate if_else
-#' @importFrom stats quantile
-#' @importFrom ggplot2 ggplot aes geom_point scale_color_gradientn labs theme_classic theme element_rect element_text
-#' @importFrom scales rescale
 select_penalty <- function(
     count_matrix,
     organism = "Hsap",
@@ -120,11 +85,14 @@ select_penalty <- function(
     penalty_step = 0.005,
     max_penalty_trials = 10,
     target_damage = c(0.1, 0.99),
-    damage_distribution = "symmetric",
+    damage_distribution = "right_skewed",
     damage_steepness = "steep",
+    beta_shape_parameters = NULL,
     stability_limit = 3,
     damage_proportion = 0.15,
+    annotated_celltypes = FALSE,
     return_output = "penalty",
+    ribosome_penalty = NULL,
     generate_plot = FALSE,
     verbose = TRUE
 ){
@@ -175,7 +143,7 @@ select_penalty <- function(
 
   # Phase Two: Iterate through penalties to generate artificial cells ----
 
-  # Define penalty values to test (starting from 0.001, increasing by 0.05, max 0.5)
+  # Define penalty values to test (starting from 0.001, increasing by 0.05)
   penalties <- seq(penalty_range[[1]], penalty_range[[2]], by = penalty_step)
   penalty_results <- list()
   best_dTNN_median <- Inf  # Initialize best dTNN median to a very high value
@@ -266,18 +234,24 @@ select_penalty <- function(
 
     # Plot the mito vs ribo for true and artificial cells, colored by dTNN
     if (generate_plot){
-      plot <- ggplot(combined_df, aes(x = .data$ribo, y = .data$mito)) +
-        geom_point(aes(color = .data$nearest_distance)) +
+
+      QC_plot <- plot_outcome(
+        data = combined_df,
+        x = "ribo",
+        y = "mito",
+        damage_column = "nearest_distance",
+        altered = TRUE,
+        mito_ribo = TRUE)
+
+      # Scale colour by nearest distances
+      plot <- QC_plot +
         scale_color_gradientn(
           colours = c("lightgray", "#7023FD", "#E60006"),
           limits = c(0, max(combined_df$nearest_distance, na.rm = TRUE))
         ) +
         labs(title = paste("Penalty:", penalty, ", Median dTNN:", round(current_median_dTNN, 4)),
              y = "Mito. proportion", x = "Ribo. Prop",
-             color = "dTNN") +
-        theme_classic() +
-        theme(panel.border = element_rect(fill = NA, colour = "black"),
-              plot.title = element_text(face = "bold"))
+             color = "dTNN")
 
       # Display plot
       print(plot)
