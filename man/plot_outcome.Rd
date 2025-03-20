@@ -50,11 +50,27 @@ c("grey", "#7023FD", "#E60006").
 'ggplot2' object
 }
 \description{
-Function to generates a scatter plot using the summary statistics.
+Helper function to generate a scatter plot of summary statistics.
 }
 \details{
-While this is primarily a helper function used by \code{detect_damage},
-\code{select_penalty}, and \code{simulate_counts} to visualise the output
+Provides customizable visualization of the distribution of quality control
+metrics of cells. Used by \code{detect_damage}, \code{select_penalty}, and
+\code{simulate_counts} to visualise the output of damage simulation.
+
+In all instances of use in this package, \code{plot_outcome} plots the y axis as
+the proportion of counts originating from the mitochondrial genome. This
+provides a rough estimate of damage where we anticipate that most cells
+cluster near a common mitochondrial proportion and fewer, likely damaged,
+outliers will lie at higher points. The x axis is either the number of
+non-zero genes expressed or the proportion of counts coming from ribosomal
+genes.
+
+Based on observations of true single-cell data, we anticipate these plots
+to follow the same shape—an exponential decay—where cells with high
+mitochondrial proportions have fewer expressed features and low
+ribosomal proportions. Any egregious deviation from this shape indicates
+that the simulated data poorly represents true data, especially when
+compared directly to unaltered cells.
 }
 \examples{
 set.seed(42)  # For reproducibility

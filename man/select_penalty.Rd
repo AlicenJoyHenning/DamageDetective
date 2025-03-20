@@ -90,7 +90,7 @@ a symmetric distribution between them. There are three valid options:
 \item "right_skewed"
 \item "left_skewed"
 \item "symmetric"
-\item Default is c(0.1, 0.8)
+\item Default is "right_skewed"
 }}
 
 \item{damage_steepness}{String specifying how concentrated the spread of
@@ -181,7 +181,7 @@ Recommended prerequisite function to \code{detect_damage()} that estimates the
 ideal \code{ribosome_penalty} value for the input data.
 }
 \details{
-Based on observation of true single cell data, we find that ribosomal RNA
+Based on observations of true single cell data, we find that ribosomal RNA
 loss occurs less frequently than expected based on abundance alone. To
 adjust for this, the probability scores of ribosomal gene loss are multiplied
 by a numerical value (\code{ribosome_penalty}) between 0 and 1. Lower values
@@ -203,6 +203,6 @@ data("test_counts", package = "DamageDetective")
 
 penalty <- select_penalty(
  count_matrix = test_counts,
- generate_plot = TRUE
+ generate_plot = FALSE
 )
 }

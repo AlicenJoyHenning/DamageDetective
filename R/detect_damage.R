@@ -24,7 +24,6 @@
 #'
 #' This filtering method is inspired by approaches developed for DoubletFinder
 #' (McGinnis et al., 2019) to detect doublets in single-cell data.
-#' `Seurat`
 #'
 #' @references
 #' McGinnis, C. S., Murrow, L. M., & Gartner, Z. J. (2019). DoubletFinder:
@@ -133,56 +132,47 @@ detect_damage <- function(
     filter_counts = FALSE,
     verbose = TRUE
 ){
-  # Phase One: data preparations for simulation ----
+  # Ensure user inputs are valid ----
 
-  # Ensure user adjustments to default parameters are executable
   if (!is.numeric(filter_threshold) ||
       filter_threshold > 1 ||
       filter_threshold  < 0) {
     stop("Please ensure 'filter_threshold' is a numeric between 0 and 1.")
   }
 
-  if ( !damage_levels %in% c(3, 5, 7) ||
-       !is.list(damage_levels) ||
-       !all(grepl("^pANN_\\d+$", names(user_list))) ||
-       !all(sapply(user_list, function(x) is.numeric(x) && length(x) == 2))) {
-    stop("Please ensure list item is named in the format 'pANN_<number>' and
-         stores a numeric vector of length 2.")
+  if (!is.numeric(mito_quantile) ||
+      mito_quantile > 1 ||
+      mito_quantile < 0) {
+    stop("Please ensure 'mito_quantile' is a numeric between 0 and 1.")
+  }
+
+  if (damage_levels %in% c(3, 5, 7)) {
+    return(invisible(NULL))  # Exit the function silently if damage_levels is valid
+  } else {
+    if (!is.list(damage_levels) ||
+        !all(grepl("^pANN_\\d+$", names(damage_levels))) ||
+        !all(sapply(damage_levels, function(x) is.numeric(x) && length(x) == 2))) {
+      stop("Please ensure `damage_levels` is of the correct format.")
+    }
   }
 
 
+  if (!is.numeric(kN) ||
+      kN > dim(count_matrix)[2]) {
+    stop("Please ensure 'kN' is not greater than the number of cells.")
+  }
 
+  # Ensure count matrix is of 'matrix' form
+  count_matrix <- as.matrix(count_matrix)
+
+  # Data preparations for simulation ----
 
   # Retrieve genes corresponding to the organism of interest
-  # Human
-  if (organism == "Hsap") {
-    mito_pattern <- "^MT-"
-    ribo_pattern <- "^(RPS|RPL)"
-    nuclear <- c("FIRRE", "NEAT1","XIST", "MALAT1", "MIAT", "MEG3", "KCNQ1OT1", "HOXA11-AS", "FTX")
-    MALAT1 <- "MALAT1"
-  }
-
-  # Mouse
-  if (organism == "Mmus") {
-    mito_pattern <- "^mt-"
-    ribo_pattern <- "^(rps|rpl)"
-    nuclear <- c("Firre", "Neat1","Xist", "Malat1", "Miat", "Meg3", "Kcnq1ot1", "Hoxa11-as", "Ftx")
-    MALAT1 <- "Malat1"
-  }
-
-  # Allow for user specification for non-standard organism
-  if (!organism %in% c("Hsap", "Mmus")) {
-    mito_pattern <- organism$mito_pattern
-    ribo_pattern <- organism$ribo_pattern
-    nuclear <- organism$nuclear
-  }
+  gene_idx <- get_organism_indices(count_matrix, organism)
 
   # Collect mito & ribo information of all true cells
-  count_matrix <- as.matrix(count_matrix)
-  mito_idx <- grep(mito_pattern, rownames(count_matrix), ignore.case = FALSE)
-  ribo_idx <- grep(ribo_pattern, rownames(count_matrix), ignore.case = FALSE)
-  mito <- colSums(count_matrix[mito_idx, , drop = FALSE]) / colSums(count_matrix)
-  ribo <- colSums(count_matrix[ribo_idx, , drop = FALSE]) / colSums(count_matrix)
+  mito <- colSums(count_matrix[gene_idx$mito_idx, , drop = FALSE]) / colSums(count_matrix)
+  ribo <- colSums(count_matrix[gene_idx$ribo_idx, , drop = FALSE]) / colSums(count_matrix)
 
   df <- data.frame(mito = mito,
                    ribo = ribo,
@@ -195,7 +185,7 @@ detect_damage <- function(
   filtered_cells <- rownames(df)[df$mito <= mito_top]
   matrix_filtered <- count_matrix[, filtered_cells]
 
-  # Phase Two: Generate simulations for defined damage levels ----
+  # Generate simulations for defined damage levels ----
 
   # Retrieve damage levels for simulation
   if (is.list(damage_levels)){
@@ -238,7 +228,7 @@ detect_damage <- function(
   # Iterate through ranges and simulate damage
   damage_ranges <- c()
   for (i in seq_along(ranges)) {
-    level <- names(ranges)[i]  # e.g., "pANN_10"
+    level <- names(ranges)[i]
     damage_range <- ranges[[i]]
     damage_ranges <- append(ranges[[i]], damage_ranges)
 
@@ -252,18 +242,17 @@ detect_damage <- function(
       damage_proportion = damage_proportion,
       target_damage = damage_range,
       ribosome_penalty = ribosome_penalty,
-      damage_distribution = "symmetric",
-      damage_steepness = "steep",
-      generate_plot = FALSE
+      damage_distribution = damage_distribution,
+      damage_steepness = damage_steepness,
+      generate_plot = generate_plot
     )
 
-    # Correct way to refer to columns and avoid global variable warning
+    # Extract barcodes of damaged cells
     barcodes <- damaged_cells$qc_summary %>%
       dplyr::filter(.data$Damaged_Level != 0) %>%
       dplyr::pull(.data$Cell)
 
     damaged_matrix <- damaged_cells$matrix[, barcodes]
-
 
     # Append the level of damage to the barcodes
     colnames(damaged_matrix) <- paste0(colnames(damaged_matrix), "_", gsub("pANN_", "", level))
@@ -293,15 +282,15 @@ detect_damage <- function(
   # Find mitochondrial and ribosomal percentage for each cell
   combined$log.features <- log10(combined$nFeature_RNA)
   combined$log.counts <- log10(combined$nCount_RNA)
-  combined$mt.prop <- PercentageFeatureSet(combined, pattern = mito_pattern) / 100
-  combined$rb.prop <- PercentageFeatureSet(combined, pattern = ribo_pattern) / 100
+  combined$mt.prop <- PercentageFeatureSet(combined, pattern = gene_idx$mito_pattern) / 100
+  combined$rb.prop <- PercentageFeatureSet(combined, pattern = gene_idx$ribo_pattern) / 100
 
   # Avoid infinite values (log10(0))
-  combined$malat1 <- FetchData(combined, vars = MALAT1)
+  combined$malat1 <- FetchData(combined, vars = gene_idx$MALAT1)
   epsilon <- 1e-6
   combined$malat1 <- log10(combined$malat1 + epsilon)
 
-  # Phase Three: Perform PCA on the meta data values ----
+  # Perform PCA on the quality control statistics of all cells ----
 
   # Isolate variables of interest
   metadata <- combined@meta.data
@@ -361,6 +350,7 @@ detect_damage <- function(
   }
 
   # Find which damage population a cell is most frequently neighboring
+
   # Isolate  true cells & define relevant columns
   metadata <- metadata %>%
     dplyr::filter(.data$Damage_level == 0)
@@ -411,8 +401,7 @@ detect_damage <- function(
   # Apply scaling
   metadata$scaled_pANN <- metadata$lower_scale + ((metadata$value  - metadata$min) / (metadata$max - metadata$min)) * (metadata$upper_scale - metadata$lower_scale)
 
-
-  # Phase Four: Filter, mark and visualise damaged cells  ----
+  # Identify and visualise damaged cells  ----
   metadata$DamageDetective <- ifelse(metadata$scaled_pANN >= filter_threshold, "damaged", "cell")
 
   if (include_pANN){
@@ -488,12 +477,10 @@ detect_damage <- function(
     final_filtered_matrix <- count_matrix[, final_filtered_cells]
     output <- final_filtered_matrix
   } else {
-    # Else just output
+    # Else just return the output data frame
     output <- metadata_output
 
   }
 
   return(output)
-
 }
-

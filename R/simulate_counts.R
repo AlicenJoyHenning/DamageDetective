@@ -125,19 +125,26 @@ simulate_counts <- function(
     generate_plot = TRUE,
     organism = "Hsap"
 ) {
-  # Phase One: Data preparations ----
+  # Ensure user inputs are valid ----
 
-  # Check that required inputs are given and in the correct format
+  # Check that count matrix is given
   if (is.null(count_matrix)) stop("Please provide 'count_matrix' input.")
-  if (is.null(damage_proportion)) stop("Please provide 'damage_proportion'.")
   if (!inherits(count_matrix, "matrix") & !inherits(count_matrix, "CsparseMatrix")) {
     stop("Please ensure 'count_matrix' is a matrix or a sparse matrix (dgCMatrix).")
   }
+
+  # Ensure count matrix is of 'matrix' form
+  count_matrix <- as.matrix(count_matrix)
+
+  # Ensure user adjustments to default parameters are executable
+  if (is.null(damage_proportion)) stop("Please provide 'damage_proportion'.")
   if (!is.numeric(damage_proportion) || damage_proportion < 0 || damage_proportion > 1) {
     stop("Please ensure 'damage_proportion' is a numeric between 0 and 1.")
   }
-
-  # Ensure user adjustments to default parameters are executable
+  if (!is.null(beta_shape_parameters) &
+      length(beta_shape_parameters) != 2) {
+    stop("Please ensure 'beta_shape_parameters' is a numeric vector of length 2.")
+  }
   if (!is.numeric(target_damage) || length(target_damage) != 2 || target_damage[1] < 0 || target_damage[2] > 1 || target_damage[1] >= target_damage[2]) {
     stop("Please ensure 'target_damage' is a numeric vector of length 2, with values between 0 and 1, and the first value is less than the second.")
   }
@@ -154,14 +161,15 @@ simulate_counts <- function(
     stop("Please ensure 'organism' is one of 'Hsap' or 'Mmus', see documentation for non-standard organisms.")
   }
 
-  # Ensure matrix is of 'matrix' form
-  count_matrix <- as.matrix(count_matrix)
+
+  # Data preparations ----
 
   # Calculate the total number of damaged cells given the target proportion
   total_cells <- ncol(count_matrix)
   damaged_cell_number <- round(total_cells * damage_proportion)
 
   # Assign damage levels to the selected cells based on beta distribution
+
   # Assign the steepness (peak height) to meet target
   steepness_levels <- list(
     shallow = 4,
@@ -171,6 +179,7 @@ simulate_counts <- function(
 
   # Retrieve user specified steepness
   steepness_value <- steepness_levels[[damage_steepness]]
+
 
   # Assign shape parameters to achieve target distribution
   if (damage_distribution == "right_skewed") {
@@ -191,36 +200,9 @@ simulate_counts <- function(
   }
 
   # Retrieve genes corresponding to the organism of interest
+  gene_idx <- get_organism_indices(count_matrix, organism)
 
-  # Human
-  if (organism == "Hsap") {
-    mito_pattern <- "^MT-"
-    ribo_pattern <- "^(RPS|RPL)"
-    nuclear <- c("FIRRE", "NEAT1","XIST", "MALAT1", "MIAT", "MEG3", "KCNQ1OT1", "HOXA11-AS", "FTX")
-  }
-
-  # Mouse
-  if (organism == "Mmus") {
-    mito_pattern <- "^mt-"
-    ribo_pattern <- "^(rps|rpl)"
-    nuclear <- c("Firre", "Neat1","Xist", "Malat1", "Miat", "Meg3", "Kcnq1ot1", "Hoxa11-as", "Ftx")
-  }
-
-  # Allow for user specification for non-standard organism
-  if (!organism %in% c("Hsap", "Mmus")) {
-    mito_pattern <- organism$mito_pattern
-    ribo_pattern <- organism$ribo_pattern
-    nuclear <- organism$nuclear
-  }
-
-  # Isolate gene set indices (consistent across cells, not subsetting the matrix)
-  mito_idx <- grep(mito_pattern, rownames(count_matrix), ignore.case = FALSE)
-  nucl_idx <- which(rownames(count_matrix) %in% nuclear)
-  mito_idx <- c(mito_idx, nucl_idx)
-  non_mito_idx <- setdiff(seq_len(nrow(count_matrix)), mito_idx)
-  ribo_idx <- grep(ribo_pattern, rownames(count_matrix), ignore.case = FALSE)
-
-  # Phase Two: Select target cells ----
+  # Select target cells for perturbation ----
 
   # Select damaged cells uniformly across cell types
   if (annotated_celltypes){
@@ -279,7 +261,7 @@ simulate_counts <- function(
   damaged_cells <- match(colnames(count_matrix)[damaged_cell_selections], damage_label$barcode)
   damage_label$damage_level[damaged_cells] <- damage_levels
 
-  # Phase Three: Perturb selected cells ----
+  # Perturb selected cells ----
 
   # Initialize for storing modified count_matrix
   damaged_count_matrix <- as.matrix(count_matrix)
@@ -289,18 +271,18 @@ simulate_counts <- function(
 
     # Determine number of transcripts to lose
     cell_damage_level <- damage_label$damage_level[match(colnames(count_matrix)[cell], damage_label$barcode)]
-    total_count <- sum(damaged_count_matrix[non_mito_idx, cell])
+    total_count <- sum(damaged_count_matrix[gene_idx$non_mito_idx, cell])
     total_loss <- round(cell_damage_level * total_count)
 
     # Expand genes into transcript-level representations
-    transcripts <- rep(non_mito_idx, times = damaged_count_matrix[non_mito_idx, cell])
+    transcripts <- rep(gene_idx$non_mito_idx, times = damaged_count_matrix[gene_idx$non_mito_idx, cell])
 
     # Assign probability of loss based on gene abundance
-    gene_totals <- damaged_count_matrix[non_mito_idx, cell]
+    gene_totals <- damaged_count_matrix[gene_idx$non_mito_idx, cell]
     probabilities <- gene_totals / total_count
 
     # Apply penalty to ribosomal genes and normalize
-    probabilities[ribo_idx] <- probabilities[ribo_idx] * ribosome_penalty
+    probabilities[gene_idx$ribo_idx] <- probabilities[gene_idx$ribo_idx] * ribosome_penalty
     probabilities <- probabilities / sum(probabilities)
 
     # Replicate probabilities for each transcript
@@ -310,13 +292,13 @@ simulate_counts <- function(
     lost_transcripts <- sample(transcripts, size = total_loss, replace = FALSE, prob = prob_repeated)
 
     # Sum remaining transcripts per gene
-    remaining_counts <- table(factor(transcripts[!transcripts %in% lost_transcripts], levels = non_mito_idx))
+    remaining_counts <- table(factor(transcripts[!transcripts %in% lost_transcripts], levels = gene_idx$non_mito_idx))
 
     # Update count matrix
-    damaged_count_matrix[non_mito_idx, cell] <- as.integer(remaining_counts)
+    damaged_count_matrix[gene_idx$non_mito_idx, cell] <- as.integer(remaining_counts)
   }
 
-  # Phase Four: Organise & plot output ----
+  # Consolidate & plot simulation output ----
 
   # Isolate indices for correct ordering of damage status
   matched_indices <- match(colnames(damaged_count_matrix), damage_label$barcode)
@@ -327,10 +309,10 @@ simulate_counts <- function(
     Damaged_Level = as.numeric(damage_label$damage_level[matched_indices]),
     Original_Features = as.numeric(colSums(count_matrix != 0)),
     New_Features = as.numeric(colSums(damaged_count_matrix != 0)),
-    Original_MitoProp = as.numeric(colSums(count_matrix[mito_idx, , drop = FALSE]) / colSums(count_matrix)),
-    New_MitoProp = as.numeric(colSums(damaged_count_matrix[mito_idx, , drop = FALSE]) / colSums(damaged_count_matrix)),
-    Original_RiboProp = as.numeric(colSums(count_matrix[ribo_idx, , drop = FALSE]) / colSums(count_matrix)),
-    New_RiboProp = as.numeric(colSums(damaged_count_matrix[ribo_idx, , drop = FALSE]) / colSums(damaged_count_matrix))
+    Original_MitoProp = as.numeric(colSums(count_matrix[gene_idx$mito_idx, , drop = FALSE]) / colSums(count_matrix)),
+    New_MitoProp = as.numeric(colSums(damaged_count_matrix[gene_idx$mito_idx, , drop = FALSE]) / colSums(damaged_count_matrix)),
+    Original_RiboProp = as.numeric(colSums(count_matrix[gene_idx$ribo_idx, , drop = FALSE]) / colSums(count_matrix)),
+    New_RiboProp = as.numeric(colSums(damaged_count_matrix[gene_idx$ribo_idx, , drop = FALSE]) / colSums(damaged_count_matrix))
   )
 
   # Generate plot before and after perturbation if specified
@@ -391,7 +373,7 @@ simulate_counts <- function(
       plot = final_plot)
     )
 
-    }
+  }
 
   # Else return without plot
   return(list(
@@ -401,5 +383,3 @@ simulate_counts <- function(
   )
 
 }
-
-

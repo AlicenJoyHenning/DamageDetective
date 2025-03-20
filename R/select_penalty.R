@@ -96,34 +96,56 @@ select_penalty <- function(
     generate_plot = FALSE,
     verbose = TRUE
 ){
-  # Phase One: Data preparations ----
+
+  # Ensure user inputs are valid ----
+
+  if (!is.numeric(mito_quantile) ||
+      mito_quantile > 1 ||
+      mito_quantile  < 0) {
+    stop("Please ensure 'mito_quantile' is a numeric between 0 and 1.")
+  }
+
+  if (length(penalty_range) != 2) {
+    stop("Please ensure 'penalty_range' is a numerical vector of length 2.")
+  }
+
+  if (penalty_range[[1]] > penalty_range[[2]] ||
+      penalty_range[[1]] < 0 ||
+      penalty_range[[2]] > 1){
+    stop("Please ensure 'penalty_range' provides values between 0 and 1.")
+  }
+
+  if (!is.numeric(penalty_step) ||
+      penalty_step < 0 ||
+      penalty_step > 1){
+    stop("Please ensure 'penalty_step' is a numeric between 0 and 1.")
+  }
+
+  if (!is.numeric(max_penalty_trials) ||
+      max_penalty_trials > 1000){
+    stop("Please ensure 'max_penalty_trials' lies within a reasonable range.")
+  }
+
+  if (!is.numeric(stability_limit) ||
+      stability_limit > 1000){
+    stop("Please ensure 'stability_limit' lies within a reasonable range.")
+  }
+
+  if (!return_output %in% c("penalty", "full")){
+    stop("Please ensure 'return_output' is one of 'penalty' or 'full'.")
+  }
+
+  # Ensure count matrix is of 'matrix' form
+  count_matrix <- as.matrix(count_matrix)
+
+  # Data preparations ----
 
   # Retrieve genes corresponding to the organism of interest
+  gene_idx <- get_organism_indices(count_matrix, organism)
 
-  # Human
-  if (organism == "Hsap") {
-    mito_pattern <- "^MT-"
-    ribo_pattern <- "^(RPS|RPL)"
-  }
-
-  # Mouse
-  if (organism == "Mmus") {
-    mito_pattern <- "^mt-"
-    ribo_pattern <- "^(rps|rpl)"
-  }
-
-  # Allow for user specification for non-standard organism
-  if (!organism %in% c("Hsap", "Mmus")) {
-    mito_pattern <- organism$mito_pattern
-    ribo_pattern <- organism$ribo_pattern
-  }
-
-  # Isolate gene set indices (consistent across cells, not subsetting the matrix)
-  count_matrix <- as.matrix(count_matrix)
-  mito_idx <- grep(mito_pattern, rownames(count_matrix), ignore.case = FALSE)
-  ribo_idx <- grep(ribo_pattern, rownames(count_matrix), ignore.case = FALSE)
-  mito <- colSums(count_matrix[mito_idx, , drop = FALSE]) / colSums(count_matrix)
-  ribo <- colSums(count_matrix[ribo_idx, , drop = FALSE]) / colSums(count_matrix)
+  # Collect mito & ribo information
+  mito <- colSums(count_matrix[gene_idx$mito_idx, , drop = FALSE]) / colSums(count_matrix)
+  ribo <- colSums(count_matrix[gene_idx$ribo_idx, , drop = FALSE]) / colSums(count_matrix)
   features <- colSums(count_matrix != 0)
 
   df <- data.frame(mito = mito,
@@ -146,10 +168,10 @@ select_penalty <- function(
   # Define penalty values to test (starting from 0.001, increasing by 0.05)
   penalties <- seq(penalty_range[[1]], penalty_range[[2]], by = penalty_step)
   penalty_results <- list()
-  best_dTNN_median <- Inf  # Initialize best dTNN median to a very high value
+  best_dTNN_median <- Inf # Initialize best dTNN median to a very high value
 
-  # Define stopping criteria
-  stability_counter <- 0  # Counter for consecutive non-improving iterations
+  # Initialize counter for consecutive non-improving iterations
+  stability_counter <- 0
   max_penalty_trials <- max_penalty_trials
   penalty_count <- 0
 
@@ -308,4 +330,3 @@ select_penalty <- function(
                 selected_penalty = best_penalty))
   }
 }
-

@@ -79,7 +79,7 @@ a symmetric distribution between them. There are three valid options:
 \item "right_skewed"
 \item "left_skewed"
 \item "symmetric"
-\item Default is c(0.1, 0.8)
+\item Default is "right_skewed"
 }}
 
 \item{damage_steepness}{String specifying how concentrated the spread of
@@ -197,8 +197,7 @@ Filtered matrix or data frame containing damage labels.
 }
 \description{
 Quality control function to identify and filter damaged cells from an
-input count matrix, where 'damage' is approximated by the loss of
-cytoplasmic RNA.
+input count matrix, where 'damage' is defined by the loss of cytoplasmic RNA.
 }
 \details{
 Using the simulation framework of \code{simulate_counts()}, \code{detect_damage()}
@@ -223,7 +222,6 @@ are marked as damaged.
 
 This filtering method is inspired by approaches developed for DoubletFinder
 (McGinnis et al., 2019) to detect doublets in single-cell data.
-\code{Seurat}
 }
 \examples{
 data("test_counts", package = "DamageDetective")
