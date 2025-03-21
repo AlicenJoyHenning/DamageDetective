@@ -1,7 +1,8 @@
 # DamageDetective
 
 [![R-CMD-check](https://github.com/AlicenJoyHenning/DamageDetective/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/AlicenJoyHenning/DamageDetective/actions/workflows/R-CMD-check.yaml)\
-[![Build Status](https://github.com/AlicenJoyHenning/DamageDetective/actions/workflows/build.yml/badge.svg)] (<https://github.com/AlicenJoyHenning/DamageDetective/actions/workflows/build.yml>)
+![Build Status](https://github.com/AlicenJoyHenning/DamageDetective/actions/workflows/build.yml/badge.svg)
+
 
 R package for understanding and managing the presence of damaged cells in single cell RNA sequencing data.
 
