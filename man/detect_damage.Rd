@@ -233,7 +233,7 @@ test <- detect_damage(
   damage_levels = 3,
   kN = 100,
   project_name = "Project",
-  generate_plot = FALSE
+  generate_plot = TRUE
 )
 }
 \references{

@@ -73,11 +73,6 @@
 #'  for pANN calculations. kN cannot exceed the total cell number.
 #'
 #'  * Default is one third of the total cell number.
-#' @param include_pANN Boolean specifying whether output should contain
-#'  columns from each level of damage or only include the top
-#'  result.
-#'
-#' * Default is FALSE.
 #' @param filter_counts Boolean specifying whether the output matrix
 #'  should be filtered, returned containing only cells that fall below
 #'  the filter threshold. Alternatively, a data frame containing cell
@@ -105,11 +100,7 @@
 #'
 #' test <- detect_damage(
 #'   count_matrix = test_counts,
-#'   ribosome_penalty = 0.05,
-#'   filter_threshold = 0.75,
-#'   damage_levels = 3,
-#'   kN = 100,
-#'   project_name = "Project",
+#'   project_name = "Test",
 #'   generate_plot = FALSE
 #' )
 detect_damage <- function(
@@ -127,7 +118,6 @@ detect_damage <- function(
     damage_proportion = 0.15,
     mito_quantile = 0.75,
     kN = NULL,
-    include_pANN = FALSE,
     generate_plot = TRUE,
     filter_counts = FALSE,
     verbose = TRUE
@@ -399,19 +389,21 @@ detect_damage <- function(
     )
 
   # Apply scaling
-  metadata$scaled_pANN <- metadata$lower_scale + ((metadata$value  - metadata$min) / (metadata$max - metadata$min)) * (metadata$upper_scale - metadata$lower_scale)
+  metadata$DamageDetective <- metadata$lower_scale + ((metadata$value  - metadata$min) / (metadata$max - metadata$min)) * (metadata$upper_scale - metadata$lower_scale)
 
   # Identify and visualise damaged cells  ----
-  metadata$DamageDetective <- ifelse(metadata$scaled_pANN >= filter_threshold, "damaged", "cell")
+  metadata$DamageDetective_filter <- ifelse(metadata$scaled_pANN >= filter_threshold, "damaged", "cell")
+  metadata_output <- metadata[, c("Cells", "DamageDetective")]
 
-  if (include_pANN){
-    # Include the proportions for each damage level simulated
-    columns <- c("Cells", "scaled_pANN", "DamageDetective")
-    columns <- append(pANN_names, columns)
-    metadata_output <- metadata[, columns]
+  # If specified, filter and return the count matrix only
+  if (filter_counts){
+    metadata_filtered <- metadata %>%
+      dplyr::filter(.data$DamageDetective_filter == "cell")
+    final_filtered_cells <- metadata_filtered$Cells
+    final_filtered_matrix <- count_matrix[, final_filtered_cells]
+    output <- final_filtered_matrix
   } else {
-    # Return only the scaled proportions
-    metadata_output <- metadata[, c("Cells", "scaled_pANN", "DamageDetective")]
+    output <- metadata_output
   }
 
   # Visualise cells according to damage level
@@ -463,23 +455,9 @@ detect_damage <- function(
     print(final_plot)
 
     output <- list(
-      metadata = metadata_output,
+      output = output,
       plot = final_plot
     )
-
-  }
-
-  # If specified, filter and return the count matrix only
-  if (filter_counts){
-    metadata_filtered <- metadata %>%
-      dplyr::filter(.data$DamageDetective == "cell")
-    final_filtered_cells <- metadata_filtered$Cells
-    final_filtered_matrix <- count_matrix[, final_filtered_cells]
-    output <- final_filtered_matrix
-  } else {
-    # Else just return the output data frame
-    output <- metadata_output
-
   }
 
   return(output)
