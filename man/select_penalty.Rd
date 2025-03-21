@@ -72,7 +72,7 @@ iterations for the ribosomal penalty value.
 \item Default is 10.
 }}
 
-\item{target_damage}{Double numeric specifying the upper and lower range of
+\item{target_damage}{Numeric vector specifying the upper and lower range of
 the level of damage that will be introduced.
 
 Here, damage refers to the amount of cytoplasmic RNA lost by a cell where
