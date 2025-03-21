@@ -9,7 +9,7 @@ R package for understanding and managing the presence of damaged cells in single
 
 [Description](#description) \| [Installation](#installation) \| [Quickstart](#quickstart) \| [Authors](#authors) \| [License](#license) \| [References](#references)
 
-## Description {#description}
+## Description
 
 Single-cell RNA sequencing (scRNA-seq) is a well-established technique in the era of next-generation sequencing. However, it relies heavily on the quality of upstream pre-processing, an extensive collection of steps to go from raw sequencing files to a cell-type annotated count matrix. Despite being a fundamental step of the pre-processing workflow, cell-level quality control, particularly the removal of damaged cells, is neglected.
 
@@ -19,7 +19,7 @@ We propose that the difficulty in detecting damaged cells stems from the difficu
 
 
 
-## Installation {#installation}
+## Installation
 
 `DamageDetective` can be installed from CRAN using,
 
@@ -46,7 +46,7 @@ help(package = "DamageDetective")
 
 ------------------------------------------------------------------------
 
-## Quick start {#quickstart}
+## Quick start
 
 The demonstrations below can be followed immediately after loading the package and serve as a "test run" to ensure all is running smoothly. For more advanced function descriptions and usage examples please refer to the [package vignettes](link).
 
@@ -60,7 +60,7 @@ dim(test_counts)
 
 ### Damaged cell simulation
 
-#### - Default
+#### \- Default
 
 A core task of `DamageDetective` is to predict how cells from existing scRNA-seq datasets might appear if they had experienced a certain degree of damage. Here, damage is modeled by the loss of cytoplasmic RNA where cells with great RNA loss are assumed to be extensively damaged, while those with minimal loss are considered largely intact.
 
@@ -91,7 +91,7 @@ head(simulated_counts$qc_summary)
 
 By default, the output is visualised in a plot grid returned by `simulate_counts`. The plots show the distribution of cells according to quality control metrics before alteration, displayed in the top row, and after alteration, in the bottom row. This is stored in the `plot` slot of the output as a `ggplot2` object. To disable plotting, indicate using the `generate_plot = FALSE` argument.
 
-#### - Flexibility
+#### \- Flexibility
 
 But the power of the `simulate_counts` function comes in the flexibility offered by its input parameters mainly,
 
@@ -130,7 +130,7 @@ To explore these parameters and more, you can visit the package [vignette](link)
 
 ### Damaged cell detection
 
-#### - Default
+#### \- Default
 
 The primary goal of `DamageDetective` is to inform the filtering of damaged cells from single cell data. This can be achieved using the `detect_damage` function that requires a count matrix as input and returns a data frame containing the barcodes of the count matrix with the estimated levels of damage.
 
@@ -153,7 +153,7 @@ filtered_counts <- test_counts[, undamaged_cells]
 
 > By default, `detect_damage` will provide plots of the data where each cell is a point coloured according to the damage level estimated by `DamageDetective`. This will be stored in `default_test$plot` as a `ggplot2` object that can be manipulated using `ggplot2` functionality. To disable plotting, indicate using the `generate_plot = FALSE` argument.
 
-#### - Return filtered output
+#### \- Return filtered output
 
 Alternatively, instead of returning an annotated data frame, `detect_damage` can return the filtered count matrix `filter_threshold = TRUE`. Here, just as above, filtering is done according to a threshold for the estimated level of damage, specified using the `filter_threshold` parameter. By default, `filter_threshold = 0.75`.
 
@@ -180,11 +180,11 @@ To explore these parameters and more, you can visit the package [vignette](link)
 ?detect_damage()
 ```
 
-## License {#license}
+## License
 
 `DamageDetective` is made available for public use through the [GNU AGPL-3.0](https://opensource.org/licenses/AGPL-3.0) license.
 
-## Authors {#authors}
+## Authors
 
 **Alicen Henning**\
 Stellenbosch University, Cape Town, South Africa\
@@ -192,6 +192,6 @@ Bioinformatics and Computational Biology
 
 This work was done under the supervision of Prof Marlo Möller, Prof Gian van der Spuy, and Prof André Loxton.
 
-## References {#references}
+## References
 
 ------------------------------------------------------------------------
