@@ -86,7 +86,7 @@ select_penalty <- function(
     max_penalty_trials = 10,
     target_damage = c(0.1, 0.99),
     damage_distribution = "right_skewed",
-    damage_steepness = "steep",
+    distribution_steepness = "steep",
     beta_shape_parameters = NULL,
     stability_limit = 3,
     damage_proportion = 0.15,
@@ -195,7 +195,7 @@ select_penalty <- function(
       target_damage = target_damage,
       ribosome_penalty = penalty,
       damage_distribution = damage_distribution,
-      damage_steepness = damage_steepness,
+      distribution_steepness = distribution_steepness,
       generate_plot = FALSE
     )
 

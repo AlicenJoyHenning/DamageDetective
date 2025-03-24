@@ -110,7 +110,7 @@ detect_damage <- function(
     annotated_celltypes = FALSE,
     target_damage = c(0.1, 0.8),
     damage_distribution = "right_skewed",
-    damage_steepness = "moderate",
+    distribution_steepness = "moderate",
     beta_shape_parameters = NULL,
     project_name = "Project",
     filter_threshold = 0.75,
@@ -136,16 +136,13 @@ detect_damage <- function(
     stop("Please ensure 'mito_quantile' is a numeric between 0 and 1.")
   }
 
-  if (damage_levels %in% c(3, 5, 7)) {
-    return(invisible(NULL))  # Exit the function silently if damage_levels is valid
-  } else {
+  if (!(damage_levels %in% c(3, 5, 7))) {
     if (!is.list(damage_levels) ||
         !all(grepl("^pANN_\\d+$", names(damage_levels))) ||
         !all(sapply(damage_levels, function(x) is.numeric(x) && length(x) == 2))) {
       stop("Please ensure `damage_levels` is of the correct format.")
     }
   }
-
 
   if (!is.numeric(kN) ||
       kN > dim(count_matrix)[2]) {
@@ -233,7 +230,7 @@ detect_damage <- function(
       target_damage = damage_range,
       ribosome_penalty = ribosome_penalty,
       damage_distribution = damage_distribution,
-      damage_steepness = damage_steepness,
+      distribution_steepness = distribution_steepness,
       generate_plot = generate_plot
     )
 

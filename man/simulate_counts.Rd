@@ -10,7 +10,7 @@ simulate_counts(
   annotated_celltypes = FALSE,
   target_damage = c(0.1, 0.8),
   damage_distribution = "right_skewed",
-  damage_steepness = "moderate",
+  distribution_steepness = "moderate",
   beta_shape_parameters = NULL,
   ribosome_penalty = 0.01,
   generate_plot = TRUE,
@@ -54,7 +54,7 @@ a symmetric distribution between them. There are three valid options:
 \item Default is "right_skewed"
 }}
 
-\item{damage_steepness}{String specifying how concentrated the spread of
+\item{distribution_steepness}{String specifying how concentrated the spread of
 damaged cells are about the mean of the target distribution specified in
 'target_damage'. Here, an increase in steepness manifests in a more
 apparent skewness.There are three valid options:
@@ -68,7 +68,7 @@ apparent skewness.There are three valid options:
 \item{beta_shape_parameters}{Numeric vector that allows for the shape
 parameters of the beta distribution to defined explicitly. This offers
 greater flexibility than allowed by the 'damage_distribution' and
-'damage_steepness' parameters and will override the defaults they
+'distribution_steepness' parameters and will override the defaults they
 offer.
 \itemize{
 \item Default is 'NULL'

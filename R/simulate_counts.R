@@ -50,7 +50,7 @@
 #'  * "symmetric"
 #'
 #'  * Default is "right_skewed"
-#' @param damage_steepness String specifying how concentrated the spread of
+#' @param distribution_steepness String specifying how concentrated the spread of
 #'  damaged cells are about the mean of the target distribution specified in
 #'  'target_damage'. Here, an increase in steepness manifests in a more
 #'  apparent skewness.There are three valid options:
@@ -63,7 +63,7 @@
 #' @param beta_shape_parameters Numeric vector that allows for the shape
 #'   parameters of the beta distribution to defined explicitly. This offers
 #'   greater flexibility than allowed by the 'damage_distribution' and
-#'   'damage_steepness' parameters and will override the defaults they
+#'   'distribution_steepness' parameters and will override the defaults they
 #'   offer.
 #'
 #'   * Default is 'NULL'
@@ -119,7 +119,7 @@ simulate_counts <- function(
     annotated_celltypes = FALSE,
     target_damage = c(0.1, 0.8),
     damage_distribution = "right_skewed",
-    damage_steepness = "moderate",
+    distribution_steepness = "moderate",
     beta_shape_parameters = NULL,
     ribosome_penalty = 0.01,
     generate_plot = TRUE,
@@ -148,8 +148,8 @@ simulate_counts <- function(
   if (!is.numeric(target_damage) || length(target_damage) != 2 || target_damage[1] < 0 || target_damage[2] > 1 || target_damage[1] >= target_damage[2]) {
     stop("Please ensure 'target_damage' is a numeric vector of length 2, with values between 0 and 1, and the first value is less than the second.")
   }
-  if (!damage_steepness %in% c("shallow", "moderate", "steep")) {
-    stop("Please ensure 'damage_steepness' is one of 'shallow', 'moderate', or 'steep'.")
+  if (!distribution_steepness %in% c("shallow", "moderate", "steep")) {
+    stop("Please ensure 'distribution_steepness' is one of 'shallow', 'moderate', or 'steep'.")
   }
   if (!damage_distribution %in% c("right_skewed", "left_skewed", "symmetric")) {
     stop("Please ensure 'damage_distribution' is one of 'right_skewed', 'left_skewed', or 'symmetric'.")
@@ -178,7 +178,7 @@ simulate_counts <- function(
   )
 
   # Retrieve user specified steepness
-  steepness_value <- steepness_levels[[damage_steepness]]
+  steepness_value <- steepness_levels[[distribution_steepness]]
 
 
   # Assign shape parameters to achieve target distribution
