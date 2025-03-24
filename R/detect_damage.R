@@ -144,9 +144,11 @@ detect_damage <- function(
     }
   }
 
-  if (!is.numeric(kN) ||
-      kN > dim(count_matrix)[2]) {
-    stop("Please ensure 'kN' is not greater than the number of cells.")
+  if (!is.null(kN)){
+    if (!is.numeric(kN) ||
+        kN > dim(count_matrix)[2]) {
+      stop("Please ensure 'kN' is not greater than the number of cells.")
+    }
   }
 
   # Ensure count matrix is of 'matrix' form
