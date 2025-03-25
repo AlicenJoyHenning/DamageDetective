@@ -220,6 +220,7 @@ data("test_counts", package = "DamageDetective")
 
 test <- detect_damage(
   count_matrix = test_counts,
+  ribosome_penalty = 0.001,
   project_name = "Test",
   generate_plot = FALSE
 )
