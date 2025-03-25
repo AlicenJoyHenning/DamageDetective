@@ -18,10 +18,11 @@ Roxygen: list(markdown = TRUE)
 Imports: 
     cowplot,
     dplyr,
-    fields,
     ggplot2,
     ggpubr,
+    Matrix,
     patchwork,
     Seurat,
     scales,
+    RANN,
     rlang

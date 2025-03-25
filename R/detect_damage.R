@@ -85,7 +85,8 @@
 #'
 #'  * Default is TRUE.
 #' @return Filtered matrix or data frame containing damage labels.
-#' @importFrom fields rdist
+#' @importFrom Matrix colSums Matrix
+#' @importFrom RANN nn2
 #' @importFrom dplyr %>% group_by summarise mutate case_when first pull
 #' @importFrom ggplot2 ggsave theme element_rect margin
 #' @importFrom cowplot ggdraw draw_label plot_grid
@@ -123,8 +124,7 @@ detect_damage <- function(
     filter_counts = FALSE,
     verbose = TRUE
 ){
-  # Ensure user inputs are valid ----
-
+  # Output warnings if user inputs are invalid ----
   if (!is.numeric(filter_threshold) ||
       filter_threshold > 1 ||
       filter_threshold  < 0) {
@@ -152,26 +152,23 @@ detect_damage <- function(
     }
   }
 
-  # Ensure count matrix is of 'matrix' form
-  count_matrix <- as.matrix(count_matrix)
-
   # Data preparations for simulation ----
 
   # Retrieve genes corresponding to the organism of interest
   gene_idx <- get_organism_indices(count_matrix, organism)
 
   # Collect mito & ribo information of all true cells
-  mito <- colSums(count_matrix[gene_idx$mito_idx, , drop = FALSE]) / colSums(count_matrix)
-  ribo <- colSums(count_matrix[gene_idx$ribo_idx, , drop = FALSE]) / colSums(count_matrix)
+  mito <- Matrix::colSums(count_matrix[gene_idx$mito_idx, , drop = FALSE]) / Matrix::colSums(count_matrix)
+  ribo <- Matrix::colSums(count_matrix[gene_idx$ribo_idx, , drop = FALSE]) / Matrix::colSums(count_matrix)
 
   df <- data.frame(mito = mito,
                    ribo = ribo,
                    row.names = colnames(count_matrix))
 
-  # Identify high mito proportion cells (likely damaged)
+  # Identify distribution of mitochondrial proportion for simulation sampling
   mito_top <- quantile(df$mito, probs = mito_quantile, na.rm = TRUE)
 
-  # Subset true cells below the 75th percentile
+  # Subset true cells below the cells in top distribution
   filtered_cells <- rownames(df)[df$mito <= mito_top]
   matrix_filtered <- count_matrix[, filtered_cells]
 
@@ -234,7 +231,7 @@ detect_damage <- function(
       ribosome_penalty = ribosome_penalty,
       damage_distribution = damage_distribution,
       distribution_steepness = distribution_steepness,
-      generate_plot = generate_plot
+      generate_plot = FALSE
     )
 
     # Extract barcodes of damaged cells
@@ -255,14 +252,13 @@ detect_damage <- function(
   # Combine and remove duplicated, unaltered true cells
   matrix_combined <- cbind(matrix_updated, count_matrix)
   matrix_combined <- matrix_combined[, unique(colnames(matrix_combined))]
+  matrix_combined <- Matrix::Matrix(matrix_combined, sparse = TRUE)
 
   # Create Seurat object with all cells
   combined <- suppressWarnings(CreateSeuratObject(counts = matrix_combined))
 
   # Pre-process the Seurat object
-  combined <- NormalizeData(combined, verbose = FALSE) %>%
-    FindVariableFeatures(verbose = FALSE) %>%
-    ScaleData(verbose = FALSE)
+  combined <- NormalizeData(combined, verbose = FALSE)
 
   # Add meta_data label with level of damage of the cell
   damage_numbers <- sub(".*_", "", names(ranges))
@@ -292,11 +288,20 @@ detect_damage <- function(
   # Extract PCA embeddings of top principal components
   pca_coord <- pca_result$x[, 1:5]
 
-  # Calculate the euclidean distance between PC embeddings of cells
-  dist_mat <- rdist(pca_coord)  # Euclidean distances
-  dimnames(dist_mat) <- list(rownames(metadata), rownames(metadata))
+  # Perform nearest neighbor search to get kN nearest neighbors
 
-  # Isolate columns of for PCA & ensure cell names present
+  # If number of neighbours is not specified, default to third of total
+  if (is.null(kN)){
+    kN <- round(dim(count_matrix)[2] / 5, 0)
+  }
+
+  # nn2 function: k = number of neighbors, search on pca_coord
+  knn_result <- RANN::nn2(pca_coord, pca_coord, k = kN)
+
+  # Get the neighbor indices (without the cell itself)
+  neighbor_indices <- knn_result$nn.idx
+
+  # Isolate columns for PCA & ensure cell names present
   metadata <- combined@meta.data[, c("nFeature_RNA", "nCount_RNA", "mt.prop", "rb.prop", "malat1", "Damage_level")]
   metadata$Cells <- rownames(metadata)
 
@@ -307,18 +312,13 @@ detect_damage <- function(
     barcodes[[barcode_name]] <- metadata$Cells[metadata$Damage_level == number]
   }
 
-  # If number of neighbours is not specified, default to third of total
-  if (is.null(kN)){
-    kN <- round(dim(count_matrix)[2] / 3, 0)
-  }
-
   # Proportion of damage level-specific artificial nearest neighbours (pANNs)
-   compute_pANN <- function(barcode_set) {
-    sapply(rownames(dist_mat), function(cell) {
-      # Find indices of the nearest neighbors (excluding itself)
-      kNN <- kN + 1
-      neighbors <- order(dist_mat[cell, ])[2:kN]
-      neighbor_barcodes <- rownames(dist_mat)[neighbors]
+  compute_pANN <- function(barcode_set) {
+    sapply(rownames(metadata), function(cell) {
+
+      # Get the neighbors for the cell (excluding itself)
+      neighbors <- neighbor_indices[which(rownames(metadata) == cell), -1]
+      neighbor_barcodes <- rownames(metadata)[neighbors]
 
       # Compute proportion of neighbors in the barcode set
       sum(neighbor_barcodes %in% barcode_set) / kN
@@ -341,7 +341,7 @@ detect_damage <- function(
 
   # Find which damage population a cell is most frequently neighboring
 
-  # Isolate  true cells & define relevant columns
+  # Isolate true cells & define relevant columns
   metadata <- metadata %>%
     dplyr::filter(.data$Damage_level == 0)
 
@@ -389,10 +389,10 @@ detect_damage <- function(
     )
 
   # Apply scaling
-  metadata$DamageDetective <- metadata$lower_scale + ((metadata$value  - metadata$min) / (metadata$max - metadata$min)) * (metadata$upper_scale - metadata$lower_scale)
+  metadata$DamageDetective <- metadata$lower_scale + ((metadata$value - metadata$min) / (metadata$max - metadata$min)) * (metadata$upper_scale - metadata$lower_scale)
 
-  # Identify and visualise damaged cells  ----
-  metadata$DamageDetective_filter <- ifelse(metadata$scaled_pANN >= filter_threshold, "damaged", "cell")
+  # Identify and visualize damaged cells ----
+  metadata$DamageDetective_filter <- ifelse(metadata$DamageDetective >= filter_threshold, "damaged", "cell")
   metadata_output <- metadata[, c("Cells", "DamageDetective")]
 
   # If specified, filter and return the count matrix only
@@ -414,7 +414,7 @@ detect_damage <- function(
       data = metadata,
       x = "rb.prop",
       y = "mt.prop",
-      damage_column = "scaled_pANN",
+      damage_column = "DamageDetective",
       altered = TRUE,
       mito_ribo = TRUE,
       target_damage = c(0.5, 0.9)
@@ -424,7 +424,7 @@ detect_damage <- function(
       data = metadata,
       x = "nFeature_RNA",
       y = "mt.prop",
-      damage_column = "scaled_pANN",
+      damage_column = "DamageDetective",
       altered = TRUE,
       target_damage = c(0.5, 0.9)
     )
