@@ -100,7 +100,7 @@
 #'
 #' test <- detect_damage(
 #'   count_matrix = test_counts,
-#'   ribosome_penalty = 0.01,
+#'   ribosome_penalty = 0.001,
 #'   project_name = "Test",
 #'   generate_plot = FALSE
 #' )
