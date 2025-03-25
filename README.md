@@ -1,25 +1,24 @@
-# DamageDetective
+# DamageDetective <img src="man/figures/logo.svg" align="right" height="139"/>
 
-[![R-CMD-check](https://github.com/AlicenJoyHenning/DamageDetective/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/AlicenJoyHenning/DamageDetective/actions/workflows/R-CMD-check.yaml) ![Build Status](https://github.com/AlicenJoyHenning/DamageDetective/actions/workflows/build.yml/badge.svg)
+<!-- badges: start -->
 
+[![R-CMD-check](https://github.com/AlicenJoyHenning/DamageDetective/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/cosimameyer/overviewR/actions) ![Build Status](https://github.com/AlicenJoyHenning/DamageDetective/actions/workflows/build.yml/badge.svg)
 
-R package for the detection of damage in single cell RNA sequencing data.
+<!-- badges: end -->
 
 ## Documentation Content
-[Description](#description) | [Installation](#installation) | [Quick start](#quick-start) ([Damage simulation](#damage-simulation), [Damaged cell detection](#damaged-cell-detection)) | [Authors](#authors) | [License](#license) | [References](#references)
 
+[Description](#description) \| [Installation](#installation) \| [Quick start](#quick-start) ([Damage simulation](#damage-simulation), [Damaged cell detection](#damaged-cell-detection)) \| [Authors](#authors) \| [License](#license) \| [References](#references)
 
-## Description
+## Description {#description}
 
 Single-cell RNA sequencing (scRNA-seq) is a well-established technique in the era of next-generation sequencing. However, it relies heavily on the quality of upstream pre-processing, an extensive collection of steps to go from raw sequencing files to a cell-type annotated count matrix. Despite being a fundamental step of the pre-processing workflow, cell-level quality control, particularly the removal of damaged cells, is neglected.
 
 We propose that the difficulty in detecting damaged cells stems from the difficulty in defining them. Unlike other low-quality cell artifacts, damage is not a binary classification but exists on a nonlinear, stochastic spectrum where not all will qualify for filtering. Without a sure definition of damage, it is difficult to know how to best go about detecting them.
 
-`DamageDetective` provides a computational solution by exploiting a traditional characteristic of damaged cells: the loss of plasma membrane integrity. In single cell data, this manifests as the increased likelihood of RNA leakage in damaged cells and that can be simulated through the probabilistic loss of cytoplasmic RNA. Using a simulation framework, `DamageDetective` predicts which cells of an input matrix are most likely damaged by comparing them to their simulated damaged counterparts. 
+`DamageDetective` provides a computational solution by exploiting a traditional characteristic of damaged cells: the loss of plasma membrane integrity. In single cell data, this manifests as the increased likelihood of RNA leakage in damaged cells and that can be simulated through the probabilistic loss of cytoplasmic RNA. Using a simulation framework, `DamageDetective` predicts which cells of an input matrix are most likely damaged by comparing them to their simulated damaged counterparts.
 
-
-
-## Installation
+## Installation {#installation}
 
 `DamageDetective` can be installed from CRAN using,
 
@@ -44,7 +43,7 @@ help(package = "DamageDetective")
 
 ------------------------------------------------------------------------
 
-## Quick start
+## Quick start {#quick-start}
 
 The demonstrations below can be followed immediately after loading the package and serve as a "test run" to ensure all is running smoothly. For more advanced function descriptions and usage examples please refer to the [package vignettes](link).
 
@@ -56,12 +55,17 @@ dim(test_counts)
 # [1] 10009   500
 ```
 
-### Damage simulation
+### Damage simulation {#damage-simulation}
 
 <ul>
-  <li><h3>Default</h3></li>
-</ul>
 
+<li>
+
+<h3>Default</h3>
+
+</li>
+
+</ul>
 
 A core task of `DamageDetective` is to predict how cells from existing scRNA-seq datasets might appear if they had experienced a certain degree of damage. Here, damage is modeled by the loss of cytoplasmic RNA where cells with great RNA loss are assumed to be extensively damaged, while those with minimal loss are considered largely intact.
 
@@ -93,7 +97,13 @@ head(simulated_counts$qc_summary)
 By default, the output is visualised in a plot grid returned by `simulate_counts`. The plots show the distribution of cells according to quality control metrics before alteration, displayed in the top row, and after alteration, in the bottom row. This is stored in the `plot` slot of the output as a `ggplot2` object. To disable plotting, indicate using the `generate_plot = FALSE` argument.
 
 <ul>
-  <li><h3>Flexibility</h3></li>
+
+<li>
+
+<h3>Flexibility</h3>
+
+</li>
+
 </ul>
 
 But the power of the `simulate_counts` function comes in the flexibility offered by its input parameters mainly,
@@ -131,10 +141,16 @@ To explore these parameters and more, you can visit the package [vignette](link)
 ?simulate_counts()
 ```
 
-### Damaged cell detection
+### Damaged cell detection {#damaged-cell-detection}
 
 <ul>
-  <li><h3>Default</h3></li>
+
+<li>
+
+<h3>Default</h3>
+
+</li>
+
 </ul>
 
 The primary goal of `DamageDetective` is to inform the filtering of damaged cells from single cell data. This can be achieved using the `detect_damage` function that requires a count matrix as input and returns a data frame containing the barcodes of the count matrix with the estimated levels of damage.
@@ -159,7 +175,13 @@ filtered_counts <- test_counts[, undamaged_cells]
 > By default, `detect_damage` will provide plots of the data where each cell is a point coloured according to the damage level estimated by `DamageDetective`. This will be stored in `default_test$plot` as a `ggplot2` object that can be manipulated using `ggplot2` functionality. To disable plotting, indicate using the `generate_plot = FALSE` argument.
 
 <ul>
-  <li><h3>Return filtered output</h3></li>
+
+<li>
+
+<h3>Return filtered output</h3>
+
+</li>
+
 </ul>
 
 Alternatively, instead of returning an annotated data frame, `detect_damage` can return the filtered count matrix `filter_threshold = TRUE`. Here, just as above, filtering is done according to a threshold for the estimated level of damage, specified using the `filter_threshold` parameter. By default, `filter_threshold = 0.75`.
@@ -187,11 +209,11 @@ To explore these parameters and more, you can visit the package [vignette](link)
 ?detect_damage()
 ```
 
-## License
+## License {#license}
 
 `DamageDetective` is made available for public use through the [GNU AGPL-3.0](https://opensource.org/licenses/AGPL-3.0) license.
 
-## Authors
+## Authors {#authors}
 
 **Alicen Henning**\
 Stellenbosch University, Cape Town, South Africa\
@@ -199,6 +221,6 @@ Bioinformatics and Computational Biology
 
 This work was done under the supervision of Prof Marlo Möller, Prof Gian van der Spuy, and Prof André Loxton.
 
-## References
+## References {#references}
 
 ------------------------------------------------------------------------

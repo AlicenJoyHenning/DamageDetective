@@ -86,7 +86,7 @@
 #'  * Default is TRUE.
 #' @return Filtered matrix or data frame containing damage labels.
 #' @importFrom Matrix colSums Matrix
-#' @importFrom RANN nn2
+#' @importFrom RcppHNSW hnsw_knn
 #' @importFrom dplyr %>% group_by summarise mutate case_when first pull
 #' @importFrom ggplot2 ggsave theme element_rect margin
 #' @importFrom cowplot ggdraw draw_label plot_grid
@@ -257,9 +257,7 @@ detect_damage <- function(
 
   # Combine and remove duplicated, unaltered true cells
   matrix_combined <- cbind(matrix_updated, count_matrix)
-  matrix_combined <- Matrix::Matrix(matrix_combined, sparse = TRUE)
   matrix_combined <- matrix_combined[, unique(colnames(matrix_combined))]
-
 
   # Compute quality control measures for the matrix
   features <- Matrix::colSums(matrix_combined > 0)
@@ -317,11 +315,11 @@ detect_damage <- function(
     kN <- round(dim(count_matrix)[2] / 5, 0)
   }
 
-  # nn2 function: k = number of neighbors, search on pca_coord
-  knn_result <- RANN::nn2(pca_coord, pca_coord, k = kN)
+  # Find k nearest neighbours
+  knn_result <- RcppHNSW::hnsw_knn(pca_coord, k = kN)
 
-  # Get the neighbor indices (without the cell itself)
-  neighbor_indices <- knn_result$nn.idx
+  # Get the neighbor indices
+  neighbor_indices <- knn_result$idx
 
   # Isolate columns & ensure cell names present
   metadata_plot <- metadata_stored[, c("features", "counts", "mt.prop", "rb.prop", "malat1", "Damage_level")]
