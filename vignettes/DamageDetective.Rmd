@@ -28,7 +28,7 @@ A core feature of `DamageDetective` is the ability to predict how scRNA-seq data
 
 The `simulate_counts` function applies this simulation, allowing users to introduce damage to a defined proportion of cells in an input count matrix. While primarily used within `detect_damage`, it is also available for standalone use to aid exploratory data analysis and ground truth dataset generation.
 
-```{r}
+```{r plot1, fig.cap="Plot 1. Scatter plot of simulated damaged data."}
 # Simulating damage in 25% of cells
 damaged_counts <- simulate_counts(
   count_matrix = test_counts,
@@ -50,7 +50,7 @@ head(damaged_counts$qc_summary, 5)
 
 Additionally, `simulate_counts` produces plots illustrating quality metric distributions before and after simulated damage that are displayed by default and accessed as shown below.
 
-```{r}
+```{r plot2, fig.cap="Plot 2. Scatter plot of simulated damaged data."}
 damaged_counts$plot
 ```
 
@@ -60,7 +60,7 @@ To control the severity and distribution of simulated damage, users can adjust:
 
 For example, simulating severe damage (70-99% RNA loss) with a right-skewed distribution:
 
-```{r}
+```{r plot3, fig.cap="Plot 3. Scatter plot of right-skewed simulated damaged data."}
 damaged_counts <- simulate_counts(
   count_matrix = test_counts,
   damage_proportion = 0.25,
@@ -100,7 +100,7 @@ For more details, refer to:
 
 Using the refined ribosomal penalty found, the damage detection can then be run as follows,
 
-```{r, fig.width=7, fig.height=4}
+```{r plot4, fig.width=7, fig.height=4, fig.cap="Plot 4. Scatter plot of damage levels detected."}
 
 damage_results <- detect_damage(
   count_matrix = test_counts, 
@@ -108,8 +108,7 @@ damage_results <- detect_damage(
 )
 
 # View the damage scores
-head(damage_results, 5)
-
+head(damage_results$output)
 ```
 
 Cells with high damage scores can be filtered out to retain high-quality data:

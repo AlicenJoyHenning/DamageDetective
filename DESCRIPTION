@@ -30,3 +30,4 @@ Suggests:
     knitr,
     rmarkdown
 VignetteBuilder: knitr
+URL: https://alicenjoyhenning.github.io/DamageDetective/
