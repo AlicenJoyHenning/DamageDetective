@@ -1,7 +1,3 @@
----
-bibliography: references.bib
----
-
 # DamageDetective <img src="man/figures/logo.svg" align="right" height="139"/>
 
 <!-- badges: start -->
