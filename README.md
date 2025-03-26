@@ -12,11 +12,11 @@
 
 ## Description
 
-Low-quality cells in single-cell RNA sequencing (scRNA-seq) include those that succumb to stress before being isolated for sequencing. Damaged cells distort analyses by exhibiting altered mRNA profiles compared to their viable counterparts, making their detection and removal from scRNA-seq data a standard practice [1](#references).
+Low-quality cells in single-cell RNA sequencing (scRNA-seq) include those that succumb to stress before being isolated for sequencing. Damaged cells distort analyses by exhibiting altered mRNA profiles compared to their viable counterparts, making their detection and removal from scRNA-seq data a standard practice.
 
-Current approaches identify damaged cells based on deviations in quality control metrics influenced by the well-accepted concept of damage: loss of plasma membrane integrity [2](#references). However, this approach assumes that all viable cells follow similar distributions for these metrics—an assumption that does not always prove effective in heterogeneous samples [3](#references), [4](#references). More recent methods improve upon this by analyzing cells at a population level, grouping those with similar distributions before detecting damaged cells within them. However, this assumes that all distinct populations represent true cells, meaning that, if abundant, damaged cells risk misclassification. Ultimately, the filtering decisions of current approaches rely more on statistical definitions of deviation within a dataset than on biological definitions of damage.
+Current approaches identify damaged cells based on deviations in quality control metrics influenced by the well-accepted concept of damage: loss of plasma membrane integrity. However, this approach assumes that all viable cells follow similar distributions for these metrics—an assumption that does not always prove effective in heterogeneous samples. More recent methods improve upon this by analyzing cells at a population level, grouping those with similar distributions before detecting damaged cells within them. However, this assumes that all distinct populations represent true cells, meaning that, if abundant, damaged cells risk misclassification. Ultimately, the filtering decisions of current approaches rely more on statistical definitions of deviation within a dataset than on biological definitions of damage.
 
-`DamageDetective` takes a different approach inspired by a technique popularised by `DoubletFinder` [5](#references) for detecting doublets: instead of detecting damaged cells by comparing them to each other, detect damaged cells by comparing them to artificially damaged versions of themselves. Using the same principle of damage—loss of plasma membrane integrity—it simulates artificial damage by selectively depleting cytoplasmic RNA. By comparing the expression profiles of real cells to artificial cells in reduced-dimensional space, `DamageDetective` estimates the degree of damage in the form of a score from 0 to 1, where 1 represents the highest RNA loss and greatest likelihood of damage. This provides an intuitive scale for filtering that is comparable across cell types, samples, and experiments and is driven directly by biological definitions of damage.
+`DamageDetective` takes a different approach inspired by a technique popularised by `DoubletFinder` [-](#references) for detecting doublets: instead of detecting damaged cells by comparing them to each other, detect damaged cells by comparing them to artificially damaged versions of themselves. Using the same principle of damage—loss of plasma membrane integrity—it simulates artificial damage by selectively depleting cytoplasmic RNA. By comparing the expression profiles of real cells to artificial cells in reduced-dimensional space, `DamageDetective` estimates the degree of damage in the form of a score from 0 to 1, where 1 represents the highest RNA loss and greatest likelihood of damage. This provides an intuitive scale for filtering that is comparable across cell types, samples, and experiments and is driven directly by biological definitions of damage.
 
 ## Installation
 
@@ -113,8 +113,8 @@ dim(filtered_test)
 #
 ```
 
-To explore these parameters and more, you can visit the package [vignette](./vignettes/DamageDetective.html)
- or read directly within `R` via the function help page,
+To explore these parameters and more, you can visit the package vignette
+ or via the function help page,
 
 ``` r
 ?detect_damage()
@@ -134,10 +134,6 @@ This work was done under the supervision of Prof Marlo Möller, Prof Gian van de
 
 ## References
 
-1.  Luecken, Malte D, and Fabian J Theis. 2019. “Current Best Practices in Single-Cell RNA-Seq Analysis: A Tutorial.” *Molecular Systems Biology* 15 (6): e8746. [https://doi.org/10.15252/msb.20188746](https://doi.org/10.15252/msb.20188746)
-2.  Amezquita, Robert A., Aaron T. L. Lun, Etienne Becht, Vince J. Carey, Lindsay N. Carpp, Ludwig Geistlinger, Federico Marini, et al. 2020. “Orchestrating Single-Cell Analysis with Bioconductor.” *Nature Methods* 17 (2): 137–45. [https://doi.org/10.1038/s41592-019-0654-x](https://doi.org/10.1038/s41592-019-0654-x)
-3.  Osorio, Daniel, and James J Cai. 2021. “Systematic Determination of the Mitochondrial Proportion in Human and Mice Tissues for Single-Cell RNA-Sequencing Data Quality Control.” *Bioinformatics* 37 (7): 963–67. [https://doi.org/10.1093/bioinformatics/btaa751](https://doi.org/10.1093/bioinformatics/btaa751)
-4.  Montserrat-Ayuso, Tomàs, and Anna Esteve-Codina. 2024. “Revealing the Prevalence of Suboptimal Cells and Organs in Reference Cell Atlases: An Imperative for Enhanced Quality Control.” *BioRxiv*, April. [https://doi.org/10.1101/2024.04.18.590104](https://doi.org/10.1101/2024.04.18.590104)
-5.  McGinnis, C. S., Murrow, L. M., & Gartner, Z. J. (2019). DoubletFinder: Doublet Detection in Single-Cell RNA Sequencing Data Using Artificial Nearest Neighbors. *Cell Systems, 8*(4), 329-337.e4. [https://doi.org/10.1016/j.cels.2019.03.003](https://doi.org/10.1016/j.cels.2019.03.003)
+- McGinnis, C. S., Murrow, L. M., & Gartner, Z. J. (2019). DoubletFinder: Doublet Detection in Single-Cell RNA Sequencing Data Using Artificial Nearest Neighbors. *Cell Systems, 8*(4), 329-337.e4. [https://doi.org/10.1016/j.cels.2019.03.003](https://doi.org/10.1016/j.cels.2019.03.003)
 
 ------------------------------------------------------------------------
