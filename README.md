@@ -10,7 +10,7 @@
 
 [Description](#description) \| [Installation](#installation) \| [Quick start](#quick-start) \| [Authors](#authors) \| [License](#license) \| [References](#references)
 
-## Description {#description}
+## Description
 
 Low-quality cells in single-cell RNA sequencing (scRNA-seq) include those that succumb to stress before being isolated for sequencing. Damaged cells distort analyses by exhibiting altered mRNA profiles compared to their viable counterparts, making their detection and removal from scRNA-seq data a standard practice [1](#references).
 
@@ -18,7 +18,7 @@ Current approaches identify damaged cells based on deviations in quality control
 
 `DamageDetective` takes a different approach inspired by a technique popularised by `DoubletFinder` [5](#references) for detecting doublets: instead of detecting damaged cells by comparing them to each other, detect damaged cells by comparing them to artificially damaged versions of themselves. Using the same principle of damage—loss of plasma membrane integrity—it simulates artificial damage by selectively depleting cytoplasmic RNA. By comparing the expression profiles of real cells to artificial cells in reduced-dimensional space, `DamageDetective` estimates the degree of damage in the form of a score from 0 to 1, where 1 represents the highest RNA loss and greatest likelihood of damage. This provides an intuitive scale for filtering that is comparable across cell types, samples, and experiments and is driven directly by biological definitions of damage.
 
-## Installation {#installation}
+## Installation
 
 `DamageDetective` can be installed from CRAN using,
 
@@ -43,7 +43,7 @@ help(package = "DamageDetective")
 
 ------------------------------------------------------------------------
 
-## Quick start {#quick-start}
+## Quick start
 
 The demonstrations below can be followed immediately after loading the package and serve as a test to ensure all is running smoothly. For function descriptions and usage examples please refer to the [package vignette](link).
 
@@ -120,11 +120,11 @@ To explore these parameters and more, you can visit the package [vignette](./vig
 ?detect_damage()
 ```
 
-## License {#license}
+## License
 
 `DamageDetective` is made available for public use through the [GNU AGPL-3.0](https://opensource.org/licenses/AGPL-3.0) license.
 
-## Authors {#authors}
+## Authors
 
 **Alicen Henning**\
 Stellenbosch University, Cape Town, South Africa\
@@ -132,7 +132,7 @@ Bioinformatics and Computational Biology
 
 This work was done under the supervision of Prof Marlo Möller, Prof Gian van der Spuy, and Prof André Loxton.
 
-## References {#references}
+## References
 
 1.  Luecken, Malte D, and Fabian J Theis. 2019. “Current Best Practices in Single-Cell RNA-Seq Analysis: A Tutorial.” *Molecular Systems Biology* 15 (6): e8746. [https://doi.org/10.15252/msb.20188746](https://doi.org/10.15252/msb.20188746)
 2.  Amezquita, Robert A., Aaron T. L. Lun, Etienne Becht, Vince J. Carey, Lindsay N. Carpp, Ludwig Geistlinger, Federico Marini, et al. 2020. “Orchestrating Single-Cell Analysis with Bioconductor.” *Nature Methods* 17 (2): 137–45. [https://doi.org/10.1038/s41592-019-0654-x](https://doi.org/10.1038/s41592-019-0654-x)
