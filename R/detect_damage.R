@@ -107,7 +107,7 @@
 #' )
 detect_damage <- function(
     count_matrix,
-    ribosome_penalty,
+    ribosome_penalty = 0.01,
     organism = "Hsap",
     annotated_celltypes = FALSE,
     target_damage = c(0.1, 0.8),

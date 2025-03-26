@@ -1,3 +1,7 @@
+---
+bibliography: references.bib
+---
+
 # DamageDetective <img src="man/figures/logo.svg" align="right" height="139"/>
 
 <!-- badges: start -->
@@ -6,17 +10,17 @@
 
 <!-- badges: end -->
 
-## Documentation Content
+## Content
 
-[Description](#description) \| [Installation](#installation) \| [Quick start](#quick-start) ([Damage simulation](#damage-simulation), [Damaged cell detection](#damaged-cell-detection)) \| [Authors](#authors) \| [License](#license) \| [References](#references)
+[Description](#description) \| [Installation](#installation) \| [Quick start](#quick-start) \| [Authors](#authors) \| [License](#license) \| [References](#references)
 
 ## Description {#description}
 
-Single-cell RNA sequencing (scRNA-seq) is a well-established technique in the era of next-generation sequencing. However, it relies heavily on the quality of upstream pre-processing, an extensive collection of steps to go from raw sequencing files to a cell-type annotated count matrix. Despite being a fundamental step of the pre-processing workflow, cell-level quality control, particularly the removal of damaged cells, is neglected.
+Low-quality cells in single-cell RNA sequencing (scRNA-seq) include those that succumb to stress before being isolated for sequencing. Damaged cells distort analyses by exhibiting altered mRNA profiles compared to their viable counterparts, making their detection and removal from scRNA-seq data a standard practice [1](#references).
 
-We propose that the difficulty in detecting damaged cells stems from the difficulty in defining them. Unlike other low-quality cell artifacts, damage is not a binary classification but exists on a nonlinear, stochastic spectrum where not all will qualify for filtering. Without a sure definition of damage, it is difficult to know how to best go about detecting them.
+Current approaches identify damaged cells based on deviations in quality control metrics influenced by the well-accepted concept of damage: loss of plasma membrane integrity [2](#references). However, this approach assumes that all viable cells follow similar distributions for these metrics—an assumption that does not always prove effective in heterogeneous samples [3](#references), [4](#references). More recent methods improve upon this by analyzing cells at a population level, grouping those with similar distributions before detecting damaged cells within them. However, this assumes that all distinct populations represent true cells, meaning that, if abundant, damaged cells risk misclassification. Ultimately, the filtering decisions of current approaches rely more on statistical definitions of deviation within a dataset than on biological definitions of damage.
 
-`DamageDetective` provides a computational solution by exploiting a traditional characteristic of damaged cells: the loss of plasma membrane integrity. In single cell data, this manifests as the increased likelihood of RNA leakage in damaged cells and that can be simulated through the probabilistic loss of cytoplasmic RNA. Using a simulation framework, `DamageDetective` predicts which cells of an input matrix are most likely damaged by comparing them to their simulated damaged counterparts.
+`DamageDetective` takes a different approach inspired by a technique popularised by `DoubletFinder` [5](#references) for detecting doublets: instead of detecting damaged cells by comparing them to each other, detect damaged cells by comparing them to artificially damaged versions of themselves. Using the same principle of damage—loss of plasma membrane integrity—it simulates artificial damage by selectively depleting cytoplasmic RNA. By comparing the expression profiles of real cells to artificial cells in reduced-dimensional space, `DamageDetective` estimates the degree of damage in the form of a score from 0 to 1, where 1 represents the highest RNA loss and greatest likelihood of damage. This provides an intuitive scale for filtering that is comparable across cell types, samples, and experiments and is driven directly by biological definitions of damage.
 
 ## Installation {#installation}
 
@@ -26,11 +30,11 @@ We propose that the difficulty in detecting damaged cells stems from the difficu
 install.packages('DamageDetective')
 ```
 
-Alternatively, if you want to use the latest development version, you can install the pacakge directly from GitHub using,
+Alternatively, the latest development version can be installed directly from GitHub using,
 
 ``` r
 library(devtools)
-devtools::install_github("AlicenJoyHenning/DamageDetective",ref='devel')
+devtools::install_github("AlicenJoyHenning/DamageDetective", build_vignettes = TRUE)
 ```
 
 To verify installation, run the following to see if you can view the package vignette and the function help page,
@@ -45,9 +49,9 @@ help(package = "DamageDetective")
 
 ## Quick start {#quick-start}
 
-The demonstrations below can be followed immediately after loading the package and serve as a "test run" to ensure all is running smoothly. For more advanced function descriptions and usage examples please refer to the [package vignettes](link).
+The demonstrations below can be followed immediately after loading the package and serve as a test to ensure all is running smoothly. For function descriptions and usage examples please refer to the [package vignette](link).
 
-Begin by loading the dummy data provided by the package, `test_counts`, a PBMC dataset containing 500 cells and 10009 genes.
+Begin by loading the dummy data provided by the package, `test_counts`, an artificial PBMC dataset containing 500 cells and 10009 genes.
 
 ``` r
 data("test_counts", package = "DamageDetective")
@@ -55,99 +59,11 @@ dim(test_counts)
 # [1] 10009   500
 ```
 
-### Damage simulation {#damage-simulation}
-
 <ul>
 
 <li>
 
-<h3>Default</h3>
-
-</li>
-
-</ul>
-
-A core task of `DamageDetective` is to predict how cells from existing scRNA-seq datasets might appear if they had experienced a certain degree of damage. Here, damage is modeled by the loss of cytoplasmic RNA where cells with great RNA loss are assumed to be extensively damaged, while those with minimal loss are considered largely intact.
-
-This achieved using the `simulate_counts` function. While `simulate_counts` is used internally by the `detect_damage` function, it has been made available to the public as an exploratory tool providing a flexible framework to understand damage as it manifests in single cell data. It may also prove useful in the generation of annotated ground truth datasets.
-
-Using an input `count_matrix` and a `target_proportion` of damage, `simulate_counts` will return a count matrix with a randomly selected target proportion of damaged cells with altered gene expression profiles. Below, we are introducing damage to 25 % of cells from the input data, 125 of the `test_counts`.
-
-The altered counts are stored in the `matrix` slot of the output.
-
-``` r
-# Run the simulation
-simulated_counts <- simulate_counts(
-  count_matrix = test_counts, 
-  damage_proportion = 0.25
-)
-
-# View the output 
-dim(simulated_counts) 
-# [1] 10009   500 # counts remain unchanged
-head(simulated_counts)
-```
-
-In addition to the altered count matrix is a data frame containing quality control statistics for the cells before and after simulation stored in the `qc_summary` slot of the output. This can be helpful for understanding how the damaged cells are changing, particularly according to the level of damage it was assigned.
-
-``` r
-head(simulated_counts$qc_summary) 
-```
-
-By default, the output is visualised in a plot grid returned by `simulate_counts`. The plots show the distribution of cells according to quality control metrics before alteration, displayed in the top row, and after alteration, in the bottom row. This is stored in the `plot` slot of the output as a `ggplot2` object. To disable plotting, indicate using the `generate_plot = FALSE` argument.
-
-<ul>
-
-<li>
-
-<h3>Flexibility</h3>
-
-</li>
-
-</ul>
-
-But the power of the `simulate_counts` function comes in the flexibility offered by its input parameters mainly,
-
--   `target_damage` specifying the upper and lower range of damage that will be introduced across the selected cells.
--   `damage_distribution` specifying the distribution of damage introduced across the cells within the `target_damage` range.
-
-For example, to generate damaged cells that are only extensively damaged we can specify a narrow target, between 70 and 99 % of RNA loss, that is shifted heavily towards the upper limit, 99 % loss, we can say,
-
-``` r
-# Run the simulation
-simulated_counts <- simulate_counts(
-  count_matrix = test_counts, 
-  damage_proportion = 0.25, 
-  target_damage = c(0.7, 0.99),
-  damage_distribution = "right_skewed"
-)
-```
-
-Alternatively, to generate a wide range of damaged cells that are mostly lightly damaged we can specify a wider target, between 0.01 and 99 % of RNA loss, that is shifted towards the lower limit, 0.01 % loss, we can say,
-
-``` r
-# Run the simulation
-simulated_counts <- simulate_counts(
-  count_matrix = test_counts, 
-  damage_proportion = 0.25, 
-  target_damage = c(0.01, 0.99),
-  damage_distribution = "left_skewed"
-)
-```
-
-To explore these parameters and more, you can visit the package [vignette](link) or read directly within `R` via the function help page,
-
-``` r
-?simulate_counts()
-```
-
-### Damaged cell detection {#damaged-cell-detection}
-
-<ul>
-
-<li>
-
-<h3>Default</h3>
+<h3>Return default output</h3>
 
 </li>
 
@@ -184,9 +100,7 @@ filtered_counts <- test_counts[, undamaged_cells]
 
 </ul>
 
-Alternatively, instead of returning an annotated data frame, `detect_damage` can return the filtered count matrix `filter_threshold = TRUE`. Here, just as above, filtering is done according to a threshold for the estimated level of damage, specified using the `filter_threshold` parameter. By default, `filter_threshold = 0.75`.
-
-Essentially, this provides a means of automating the filtering process shown above.
+Alternatively, instead of returning an annotated data frame, `detect_damage` can return the filtered count matrix `filter_threshold = TRUE`. Here, just as above, filtering is done according to a threshold for the estimated level of damage, specified using the `filter_threshold` parameter. By default, `filter_threshold = 0.75`. Essentially, this provides a means of automating the filtering process shown above.
 
 ``` r
 # Perform damage detection & filtering according to non-default threshold
@@ -203,7 +117,8 @@ dim(filtered_test)
 #
 ```
 
-To explore these parameters and more, you can visit the package [vignette](link) or read directly within `R` via the function help page,
+To explore these parameters and more, you can visit the package [vignette](./vignettes/DamageDetective.html)
+ or read directly within `R` via the function help page,
 
 ``` r
 ?detect_damage()
@@ -222,5 +137,11 @@ Bioinformatics and Computational Biology
 This work was done under the supervision of Prof Marlo Möller, Prof Gian van der Spuy, and Prof André Loxton.
 
 ## References {#references}
+
+1.  Luecken, Malte D, and Fabian J Theis. 2019. “Current Best Practices in Single-Cell RNA-Seq Analysis: A Tutorial.” *Molecular Systems Biology* 15 (6): e8746. [https://doi.org/10.15252/msb.20188746](https://doi.org/10.15252/msb.20188746)
+2.  Amezquita, Robert A., Aaron T. L. Lun, Etienne Becht, Vince J. Carey, Lindsay N. Carpp, Ludwig Geistlinger, Federico Marini, et al. 2020. “Orchestrating Single-Cell Analysis with Bioconductor.” *Nature Methods* 17 (2): 137–45. [https://doi.org/10.1038/s41592-019-0654-x](https://doi.org/10.1038/s41592-019-0654-x)
+3.  Osorio, Daniel, and James J Cai. 2021. “Systematic Determination of the Mitochondrial Proportion in Human and Mice Tissues for Single-Cell RNA-Sequencing Data Quality Control.” *Bioinformatics* 37 (7): 963–67. [https://doi.org/10.1093/bioinformatics/btaa751](https://doi.org/10.1093/bioinformatics/btaa751)
+4.  Montserrat-Ayuso, Tomàs, and Anna Esteve-Codina. 2024. “Revealing the Prevalence of Suboptimal Cells and Organs in Reference Cell Atlases: An Imperative for Enhanced Quality Control.” *BioRxiv*, April. [https://doi.org/10.1101/2024.04.18.590104](https://doi.org/10.1101/2024.04.18.590104)
+5.  McGinnis, C. S., Murrow, L. M., & Gartner, Z. J. (2019). DoubletFinder: Doublet Detection in Single-Cell RNA Sequencing Data Using Artificial Nearest Neighbors. *Cell Systems, 8*(4), 329-337.e4. [https://doi.org/10.1016/j.cels.2019.03.003](https://doi.org/10.1016/j.cels.2019.03.003)
 
 ------------------------------------------------------------------------

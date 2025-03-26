@@ -26,3 +26,7 @@ Imports:
     scales,
     RcppHNSW,
     rlang
+Suggests: 
+    knitr,
+    rmarkdown
+VignetteBuilder: knitr
