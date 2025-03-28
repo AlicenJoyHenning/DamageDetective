@@ -14,7 +14,7 @@ simulate_counts(
   beta_shape_parameters = NULL,
   ribosome_penalty = 0.001,
   generate_plot = TRUE,
-  seed = 7,
+  seed = NULL,
   organism = "Hsap"
 )
 }

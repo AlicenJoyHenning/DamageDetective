@@ -16,7 +16,7 @@ detect_damage(
   filter_threshold = 0.7,
   damage_levels = 5,
   damage_proportion = 0.15,
-  seed = 7,
+  seed = NULL,
   mito_quantile = 0.75,
   kN = NULL,
   generate_plot = TRUE,

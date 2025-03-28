@@ -30,7 +30,8 @@ Imports:
     scales,
     RcppHNSW,
     rlang,
-    tidyr
+    tidyr,
+    withr
 Suggests: 
     knitr,
     rmarkdown

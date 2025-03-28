@@ -106,6 +106,7 @@
 #'  metrics of the alteration.
 #' @import ggplot2
 #' @importFrom stats rbeta
+#' @importFrom withr with_seed
 #' @import patchwork
 #' @importFrom ggpubr get_legend
 #' @importFrom cowplot ggdraw draw_label plot_grid
@@ -131,9 +132,13 @@ simulate_counts <- function(
     beta_shape_parameters = NULL,
     ribosome_penalty = 0.001,
     generate_plot = TRUE,
-    seed = 7,
+    seed = NULL,
     organism = "Hsap"
 ) {
+  # Set RNG kind and seed for reproducibility
+  RNGkind("Mersenne-Twister", "Inversion")
+  if (!is.null(seed)) set.seed(seed)
+
   # Data preparations ----
 
   # Verify inputs
@@ -206,7 +211,8 @@ simulate_counts <- function(
 
     if (total_damaged != damaged_cell_number) {
       diff <- damaged_cell_number - total_damaged
-      damage_per_type <- damage_per_type + round(diff * damage_per_type / sum(damage_per_type))
+      damage_per_type <- damage_per_type + round(
+        diff * damage_per_type / sum(damage_per_type))
     }
 
     # Select the calculated number of damaged cells from each cell type
@@ -221,7 +227,9 @@ simulate_counts <- function(
   } else {
 
     # If no cell types were specified, cells are sampled randomly
-    damaged_cell_selections <- sample(seq_len(total_cells), damaged_cell_number, replace = FALSE)
+    damaged_cell_selections <- withr::with_seed(seed, {
+      sample(seq_len(total_cells), damaged_cell_number, replace = FALSE)
+    })
 
   }
 
@@ -273,7 +281,14 @@ simulate_counts <- function(
     prob_repeated <- rep(probabilities, times = gene_totals)
 
     # Sample transcripts to be lost
-    lost_transcripts <- sample(transcripts, size = total_loss, replace = FALSE, prob = prob_repeated)
+    lost_transcripts <- withr::with_seed(seed, {
+      sample(
+        transcripts,
+        size = total_loss,
+        replace = FALSE,
+        prob = prob_repeated
+      )
+    })
 
     # Sum remaining transcripts per gene
     remaining_counts <- table(factor(transcripts[!transcripts %in% lost_transcripts], levels = gene_idx$non_mito_idx))
@@ -307,9 +322,9 @@ simulate_counts <- function(
 
     # Return a list containing plot
     return(list(
-      matrix = damaged_count_matrix,
-      qc_summary = qc_summary,
-      plot = final_plot)
+                matrix = damaged_count_matrix,
+                qc_summary = qc_summary,
+                plot = final_plot)
     )
 
   }
