@@ -1,7 +1,7 @@
 <urlset xmlns = 'http://www.sitemaps.org/schemas/sitemap/0.9'>
 <url><loc>https://alicenjoyhenning.github.io/DamageDetective/404.html</loc></url>
 <url><loc>https://alicenjoyhenning.github.io/DamageDetective/LICENSE.html</loc></url>
-<url><loc>https://alicenjoyhenning.github.io/DamageDetective/articles/DamageDetective.html</loc></url>
+<url><loc>https://alicenjoyhenning.github.io/DamageDetective/articles/detection-vignette.html</loc></url>
 <url><loc>https://alicenjoyhenning.github.io/DamageDetective/articles/index.html</loc></url>
 <url><loc>https://alicenjoyhenning.github.io/DamageDetective/authors.html</loc></url>
 <url><loc>https://alicenjoyhenning.github.io/DamageDetective/index.html</loc></url>
@@ -9,7 +9,10 @@
 <url><loc>https://alicenjoyhenning.github.io/DamageDetective/reference/detect_damage.html</loc></url>
 <url><loc>https://alicenjoyhenning.github.io/DamageDetective/reference/get_organism_indices.html</loc></url>
 <url><loc>https://alicenjoyhenning.github.io/DamageDetective/reference/index.html</loc></url>
-<url><loc>https://alicenjoyhenning.github.io/DamageDetective/reference/plot_outcome.html</loc></url>
+<url><loc>https://alicenjoyhenning.github.io/DamageDetective/reference/plot_altered_counts.html</loc></url>
+<url><loc>https://alicenjoyhenning.github.io/DamageDetective/reference/plot_detection_outcome.html</loc></url>
+<url><loc>https://alicenjoyhenning.github.io/DamageDetective/reference/plot_simulation_outcome.html</loc></url>
+<url><loc>https://alicenjoyhenning.github.io/DamageDetective/reference/plot_unaltered_counts.html</loc></url>
 <url><loc>https://alicenjoyhenning.github.io/DamageDetective/reference/select_penalty.html</loc></url>
 <url><loc>https://alicenjoyhenning.github.io/DamageDetective/reference/simulate_counts.html</loc></url>
 <url><loc>https://alicenjoyhenning.github.io/DamageDetective/reference/test_counts.html</loc></url>
