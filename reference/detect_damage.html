@@ -54,10 +54,10 @@ input count matrix, where 'damage' is defined by the loss of cytoplasmic RNA.</p
 <span>  damage_distribution <span class="op">=</span> <span class="st">"right_skewed"</span>,</span>
 <span>  distribution_steepness <span class="op">=</span> <span class="st">"moderate"</span>,</span>
 <span>  beta_shape_parameters <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  project_name <span class="op">=</span> <span class="st">"Project"</span>,</span>
-<span>  filter_threshold <span class="op">=</span> <span class="fl">0.75</span>,</span>
+<span>  filter_threshold <span class="op">=</span> <span class="fl">0.7</span>,</span>
 <span>  damage_levels <span class="op">=</span> <span class="fl">5</span>,</span>
 <span>  damage_proportion <span class="op">=</span> <span class="fl">0.15</span>,</span>
+<span>  seed <span class="op">=</span> <span class="fl">7</span>,</span>
 <span>  mito_quantile <span class="op">=</span> <span class="fl">0.75</span>,</span>
 <span>  kN <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  generate_plot <span class="op">=</span> <span class="cn">TRUE</span>,</span>
@@ -144,13 +144,6 @@ offer.</p><ul><li><p>Default is 'NULL'</p></li>
 </ul></dd>
 
 
-<dt id="arg-project-name">project_name<a class="anchor" aria-label="anchor" href="#arg-project-name"></a></dt>
-<dd><p>String specifying a project identifier. Intended
-for generating quality control plots that are distinct across samples.
-However, is otherwise not relevant to the function.</p><ul><li><p>Default is "Project"</p></li>
-</ul></dd>
-
-
 <dt id="arg-filter-threshold">filter_threshold<a class="anchor" aria-label="anchor" href="#arg-filter-threshold"></a></dt>
 <dd><p>Numeric specifying the proportion of RNA loss
 above which a cell should be considered damaged.</p><ul><li><p>Default is 0.75.</p></li>
@@ -179,6 +172,14 @@ time for the function.</p><ul><li><p>Default is 5.</p></li>
 <dt id="arg-damage-proportion">damage_proportion<a class="anchor" aria-label="anchor" href="#arg-damage-proportion"></a></dt>
 <dd><p>Numeric describing what proportion
 of the input data should be altered to resemble damaged data.</p><ul><li><p>Must range between 0 and 1.</p></li>
+</ul></dd>
+
+
+<dt id="arg-seed">seed<a class="anchor" aria-label="anchor" href="#arg-seed"></a></dt>
+<dd><p>Numeric specifying the random seed to ensure reproducibility of
+the function's output. Setting a seed ensures that the random sampling
+and perturbation processes produce the same results when the function
+is run multiple times with the same input data and parameters.</p><ul><li><p>Default is 7.</p></li>
 </ul></dd>
 
 
