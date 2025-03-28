@@ -8,7 +8,7 @@ select_penalty(
   count_matrix,
   organism = "Hsap",
   mito_quantile = 0.75,
-  penalty_range = c(0.001, 0.5),
+  penalty_range = c(1e-05, 0.5),
   penalty_step = 0.005,
   max_penalty_trials = 10,
   target_damage = c(0.1, 0.99),

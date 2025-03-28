@@ -35,11 +35,6 @@
 #'  above which a cell should be considered damaged.
 #'
 #'  * Default is 0.75.
-#' @param project_name String specifying a project identifier. Intended
-#'  for generating quality control plots that are distinct across samples.
-#'  However, is otherwise not relevant to the function.
-#'
-#'  * Default is "Project"
 #' @param damage_levels Numeric specifying the number of distinct sets of
 #'  artificial damaged cells simulated, each with a defined range of loss.
 #'  Default ptions include,
@@ -121,10 +116,10 @@ detect_damage <- function(
     damage_distribution = "right_skewed",
     distribution_steepness = "moderate",
     beta_shape_parameters = NULL,
-    project_name = "Project",
-    filter_threshold = 0.75,
+    filter_threshold = 0.7,
     damage_levels = 5,
     damage_proportion = 0.15,
+    seed = 7,
     mito_quantile = 0.75,
     kN = NULL,
     generate_plot = TRUE,
@@ -223,7 +218,8 @@ detect_damage <- function(
       ribosome_penalty = ribosome_penalty,
       damage_distribution = damage_distribution,
       distribution_steepness = distribution_steepness,
-      generate_plot = FALSE
+      generate_plot = FALSE,
+      seed = seed
     )
 
     # Extract barcodes of damaged cells

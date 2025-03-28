@@ -95,6 +95,12 @@
 #'                 nuclear <- c("NEAT1","XIST", "MALAT1")
 #'
 #' * Default is "Hsap"
+#' @param seed Numeric specifying the random seed to ensure reproducibility of
+#'  the function's output. Setting a seed ensures that the random sampling
+#'  and perturbation processes produce the same results when the function
+#'  is run multiple times with the same input data and parameters.
+#'
+#'  * Default is 7.
 #' @return A list containing the altered count matrix, a data frame with summary
 #'  statistics, and, if specified, a 'ggplot2' object of the quality control
 #'  metrics of the alteration.
@@ -125,6 +131,7 @@ simulate_counts <- function(
     beta_shape_parameters = NULL,
     ribosome_penalty = 0.001,
     generate_plot = TRUE,
+    seed = 7,
     organism = "Hsap"
 ) {
   # Data preparations ----
@@ -214,7 +221,7 @@ simulate_counts <- function(
   } else {
 
     # If no cell types were specified, cells are sampled randomly
-    damaged_cell_selections <- sample(seq_len(total_cells), damaged_cell_number)
+    damaged_cell_selections <- sample(seq_len(total_cells), damaged_cell_number, replace = FALSE)
 
   }
 

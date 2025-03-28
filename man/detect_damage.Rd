@@ -13,10 +13,10 @@ detect_damage(
   damage_distribution = "right_skewed",
   distribution_steepness = "moderate",
   beta_shape_parameters = NULL,
-  project_name = "Project",
-  filter_threshold = 0.75,
+  filter_threshold = 0.7,
   damage_levels = 5,
   damage_proportion = 0.15,
+  seed = 7,
   mito_quantile = 0.75,
   kN = NULL,
   generate_plot = TRUE,
@@ -102,13 +102,6 @@ offer.
 \item Default is 'NULL'
 }}
 
-\item{project_name}{String specifying a project identifier. Intended
-for generating quality control plots that are distinct across samples.
-However, is otherwise not relevant to the function.
-\itemize{
-\item Default is "Project"
-}}
-
 \item{filter_threshold}{Numeric specifying the proportion of RNA loss
 above which a cell should be considered damaged.
 \itemize{
@@ -146,6 +139,14 @@ time for the function.
 of the input data should be altered to resemble damaged data.
 \itemize{
 \item Must range between 0 and 1.
+}}
+
+\item{seed}{Numeric specifying the random seed to ensure reproducibility of
+the function's output. Setting a seed ensures that the random sampling
+and perturbation processes produce the same results when the function
+is run multiple times with the same input data and parameters.
+\itemize{
+\item Default is 7.
 }}
 
 \item{mito_quantile}{Numeric between 0 and 1 specifying below what

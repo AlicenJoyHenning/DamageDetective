@@ -14,6 +14,7 @@ simulate_counts(
   beta_shape_parameters = NULL,
   ribosome_penalty = 0.001,
   generate_plot = TRUE,
+  seed = 7,
   organism = "Hsap"
 )
 }
@@ -87,6 +88,14 @@ verifying the perturbed data retains characteristics of true
 single cell data.
 \itemize{
 \item Default is TRUE.
+}}
+
+\item{seed}{Numeric specifying the random seed to ensure reproducibility of
+the function's output. Setting a seed ensures that the random sampling
+and perturbation processes produce the same results when the function
+is run multiple times with the same input data and parameters.
+\itemize{
+\item Default is 7.
 }}
 
 \item{organism}{String specifying the organism of origin of the input
