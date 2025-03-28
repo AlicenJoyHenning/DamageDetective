@@ -99,19 +99,21 @@
 #'  statistics, and, if specified, a 'ggplot2' object of the quality control
 #'  metrics of the alteration.
 #' @import ggplot2
-#' @import stats
+#' @importFrom stats rbeta
 #' @import patchwork
 #' @importFrom ggpubr get_legend
 #' @importFrom cowplot ggdraw draw_label plot_grid
+#' @keywords Simulation
 #' @export
 #' @examples
 #' data("test_counts", package = "DamageDetective")
 #'
 #' simulated_damage <- simulate_counts(
 #'   count_matrix = test_counts,
-#'   damage_proportion = 0.5,
+#'   damage_proportion = 0.1,
 #'   ribosome_penalty = 0.01,
-#'   target_damage = c(0.5, 0.9)
+#'   target_damage = c(0.5, 0.9),
+#'   generate_plot = FALSE
 #' )
 simulate_counts <- function(
     count_matrix,
@@ -121,48 +123,23 @@ simulate_counts <- function(
     damage_distribution = "right_skewed",
     distribution_steepness = "moderate",
     beta_shape_parameters = NULL,
-    ribosome_penalty = 0.01,
+    ribosome_penalty = 0.001,
     generate_plot = TRUE,
     organism = "Hsap"
 ) {
-  # Ensure user inputs are valid ----
-
-  # Check that count matrix is given
-  if (is.null(count_matrix)) stop("Please provide 'count_matrix' input.")
-  if (!inherits(count_matrix, "matrix") & !inherits(count_matrix, "CsparseMatrix")) {
-    stop("Please ensure 'count_matrix' is a matrix or a sparse matrix (dgCMatrix).")
-  }
-
-  # Ensure count matrix is of 'matrix' form
-  count_matrix <- as.matrix(count_matrix)
-
-  # Ensure user adjustments to default parameters are executable
-  if (is.null(damage_proportion)) stop("Please provide 'damage_proportion'.")
-  if (!is.numeric(damage_proportion) || damage_proportion < 0 || damage_proportion > 1) {
-    stop("Please ensure 'damage_proportion' is a numeric between 0 and 1.")
-  }
-  if (!is.null(beta_shape_parameters) &
-      length(beta_shape_parameters) != 2) {
-    stop("Please ensure 'beta_shape_parameters' is a numeric vector of length 2.")
-  }
-  if (!is.numeric(target_damage) || length(target_damage) != 2 || target_damage[1] < 0 || target_damage[2] > 1 || target_damage[1] >= target_damage[2]) {
-    stop("Please ensure 'target_damage' is a numeric vector of length 2, with values between 0 and 1, and the first value is less than the second.")
-  }
-  if (!distribution_steepness %in% c("shallow", "moderate", "steep")) {
-    stop("Please ensure 'distribution_steepness' is one of 'shallow', 'moderate', or 'steep'.")
-  }
-  if (!damage_distribution %in% c("right_skewed", "left_skewed", "symmetric")) {
-    stop("Please ensure 'damage_distribution' is one of 'right_skewed', 'left_skewed', or 'symmetric'.")
-  }
-  if (!is.numeric(ribosome_penalty) || ribosome_penalty < 0 || ribosome_penalty > 1) {
-    stop("Please ensure 'ribosome_penalty' is a numeric between 0 and 1.")
-  }
-  if (!organism %in% c("Hsap", "Mmus") & length(organism) != 3) {
-    stop("Please ensure 'organism' is one of 'Hsap' or 'Mmus', see documentation for non-standard organisms.")
-  }
-
-
   # Data preparations ----
+
+  # Verify inputs
+  check_simulate_inputs(
+    count_matrix,
+    damage_proportion,
+    beta_shape_parameters,
+    target_damage,
+    distribution_steepness,
+    damage_distribution,
+    ribosome_penalty,
+    organism
+  )
 
   # Calculate the total number of damaged cells given the target proportion
   total_cells <- ncol(count_matrix)
@@ -264,7 +241,7 @@ simulate_counts <- function(
   # Perturb selected cells ----
 
   # Initialize for storing modified count_matrix
-  damaged_count_matrix <- as.matrix(count_matrix)
+  damaged_count_matrix <- count_matrix
 
   for (i in seq_along(damaged_cell_selections)) {
     cell <- damaged_cell_selections[i]
@@ -315,55 +292,10 @@ simulate_counts <- function(
     New_RiboProp = as.numeric(colSums(damaged_count_matrix[gene_idx$ribo_idx, , drop = FALSE]) / colSums(damaged_count_matrix))
   )
 
-  # Generate plot before and after perturbation if specified
   if (generate_plot){
 
-    # Generate individual plots
-    mito_ribo_old <- plot_outcome(qc_summary, x = "Original_RiboProp", y = "Original_MitoProp", mito_ribo = TRUE, target_damage = target_damage)
-    mito_ribo_new <- plot_outcome(qc_summary, x = "New_RiboProp", y = "New_MitoProp", altered = TRUE, mito_ribo = TRUE, target_damage = target_damage)
-    mito_features_old <- plot_outcome(qc_summary, x = "Original_Features", y = "Original_MitoProp", target_damage = target_damage)
-    mito_features_new <- plot_outcome(qc_summary, x = "New_Features", y = "New_MitoProp", altered = TRUE, target_damage = target_damage)
-
-    # Extract the legend from mito_ribo_new
-    legend <- ggpubr::get_legend(mito_ribo_new)
-
-    # Create titles for the plots
-    title_original <- cowplot::ggdraw() +
-      cowplot::draw_label("Original count_matrix", fontface = 'bold', hjust = 0.5)
-
-    title_altered <- cowplot::ggdraw() +
-      cowplot::draw_label("Altered count_matrix", fontface = 'bold', hjust = 0.5)
-
-    # Arrange original plots in a single row
-    original_plots <- cowplot::plot_grid(mito_features_old, mito_ribo_old, ncol = 2)
-
-    # Arrange altered plots in a single row
-    mito_ribo_new_no_legend <- mito_ribo_new + ggplot2::theme(legend.position = "none")
-    mito_features_new_no_legend <- mito_features_new + ggplot2::theme(legend.position = "none")
-    altered_plots <- cowplot::plot_grid(mito_features_new_no_legend, mito_ribo_new_no_legend, ncol = 2)
-
-    # Combine the original and altered rows with their titles
-    original_with_title <- cowplot::plot_grid(title_original, original_plots, ncol = 1, rel_heights = c(0.2, 1))
-    altered_with_title <- cowplot::plot_grid(title_altered, altered_plots, ncol = 1, rel_heights = c(0.2, 1))
-
-    # Combine the original and altered rows, and position the legend in its own row
-    final_plot <- cowplot::plot_grid(
-      original_with_title,
-      altered_with_title,
-      legend,
-      ncol = 1,
-      rel_heights = c(1, 1, 0.25)
-    )
-
-    # Increase margins around the total plot area
-    final_plot <- final_plot +
-      ggplot2::theme(
-        plot.margin = ggplot2::margin(10, 20, 20, 20),  # top, right, bottom, left
-        panel.background = ggplot2::element_rect(fill = "white", color = "white"),
-        plot.background = ggplot2::element_rect(fill = "white", color = "white")  # Ensure the plot background is white
-      )
-
-    # Display the final plot
+    # Generate plot before and after perturbation
+    final_plot <- plot_simulation_outcome(qc_summary)
     print(final_plot)
 
     # Return a list containing plot

@@ -12,7 +12,7 @@ simulate_counts(
   damage_distribution = "right_skewed",
   distribution_steepness = "moderate",
   beta_shape_parameters = NULL,
-  ribosome_penalty = 0.01,
+  ribosome_penalty = 0.001,
   generate_plot = TRUE,
   organism = "Hsap"
 )
@@ -142,8 +142,10 @@ data("test_counts", package = "DamageDetective")
 
 simulated_damage <- simulate_counts(
   count_matrix = test_counts,
-  damage_proportion = 0.5,
+  damage_proportion = 0.1,
   ribosome_penalty = 0.01,
-  target_damage = c(0.5, 0.9)
+  target_damage = c(0.5, 0.9),
+  generate_plot = FALSE
 )
 }
+\keyword{Simulation}

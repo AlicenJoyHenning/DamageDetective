@@ -1,4 +1,6 @@
 url: https://alicenjoyhenning.github.io/DamageDetective/
 template:
   bootstrap: 5
-
+  bootswatch: flatly
+navbar:
+  bg: primary

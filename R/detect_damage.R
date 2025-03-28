@@ -80,6 +80,11 @@
 #'  is returned.
 #'
 #'  * Default is FALSE.
+#' @param palette String specifying the three colours that will be used to
+#'  create the continuous colour palette for colouring the 'damage_column'.
+#'
+#'  * Default is a range from purple to red,
+#'  c("grey", "#7023FD", "#E60006").
 #' @param verbose Boolean specifying whether messages and function progress
 #'  should be displayed in the console.
 #'
@@ -95,6 +100,7 @@
 #' @importFrom Seurat ScaleData PercentageFeatureSet FetchData
 #' @importFrom rlang expr !!! .data
 #' @importFrom stats prcomp
+#' @keywords Detection
 #' @export
 #' @examples
 #' data("test_counts", package = "DamageDetective")
@@ -102,7 +108,8 @@
 #' test <- detect_damage(
 #'   count_matrix = test_counts,
 #'   ribosome_penalty = 0.001,
-#'   project_name = "Test",
+#'   damage_levels = 3,
+#'   damage_proportion = 0.1,
 #'   generate_plot = FALSE
 #' )
 detect_damage <- function(
@@ -121,38 +128,20 @@ detect_damage <- function(
     mito_quantile = 0.75,
     kN = NULL,
     generate_plot = TRUE,
+    palette = c("grey", "#7023FD", "#E60006"),
     filter_counts = FALSE,
     verbose = TRUE
 ){
-  # Output warnings if user inputs are invalid ----
-  if (!is.numeric(filter_threshold) ||
-      filter_threshold > 1 ||
-      filter_threshold  < 0) {
-    stop("Please ensure 'filter_threshold' is a numeric between 0 and 1.")
-  }
-
-  if (!is.numeric(mito_quantile) ||
-      mito_quantile > 1 ||
-      mito_quantile < 0) {
-    stop("Please ensure 'mito_quantile' is a numeric between 0 and 1.")
-  }
-
-  if (!(damage_levels %in% c(3, 5, 7))) {
-    if (!is.list(damage_levels) ||
-        !all(grepl("^pANN_\\d+$", names(damage_levels))) ||
-        !all(sapply(damage_levels, function(x) is.numeric(x) && length(x) == 2))) {
-      stop("Please ensure `damage_levels` is of the correct format.")
-    }
-  }
-
-  if (!is.null(kN)){
-    if (!is.numeric(kN) ||
-        kN > dim(count_matrix)[2]) {
-      stop("Please ensure 'kN' is not greater than the number of cells.")
-    }
-  }
-
   # Data preparations for simulation ----
+
+  # Verify inputs
+  check_detect_inputs(
+    filter_threshold,
+    mito_quantile,
+    damage_levels,
+    count_matrix,
+    kN
+  )
 
   # Retrieve genes corresponding to the organism of interest
   gene_idx <- get_organism_indices(count_matrix, organism)
@@ -429,48 +418,11 @@ detect_damage <- function(
 
   # Visualise cells according to damage level
   if (generate_plot){
-
-    # Generate QC plots with cells coloured by scaled pANN
-    plot_mito_ribo <- plot_outcome(
-      data = metadata_plot,
-      x = "rb.prop",
-      y = "mt.prop",
-      damage_column = "DamageDetective",
-      altered = TRUE,
-      mito_ribo = TRUE,
-      target_damage = c(0.5, 0.9)
+    final_plot <- plot_detection_outcome(
+      qc_summary = metadata_plot,
+      target_damage = target_damage,
+      palette = palette
     )
-
-    plot_mito_features <- plot_outcome(
-      data = metadata_plot,
-      x = "features",
-      y = "mt.prop",
-      damage_column = "DamageDetective",
-      altered = TRUE,
-      target_damage = c(0.5, 0.9)
-    )
-
-    # Extract the legend from mito_ribo_new
-    legend <- ggpubr::get_legend(plot_mito_features)
-
-    # Create title for the plot
-    title_text <- paste0(project_name, " damage level predictions")
-    title <- cowplot::ggdraw() +
-      cowplot::draw_label(title_text, fontface = 'bold', hjust = 0.5)
-
-    # Arrange altered plots in a single row
-    mito_ribo_no_legend <- plot_mito_ribo + ggplot2::theme(legend.position = "none")
-    mito_features_no_legend <- plot_mito_features + ggplot2::theme(legend.position = "none")
-    combined_plots <- cowplot::plot_grid(mito_features_no_legend, mito_ribo_no_legend, ncol = 2)
-    final_plot <- cowplot::plot_grid(title, combined_plots, legend, ncol = 1, rel_heights = c(0.2, 1, 0.25))
-
-    # Increase margins around the total plot area
-    final_plot <- final_plot +
-      ggplot2::theme(
-        plot.margin = ggplot2::margin(5, 20, 20, 20),
-        panel.background = ggplot2::element_rect(fill = "white", color = "white"),
-        plot.background = ggplot2::element_rect(fill = "white", color = "white")
-      )
 
     # Display the final plot
     print(final_plot)

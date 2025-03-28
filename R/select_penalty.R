@@ -66,16 +66,18 @@
 #'  * Default is TRUE.
 #' @return Numeric representing the ideal ribosomal penalty for an input dataset.
 #' @importFrom dplyr %>% mutate if_else
-#' @importFrom stats quantile
+#' @importFrom stats quantile median
 #' @importFrom ggplot2 ggplot aes geom_point scale_color_gradientn labs theme_classic theme element_rect element_text
 #' @importFrom scales rescale
+#' @keywords Detection
 #' @export
 #' @examples
 #' data("test_counts", package = "DamageDetective")
 #'
 #' penalty <- select_penalty(
 #'  count_matrix = test_counts,
-#'  generate_plot = FALSE
+#'  stability_limit = 1,
+#'  max_penalty_trials = 1,
 #' )
 select_penalty <- function(
     count_matrix,
@@ -93,52 +95,19 @@ select_penalty <- function(
     annotated_celltypes = FALSE,
     return_output = "penalty",
     ribosome_penalty = NULL,
-    generate_plot = FALSE,
     verbose = TRUE
 ){
-
-  # Ensure user inputs are valid ----
-
-  if (!is.numeric(mito_quantile) ||
-      mito_quantile > 1 ||
-      mito_quantile  < 0) {
-    stop("Please ensure 'mito_quantile' is a numeric between 0 and 1.")
-  }
-
-  if (length(penalty_range) != 2) {
-    stop("Please ensure 'penalty_range' is a numerical vector of length 2.")
-  }
-
-  if (penalty_range[[1]] > penalty_range[[2]] ||
-      penalty_range[[1]] < 0 ||
-      penalty_range[[2]] > 1){
-    stop("Please ensure 'penalty_range' provides values between 0 and 1.")
-  }
-
-  if (!is.numeric(penalty_step) ||
-      penalty_step < 0 ||
-      penalty_step > 1){
-    stop("Please ensure 'penalty_step' is a numeric between 0 and 1.")
-  }
-
-  if (!is.numeric(max_penalty_trials) ||
-      max_penalty_trials > 1000){
-    stop("Please ensure 'max_penalty_trials' lies within a reasonable range.")
-  }
-
-  if (!is.numeric(stability_limit) ||
-      stability_limit > 1000){
-    stop("Please ensure 'stability_limit' lies within a reasonable range.")
-  }
-
-  if (!return_output %in% c("penalty", "full")){
-    stop("Please ensure 'return_output' is one of 'penalty' or 'full'.")
-  }
-
-  # Ensure count matrix is of 'matrix' form
-  count_matrix <- as.matrix(count_matrix)
-
   # Data preparations ----
+
+  # Verify inputs
+  check_penalty_inputs(
+    mito_quantile,
+    penalty_range,
+    penalty_step,
+    max_penalty_trials,
+    stability_limit,
+    return_output
+  )
 
   # Retrieve genes corresponding to the organism of interest
   gene_idx <- get_organism_indices(count_matrix, organism)
@@ -254,46 +223,12 @@ select_penalty <- function(
     combined_df$nearest_distance[rownames(combined_df) %in% rownames(artificial_cells)] <-
       artificial_cells$nearest_distance[match(rownames(combined_df)[rownames(combined_df) %in% rownames(artificial_cells)], rownames(artificial_cells))]
 
-    # Plot the mito vs ribo for true and artificial cells, colored by dTNN
-    if (generate_plot){
-
-      QC_plot <- plot_outcome(
-        data = combined_df,
-        x = "ribo",
-        y = "mito",
-        damage_column = "nearest_distance",
-        altered = TRUE,
-        mito_ribo = TRUE)
-
-      # Scale colour by nearest distances
-      plot <- QC_plot +
-        scale_color_gradientn(
-          colours = c("lightgray", "#7023FD", "#E60006"),
-          limits = c(0, max(combined_df$nearest_distance, na.rm = TRUE))
-        ) +
-        labs(title = paste("Penalty:", penalty, ", Median dTNN:", round(current_median_dTNN, 4)),
-             y = "Mito. proportion", x = "Ribo. Prop",
-             color = "dTNN")
-
-      # Display plot
-      print(plot)
-
-      # Store results for this penalty
-      penalty_results[[paste0("penalty_", penalty)]] <- list(
-        median = current_median_dTNN,
-        dTNN_medians = dTNN_medians,
-        plot = plot
+    penalty_results[[paste0("penalty_", penalty)]] <- list(
+      median = current_median_dTNN,
+      dTNN_medians = dTNN_medians
       )
-    } else {
-      # Else skip plot
-      penalty_results[[paste0("penalty_", penalty)]] <- list(
-        median = current_median_dTNN,
-        dTNN_medians = dTNN_medians
-      )
-    }
 
     # Phase Four: Stop if dTNN has stabilized ----
-
     if (length(penalty_results) == 1) {
       best_dTNN <-  current_median_dTNN
       best_penalty <- penalty

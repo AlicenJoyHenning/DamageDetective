@@ -20,6 +20,7 @@ detect_damage(
   mito_quantile = 0.75,
   kN = NULL,
   generate_plot = TRUE,
+  palette = c("grey", "#7023FD", "#E60006"),
   filter_counts = FALSE,
   verbose = TRUE
 )
@@ -169,6 +170,13 @@ single cell data.
 \item Default is TRUE.
 }}
 
+\item{palette}{String specifying the three colours that will be used to
+create the continuous colour palette for colouring the 'damage_column'.
+\itemize{
+\item Default is a range from purple to red,
+c("grey", "#7023FD", "#E60006").
+}}
+
 \item{filter_counts}{Boolean specifying whether the output matrix
 should be filtered, returned containing only cells that fall below
 the filter threshold. Alternatively, a data frame containing cell
@@ -221,7 +229,8 @@ data("test_counts", package = "DamageDetective")
 test <- detect_damage(
   count_matrix = test_counts,
   ribosome_penalty = 0.001,
-  project_name = "Test",
+  damage_levels = 3,
+  damage_proportion = 0.1,
   generate_plot = FALSE
 )
 }
@@ -230,3 +239,4 @@ McGinnis, C. S., Murrow, L. M., & Gartner, Z. J. (2019). DoubletFinder:
 Doublet Detection in Single-Cell RNA Sequencing Data Using Artificial
 Nearest Neighbors. \emph{Cell Systems, 8}(4), 329-337.e4. \doi{10.1016/j.cels.2019.03.003}
 }
+\keyword{Detection}

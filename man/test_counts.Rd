@@ -5,22 +5,24 @@
 \alias{test_counts}
 \title{Test Counts}
 \format{
-A sparse matrix with 10 009 features and 500 cells.
-\describe{
-\item{features}{Numeric. The number of features (genes) in the dataset.}
-\item{cells}{Numeric. The number of cells in the dataset.}
+A sparse matrix with:
+\itemize{
+\item 32 738 rows representing genes.
+\item 500 columns representing single cells.
+\item Stored expression values representing nonzero gene expression levels.
 }
 }
 \source{
-Generated for testing purposes
+\url{https://doi.org/10.1038/s41591-020-0769-8}
 }
 \usage{
-test_counts
+data(test_counts)
 }
 \description{
-This dataset contains a sparse matrix for testing purposes.
+A sparse matrix of PBMC single-cell gene expression data for function testing.
 }
-\examples{
-data("test_counts", package = "DamageDetective")
+\details{
+This dataset consists of an abridged sparse matrix originally derived from PBMC single-cell RNA sequencing data.
+The data was processed and stored in a sparse matrix format.
 }
 \keyword{datasets}

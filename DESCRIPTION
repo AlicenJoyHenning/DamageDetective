@@ -1,13 +1,17 @@
 Package: DamageDetective
 Type: Package
-Title: Detect Damage in Single Cell RNA Sequencing Data
+Title: Detecting Damaged Cells in Single-Cell RNA Sequencing Data
 Version: 0.0.1
 Authors@R: 
     person("Alicen", "Henning", email = "alicen.jhb@gmail.com", role = c("aut", "cre", "cph"))
-Description: Simulate datasets containing a specified proportion of damaged cells, 
-    estimate the distribution of damage in a dataset and detect the cells in 
-    a dataset that are most likely to be damaged given the similarity to 
-    simulated damaged cells. 
+Description: DamageDetective detects and filters damaged cells in single-cell 
+    RNA sequencing (scRNA-seq) datasets using a novel approach inspired by 
+    DoubletFinder. It compares each cell’s gene expression profile to simulated 
+    “damaged” versions of itself, quantifying damage severity based on the 
+    probabilistic escape of cytoplasmic RNA. This results in a damage score 
+    ranging from 0 to 1 for each cell. By aligning with biological definitions 
+    of damage, the method offers a more reliable and standardised approach for 
+    cleaning scRNA-seq data across diverse cell types, samples, and experiments.
 License: AGPL (>= 3)
 Encoding: UTF-8
 LazyData: true
@@ -25,9 +29,11 @@ Imports:
     Seurat,
     scales,
     RcppHNSW,
-    rlang
+    rlang,
+    tidyr
 Suggests: 
     knitr,
     rmarkdown
 VignetteBuilder: knitr
-URL: https://alicenjoyhenning.github.io/DamageDetective/
+URL: https://alicenjoyhenning.github.io/DamageDetective, https://github.com/alicenjoyhenning/DamageDetective
+BugReports: https://github.com/alicenjoyhenning/DamageDetective/issues

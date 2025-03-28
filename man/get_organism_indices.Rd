@@ -36,3 +36,4 @@ mitochondrial, non-mitochondrial, and ribosomal gene sets.
 \description{
 Retrieve genes corresponding to the organism of interest
 }
+\keyword{internal}

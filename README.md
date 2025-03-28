@@ -52,7 +52,7 @@ Begin by loading the dummy data provided by the package, `test_counts`, an artif
 ``` r
 data("test_counts", package = "DamageDetective")
 dim(test_counts)
-# [1] 10009   500
+# [1] 10000   500
 ```
 
 <ul>

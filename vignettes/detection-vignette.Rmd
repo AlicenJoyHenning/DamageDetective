@@ -1,0 +1,34 @@
+---
+title: "Damage cell quality control"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Damage cell quality control}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+# Tutorial overview
+
+The goal of DamageDetective is to simplify the process of making informed and reproducible damaged cell filtering decisions. This tutorial provides an outline of the steps required to make this possible, including:\
+- [Data preparation](#data-preparation)\
+- [Optimal parameter selection](#optimal-parameter-selection)\
+- [Damaged cell detection](#damaged-cell-detection)
+
+All data used for this tutorial is publicly available in R through the 
+
+## Data preparation {#data-preparation}
+
+```{r setup}
+library(DamageDetective)
+```
+
+## Optimal parameter selection {#optimal-parameter-selection}
+
+## Damaged cell detection {#damaged-cell-detection}
