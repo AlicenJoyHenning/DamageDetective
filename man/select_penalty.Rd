@@ -20,6 +20,7 @@ select_penalty(
   annotated_celltypes = FALSE,
   return_output = "penalty",
   ribosome_penalty = NULL,
+  seed = NULL,
   verbose = TRUE
 )
 }
@@ -158,6 +159,14 @@ Here, values closer to 0 represent a greater penalty.
 \item Default is 0.01.
 }}
 
+\item{seed}{Numeric specifying the random seed to ensure reproducibility of
+the function's output. Setting a seed ensures that the random sampling
+and perturbation processes produce the same results when the function
+is run multiple times with the same input data and parameters.
+\itemize{
+\item Default is 7.
+}}
+
 \item{verbose}{Boolean specifying whether messages and function progress
 should be displayed in the console.
 \itemize{
@@ -196,6 +205,7 @@ penalty <- select_penalty(
  count_matrix = test_counts,
  stability_limit = 1,
  max_penalty_trials = 1,
+ seed = 7
 )
 }
 \keyword{Detection}

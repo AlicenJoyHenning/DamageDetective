@@ -96,8 +96,8 @@ select_penalty <- function(
     annotated_celltypes = FALSE,
     return_output = "penalty",
     ribosome_penalty = NULL,
-    verbose = TRUE,
-    seed
+    seed = NULL,
+    verbose = TRUE
 ){
   # Data preparations ----
 

@@ -154,7 +154,8 @@ simulated_damage <- simulate_counts(
   damage_proportion = 0.1,
   ribosome_penalty = 0.01,
   target_damage = c(0.5, 0.9),
-  generate_plot = FALSE
+  generate_plot = FALSE,
+  seed = 7
 )
 }
 \keyword{Simulation}

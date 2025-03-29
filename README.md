@@ -74,10 +74,9 @@ dim(test_counts)
 While `detect_damage` requires only a count matrix as input, there are optional parameters that adjust the implementation of the function. Of these, we recommend `ribosome_penalty` be adjusted for each input dataset (see [vignette](https://alicenjoyhenning.github.io/DamageDetective/articles/detection-vignette.html) for more details). This is done automatically using the `select_penalty` function. This requires the count matrix as input and will output a numeric of the optimal penalty.
 
 ``` r
-set.seed(777) 
-
 penalty <- select_penalty(
-  count_matrix = test_counts
+  count_matrix = test_counts,
+  seed = 7
 )
 
 # View penalty

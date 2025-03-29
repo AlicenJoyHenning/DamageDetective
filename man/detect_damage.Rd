@@ -232,7 +232,8 @@ test <- detect_damage(
   ribosome_penalty = 0.001,
   damage_levels = 3,
   damage_proportion = 0.1,
-  generate_plot = FALSE
+  generate_plot = FALSE,
+  seed = 7
 )
 }
 \references{
