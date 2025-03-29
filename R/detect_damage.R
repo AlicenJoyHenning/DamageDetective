@@ -105,7 +105,8 @@
 #'   ribosome_penalty = 0.001,
 #'   damage_levels = 3,
 #'   damage_proportion = 0.1,
-#'   generate_plot = FALSE
+#'   generate_plot = FALSE,
+#'   seed = 7
 #' )
 detect_damage <- function(
     count_matrix,
@@ -159,7 +160,7 @@ detect_damage <- function(
     mito_ribo_data[, "mito"], probs = mito_quantile, na.rm = TRUE
   )
 
-  # Subset true cells below the cells in the top distribution 
+  # Subset true cells below the cells in the top distribution
   filtered_cells <- rownames(mito_ribo_data)[mito_ribo_data[, "mito"] <= mito_top]
 
   # Efficiently subset count_matrix while preserving sparsity

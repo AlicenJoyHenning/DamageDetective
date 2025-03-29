@@ -44,7 +44,8 @@ library(DamageDetective)
 help(package = "DamageDetective")
 ```
 
-------------------------------------------------------------------------
+<br>
+<br>
 
 ## Quick start
 
@@ -62,6 +63,9 @@ data("test_counts", package = "DamageDetective")
 dim(test_counts)
 # [1] 32738   500
 ```
+
+<br>
+
 
 ### Select parameters for damage detection
 
@@ -81,17 +85,17 @@ penalty
 # [1] 1e-05
 ```
 
-\
+<br>
 
 #### `filter_threshold`
 
 `DamageDetective` does not provide binary classifications, "cell" or "damage", it provides a score from 0 to 1 indicating the estimated extent of damage in the cell. This is taken directly from the extent of cytoplasmic RNA loss, a proportion ranging from 0 to 1, of the set of artificial cells which a true cell has the greatest proximity to.
 
-In other words, a user must select a value between 0 and 1 to define what level of damage, what proportion of RNA loss, above which they define cells necessary for exclusion. By default, `DamageDetective` offers the threshold of `0.7`. Values greater than `0.7` reflect more permissive filtering while those closer to `0` reflect more stringent filtering. We recommend the default for all cases but suggest that if adjustments are made, they are informed by inspecting the output `detect_damage` plots, `generate_plot = TRUE`.
+In other words, the user must choose a value between 0 and 1 to determine the level of damage, or proportion of RNA loss, above which cells will be excluded. By default, `DamageDetective` offers the threshold of `0.7`. Values greater than `0.7` reflect more permissive filtering while those closer to `0` reflect more stringent filtering. We recommend the default for all cases but suggest that if adjustments are made, they are informed by inspecting the output `detect_damage` plots, `generate_plot = TRUE`.
 
-The remaining parameters for `detect_damage` can be explored in the function help page `?detect_damage` or in the [introduction article](https://alicenjoyhenning.github.io/DamageDetective/articles/detection-vignette.html) online.
+The remaining parameters for `detect_damage` can be explored in the [function help page](https://alicenjoyhenning.github.io/DamageDetective/docs/reference/detect_damage.html)  or in the [introduction article](https://alicenjoyhenning.github.io/DamageDetective/articles/detection-vignette.html) online.
 
-\
+<br>
 
 ### Run damage detection
 
@@ -102,7 +106,8 @@ Damage detection can then be run using the count matrix and selected parameters 
 detection_results <- detect_damage(
   count_matrix = test_counts,
   ribosome_penalty = penalty,
-  filter_counts = TRUE
+  filter_counts = TRUE,
+  seed = 7
 )
 # Simulating cells between 1e-05 and 0.08 RNA loss...
 # Simulating cells between 0.1 and 0.3 RNA loss...
@@ -113,7 +118,7 @@ detection_results <- detect_damage(
 
 # View the resulting count matrix
 dim(detection_results$output)
-# [1] 32738   489
+# [1] 32738   470
 ```
 
 > Note, the above assumes the data is of human origin, see `organism` parameter.
@@ -123,7 +128,7 @@ dim(detection_results$output)
   ![Plot showing the output of test_counts with cells coloured according to the estimated level of damage](man/figures/plot.svg)
 </div>
 
-\
+<br>
 
 
 Alternatively, if `filter_counts` is set to `FALSE`, a data frame will be given as output containing the damage scores for each barcode. This is provided for interest to the user if they wish to interact with the `DamageDetective` results more directly. From here, a user can filter their data as done by `filter_counts`.
@@ -133,7 +138,8 @@ Alternatively, if `filter_counts` is set to `FALSE`, a data frame will be given 
 detection_results <- detect_damage(
   count_matrix = test_counts,
   ribosome_penalty = penalty,
-  filter_counts = FALSE
+  filter_counts = FALSE,
+  seed = 7
 )
 # Simulating cells between 1e-05 and 0.08 RNA loss...
 # Simulating cells between 0.1 and 0.3 RNA loss...
@@ -144,28 +150,29 @@ detection_results <- detect_damage(
 
 # View output
 print(head(detection_results$output), row.names = FALSE)
-# [1]                    Cells DamageDetective
-# [2] TCTGGAAAGCCCAACC_H1B2ln6      0.10000000
-# [3] CCGTTCATCGTGGGAA_H1B2ln2      0.46521739
-# [4] CTTCTCTTCAGCCTAA_H1B2ln1      0.05333667
-# [5] GGATTACAGGGATGGG_H1B2ln1      0.01334167
-# [6] TCTATTGTCTGGTATG_H1B2ln2      0.03111722
-# [7] ACGGGTCAGACAAGCC_H1B2ln6      0.30000000
+#                     Cells DamageDetective
+# TCTGGAAAGCCCAACC_H1B2ln6      0.03826609
+# CCGTTCATCGTGGGAA_H1B2ln2      0.48333333
+# CTTCTCTTCAGCCTAA_H1B2ln1      0.05217739
+# GGATTACAGGGATGGG_H1B2ln1      0.01044348
+# TCTATTGTCTGGTATG_H1B2ln2      0.02435478
+# ACGGGTCAGACAAGCC_H1B2ln6      0.28888889
 
 # Filter matrix 
-undamaged_cells <- filter(detection_results$output, DamageDetective <= 0.7)
+undamaged_cells <- filter(detection_results$output, DamageDetective < 0.7)
 filtered_matrix <- test_counts[, undamaged_cells]
 dim(filtered_matrix)
-# [1] 32738   490
+# [1] 32738   470
 ```
 
-\
-\
+
+
 
 
 ## License
 
 `DamageDetective` is made available for public use through the [GNU AGPL-3.0](https://opensource.org/licenses/AGPL-3.0) license.
+
 
 ## Authors
 
@@ -174,6 +181,7 @@ Stellenbosch University, Cape Town, South Africa\
 Bioinformatics and Computational Biology
 
 This work was done under the supervision of Prof Marlo Möller, Prof Gian van der Spuy, and Prof André Loxton.
+
 
 ## References
 

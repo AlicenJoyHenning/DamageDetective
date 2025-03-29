@@ -78,6 +78,7 @@
 #'  count_matrix = test_counts,
 #'  stability_limit = 1,
 #'  max_penalty_trials = 1,
+#'  seed = 7
 #' )
 select_penalty <- function(
     count_matrix,
@@ -95,7 +96,8 @@ select_penalty <- function(
     annotated_celltypes = FALSE,
     return_output = "penalty",
     ribosome_penalty = NULL,
-    verbose = TRUE
+    verbose = TRUE,
+    seed
 ){
   # Data preparations ----
 
