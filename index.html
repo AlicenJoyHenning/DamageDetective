@@ -123,10 +123,9 @@
 </h4>
 <p>While <code>detect_damage</code> requires only a count matrix as input, there are optional parameters that adjust the implementation of the function. Of these, we recommend <code>ribosome_penalty</code> be adjusted for each input dataset (see <a href="https://alicenjoyhenning.github.io/DamageDetective/articles/detection-vignette.html">vignette</a> for more details). This is done automatically using the <code>select_penalty</code> function. This requires the count matrix as input and will output a numeric of the optimal penalty.</p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">777</span><span class="op">)</span> </span>
-<span></span>
-<span><span class="va">penalty</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/select_penalty.html">select_penalty</a></span><span class="op">(</span></span>
-<span>  count_matrix <span class="op">=</span> <span class="va">test_counts</span></span>
+<code class="sourceCode R"><span><span class="va">penalty</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/select_penalty.html">select_penalty</a></span><span class="op">(</span></span>
+<span>  count_matrix <span class="op">=</span> <span class="va">test_counts</span>,</span>
+<span>  seed <span class="op">=</span> <span class="fl">7</span></span>
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># View penalty</span></span>

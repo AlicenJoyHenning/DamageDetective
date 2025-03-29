@@ -61,6 +61,7 @@ ideal <code>ribosome_penalty</code> value for the input data.</p>
 <span>  annotated_celltypes <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  return_output <span class="op">=</span> <span class="st">"penalty"</span>,</span>
 <span>  ribosome_penalty <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  seed <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  verbose <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
@@ -195,6 +196,14 @@ Here, values closer to 0 represent a greater penalty.</p><ul><li><p>Default is 0
 </ul></dd>
 
 
+<dt id="arg-seed">seed<a class="anchor" aria-label="anchor" href="#arg-seed"></a></dt>
+<dd><p>Numeric specifying the random seed to ensure reproducibility of
+the function's output. Setting a seed ensures that the random sampling
+and perturbation processes produce the same results when the function
+is run multiple times with the same input data and parameters.</p><ul><li><p>Default is 7.</p></li>
+</ul></dd>
+
+
 <dt id="arg-verbose">verbose<a class="anchor" aria-label="anchor" href="#arg-verbose"></a></dt>
 <dd><p>Boolean specifying whether messages and function progress
 should be displayed in the console.</p><ul><li><p>Default is TRUE.</p></li>
@@ -232,6 +241,7 @@ generated the lowest dTNN.</p>
 <span class="r-in"><span> count_matrix <span class="op">=</span> <span class="va">test_counts</span>,</span></span>
 <span class="r-in"><span> stability_limit <span class="op">=</span> <span class="fl">1</span>,</span></span>
 <span class="r-in"><span> max_penalty_trials <span class="op">=</span> <span class="fl">1</span>,</span></span>
+<span class="r-in"><span> seed <span class="op">=</span> <span class="fl">7</span></span></span>
 <span class="r-in"><span><span class="op">)</span></span></span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> Testing penalty of 1e-05...</span>
 <span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>'.Random.seed' is not an integer vector but of type 'NULL', so ignored</span>
