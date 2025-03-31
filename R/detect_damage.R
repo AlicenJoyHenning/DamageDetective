@@ -89,10 +89,6 @@
 #' @importFrom RcppHNSW hnsw_knn
 #' @importFrom dplyr %>% group_by summarise mutate case_when first pull
 #' @importFrom ggplot2 ggsave theme element_rect margin
-#' @importFrom cowplot ggdraw draw_label plot_grid
-#' @importFrom ggpubr get_legend
-#' @importFrom Seurat CreateSeuratObject NormalizeData FindVariableFeatures
-#' @importFrom Seurat ScaleData PercentageFeatureSet FetchData
 #' @importFrom rlang expr !!! .data
 #' @importFrom stats prcomp
 #' @keywords Detection
@@ -117,7 +113,6 @@ detect_damage <- function(
     damage_distribution = "right_skewed",
     distribution_steepness = "moderate",
     beta_shape_parameters = NULL,
-    filter_threshold = 0.7,
     damage_levels = 5,
     damage_proportion = 0.15,
     seed = NULL,
@@ -125,6 +120,7 @@ detect_damage <- function(
     kN = NULL,
     generate_plot = TRUE,
     palette = c("grey", "#7023FD", "#E60006"),
+    filter_threshold = 0.7,
     filter_counts = FALSE,
     verbose = TRUE
 ){

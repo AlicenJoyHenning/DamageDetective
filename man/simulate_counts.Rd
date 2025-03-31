@@ -158,4 +158,3 @@ simulated_damage <- simulate_counts(
   seed = 7
 )
 }
-\keyword{Simulation}

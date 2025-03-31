@@ -14,21 +14,183 @@ knitr::opts_chunk$set(
 )
 ```
 
-# Tutorial overview
+## Tutorial overview
 
-The goal of DamageDetective is to simplify the process of making informed and reproducible damaged cell filtering decisions. This tutorial provides an outline of the steps required to make this possible, including:\
-- [Data preparation](#data-preparation)\
-- [Optimal parameter selection](#optimal-parameter-selection)\
-- [Damaged cell detection](#damaged-cell-detection)
+The goal of `DamageDetective` is to simplify the process of making informed and reproducible damaged cell filtering decisions in single cell RNA sequencing (scRNA-seq) data pre-processing. This tutorial provides an outline of the steps needed to achieve this with `DamageDetective`,\
 
-All data used for this tutorial is publicly available in R through the 
+-   Data preparation
+-   Parameter selection
+-   Damaged cell detection
 
-## Data preparation {#data-preparation}
+Ensure the following packages are installed and made available in your R environment to follow along with the tutorial.
 
-```{r setup}
-library(DamageDetective)
+-   [DamageDetective](https://github.com/AlicenJoyHenning/DamageDetective), [SeuratData](https://github.com/satijalab/seurat-data), [Seurat](https://github.com/satijalab/seurat), [scRNAseq](https://bioconductor.org/packages/release/data/experiment/html/scRNAseq.html)
+, and [SingleCellExperiment](https://bioconductor.org/packages/release/bioc/html/SingleCellExperiment.html).
+
+```{r, include=FALSE, message=FALSE, warning=FALSE}
+
+invisible(lapply(c("Seurat", "SeuratData", "SingleCellExperiment", "scRNAseq"), requireNamespace, quietly = TRUE))
+
+if (requireNamespace("SeuratData", quietly = TRUE)) {
+  data("pbmc3k", package = "SeuratData")
+}
+
 ```
 
-## Optimal parameter selection {#optimal-parameter-selection}
 
-## Damaged cell detection {#damaged-cell-detection}
+
+## Data preparation
+
+The entirety of this tutorial will take place in `R`, home to three popular scRNA-seq data storage types,
+
+-   `Seurat` object
+
+-   `SingleCellExperiment` (`sce`) class
+
+-   Or directly as a matrix compiled from the alignment output, `matrix.mtx`, `barcodes.tsv`, and `features.tsv`.
+
+
+`DamageDetective` operates with data in a compressed, column-oriented sparse matrix (dgCMatrix). This format efficiently handles the sparse nature of single-cell data by indexing only nonzero elements within each column. As the damage simulation at the core of `DamageDetective` involves multiple column-wise operations, this is the preferred input format.
+
+Each of the above data types can act as the starting point to damage detection through conversion to a sparse matrix.
+
+
+### `Seurat` object
+
+We will use the `SeuratData` package to retrieve a publicly available `Seurat` object for demonstration. This object stores the data from peripheral blood mononuclear cells, or PBMCs, sequenced using the 10X Genomics platform.
+
+```{r, eval=FALSE}
+# Retrieve the dataset of interest
+SeuratData::InstallData("pbmc3k")
+data("pbmc3k")
+```
+
+```{r, echo=FALSE, eval=TRUE}
+# Circumventing the inability of the vignette to load directly from SeuratData
+pbmc3k <- readRDS("~/Projects/demonstrations/pbmc3k.rds")
+```
+
+Upon loading, we see the `Seurat` object contains 2700 cells and 13 714 features. The count matrix can be extracted from the assay slot of the object which, by default, is already in compressed column-oriented sparse form. The counts can now be used as input for `DamageDetective`. 
+
+```{r}
+# View dimensions & class
+class(pbmc3k)[1]
+dim(pbmc3k)
+
+# Extract the count matrix
+pbmc3k_counts <- pbmc3k@assays$RNA$counts
+
+# View data
+class(pbmc3k_counts)[1]
+dim(pbmc3k_counts)
+```
+
+### Alignment output
+
+We will use publicly available alignment data from the [10X Genomics website](https://www.10xgenomics.com/datasets) for demonstration, specifically the '1k PBMCs from a healthy donor (v3)' data available [here](https://www.10xgenomics.com/datasets/1-k-pbm-cs-from-a-healthy-donor-v-3-chemistry-3-standard-3-0-0) following the link named "Feature / cell matrix (filtered)". 
+
+The alignment output comes in the form of three files containing the row names (genes), column names (cell identifiers), and input values (counts) of the count matrix. These can be compiled using `Seurat`'s `ReadMtx` which simplifies the count matrix compilation into one function. This involves uncompressing zipped files, mapping feature names to HGNC gene symbols, and converting the matrix to sparse format. `ReadMtx` output can be used directly for `DamageDetective`.
+
+Upon converting, we see this dataset contains 1222 cells and 33 538 genes.
+
+
+```{r}
+# Set the file paths relative to location on your device
+matrix_file <- "~/Projects/demonstrations/matrix.mtx.gz"     
+barcodes_file <- "~/Projects/demonstrations/barcodes.tsv.gz" 
+features_file <- "~/Projects/demonstrations/features.tsv.gz" 
+
+# Construct the sparse matrix
+alignment_counts <- Seurat::ReadMtx(
+  mtx = matrix_file,
+  cells = barcodes_file,
+  features = features_file
+)
+
+# View output
+class(alignment_counts)[1]
+dim(alignment_counts)
+```
+
+### `sce` object
+
+We will use the `scRNAseq` package to retrieve a publicly available `sce` object for demonstration. This object stores PBMC data of multiple samples from a study investigating influenza and yellow fever vaccine responsiveness. We will focus on the "234_d0" sample coming from an individual with a high vaccine responsiveness.
+
+Upon loading, we see the object contains 2358 cells and 32 738 features. The count matrix is stored as a delayed matrix within the assay slot of the `sce` object. This format enables memory-efficient operations by delaying computations until explicitly requested, rather than storing all values in memory upfront. However, `DamageDetective` computations require repeated access to the matrix and delays at each request greatly accumulate to slow down the process. Thus, we must convert the delayed matrix to the required `DamageDetective` format of a sparse matrix using a dense matrix intermediate.
+
+```{r}
+# Retrieve multisample dataset
+pbmc_sce <- scRNAseq::fetchDataset("kotliarov-pbmc-2020", "2024-04-18")
+
+# Extract barcodes of the sample of interest
+metadata <- SummarizedExperiment::colData(pbmc_sce)
+sample_sce <- subset(metadata, sample == "234_d0")
+sample_sce <- rownames(sample_sce)
+
+# Isolate counts from multisample and subset for sample of interest
+pbmc_counts <- SummarizedExperiment::assay(pbmc_sce, "counts")
+sample_counts  <- pbmc_counts[, sample_sce]
+
+# Convert delayed to sparse format
+sample_counts <- as.matrix(sample_counts)
+sample_counts <- as(sample_counts, "dgCMatrix")
+
+# View output
+class(sample_counts)[1]
+dim(sample_counts)
+
+```
+
+## Parameter selection
+Damage detection is carried out by the `detect_damage` function that requires only one input to run, the count matrix, but accepts additional parameters. 
+
+These can be divided into two categories, those that adjust the computation and will result in a different output, **computation parameters**, and those that adjust how the user receives the output of the computation but cannot change it, **aesthetic parameters**. Each will be explored briefly before deciding on appropriate selections.
+
+### Computational parameters
+**Dataset-defined**  
+For some parameters, the choice of input is predetermined by the input data and in most cases needs no alteration from the default case. This includes specifying the `organism` from which the data came (human is default) and whether the data contains `annotated_celltypes` (default is FALSE). 
+
+The `ribosome_penalty` parameter is determined by the input data but requires some computational work to uncover, work that must be done for each input dataset. This parameter accounts for the unexpectedly lower probability of ribosomal RNA loss observed in real single cell data than what is expected based on transcript abundance alone. 
+
+The images
+
+
+loss of cytoplasmic RNA 
+
+
+
+
+<br>
+
+**Table summarising `detect_damage` parameters** 
+
+| Parameter | Description | Options | Default | Recommendations |
+| --- | --- | --- | --- | --- | 
+| seed | Number set to make the output of random sampling reproducible | any integer | 7 | - | 
+
+
+
+
+
+
+
+
+
+
+
+### Aesthetic parameters
+This
+
+    organism = "Hsap",
+    annotated_celltypes = FALSE,
+    target_damage = c(0.1, 0.8),
+    damage_distribution = "right_skewed",
+    distribution_steepness = "moderate",
+    beta_shape_parameters = NULL,
+
+
+## Damaged cell detection
+
+# References
+
+1.  Satija R, Hoffman P, Butler A (2025). *SeuratData: Install and Manage Seurat Datasets*. R package version 0.2.2.9002, commit 3e51f44303069b64f5dc4d68e6a3d4a343f55c39, <https://github.com/satijalab/seurat-data>.

@@ -15,7 +15,7 @@
 #'  coloring the damage levels.
 #' @return A `ggplot2` object representing the combined plot of altered
 #' and unaltered counts.
-#' @importFrom ggplot2 ggplot aes geom_point facet_wrap scale_y_continuous labs theme_minimal
+#' @import ggplot2
 #' @importFrom dplyr select rename mutate filter bind_rows
 #' @importFrom tidyr pivot_longer
 #' @importFrom scales rescale
@@ -161,7 +161,7 @@ plot_altered_counts <- function(
       State = factor(ifelse(.data$State == "Original", "Original", "Altered"), levels = c("Original", "Altered"))
     ) %>%
     dplyr::rename(
-      `Ribo. prop` = .data$RiboProp
+      `Ribo. prop` = RiboProp
     ) %>%
     dplyr::filter(.data$State == "Altered") %>%
     tidyr::pivot_longer(
@@ -176,7 +176,7 @@ plot_altered_counts <- function(
     dplyr::slice_sample(n = 1)
 
   new_row <- template_row %>%
-    dplyr::mutate(X_Value = 0.9)
+    dplyr::mutate(X_Value = (max(qc_summary$Original_RiboProp) + 0.1))
 
   qc_summary_long_filtered <- bind_rows(qc_summary_long_filtered, new_row)
 
@@ -193,7 +193,7 @@ plot_altered_counts <- function(
         barwidth = 10
       )
     ) +
-    ggplot2::scale_y_continuous(limits = c(0, 1)) +
+    # ggplot2::scale_y_continuous(limits = c(0, 1)) +
     ggplot2::labs(x = NULL, y = "Mito. prop", color = "Damage score") +
     ggplot2::theme_minimal(base_size = 10) +
     ggplot2::theme(
@@ -269,7 +269,7 @@ plot_unaltered_counts <- function(
   plot <- ggplot2::ggplot(qc_summary_long_filtered, aes(x = .data$X_Value, y = .data$MitoProp)) +
     ggplot2::geom_point(alpha = 0.7, size = 0.7, colour = "grey") +
     ggplot2::facet_wrap(~ X_Variable, scales = "free_x", strip.position = "bottom") +
-    ggplot2::scale_y_continuous(limits = c(0, 1)) +
+    # ggplot2::scale_y_continuous(limits = c(0, 1)) +
     ggplot2::labs(x = NULL, y = "Mito. prop", color = "Damage score") +
     ggplot2::theme_minimal(base_size = 10) +
     ggplot2::theme(

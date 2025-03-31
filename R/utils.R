@@ -194,7 +194,7 @@ check_penalty_inputs <- function(
 # Global variables ----
 
 utils::globalVariables(c(
-  "Features", "New_Features", "New_MitoProp", "New_RiboProp",
+  "Features", "New_Features", "New_MitoProp", "New_RiboProp", "RiboProp",
   "Original_Features", "Original_MitoProp", "Original_RiboProp", "Ribo. prop"
 ))
 

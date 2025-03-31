@@ -110,7 +110,6 @@
 #' @import patchwork
 #' @importFrom ggpubr get_legend
 #' @importFrom cowplot ggdraw draw_label plot_grid
-#' @keywords Simulation
 #' @export
 #' @examples
 #' data("test_counts", package = "DamageDetective")
@@ -135,10 +134,10 @@ simulate_counts <- function(
     generate_plot = TRUE,
     seed = NULL,
     organism = "Hsap"
-) {
-  # Set RNG kind and seed for reproducibility
-  RNGkind("Mersenne-Twister", "Inversion")
+){
+  # Set a default seed if NULL
   if (!is.null(seed)) set.seed(seed)
+  RNGkind("Mersenne-Twister", "Inversion")
 
   # Data preparations ----
 
@@ -254,24 +253,32 @@ simulate_counts <- function(
   damaged_cells <- match(colnames(count_matrix)[damaged_cell_selections], damage_label$barcode)
   damage_label$damage_level[damaged_cells] <- damage_levels
 
+  # Calculate initial stats
+  total_counts <- colSums(count_matrix)
+  Original_Features <- colSums(count_matrix != 0)
+  Original_MitoProp <- colSums(count_matrix[gene_idx$mito_idx, , drop = FALSE]) / total_counts
+  Original_RiboProp <- colSums(count_matrix[gene_idx$ribo_idx, , drop = FALSE]) / total_counts
+
+
   # Perturb selected cells ----
 
-  # Initialize for storing modified count_matrix
-  damaged_count_matrix <- count_matrix
+  # Create barcode map
+  barcode_map <- match(colnames(count_matrix), damage_label$barcode)
 
   for (i in seq_along(damaged_cell_selections)) {
     cell <- damaged_cell_selections[i]
 
     # Determine number of transcripts to lose
-    cell_damage_level <- damage_label$damage_level[match(colnames(count_matrix)[cell], damage_label$barcode)]
-    total_count <- sum(damaged_count_matrix[gene_idx$non_mito_idx, cell])
+    #cell_damage_level <- damage_label$damage_level[match(colnames(count_matrix)[cell], damage_label$barcode)]
+    cell_damage_level <- damage_label$damage_level[barcode_map[cell]]  # Faster access
+    total_count <- sum(count_matrix[gene_idx$non_mito_idx, cell])
     total_loss <- round(cell_damage_level * total_count)
 
     # Expand genes into transcript-level representations
-    transcripts <- rep(gene_idx$non_mito_idx, times = damaged_count_matrix[gene_idx$non_mito_idx, cell])
+    transcripts <- rep(gene_idx$non_mito_idx, times = count_matrix[gene_idx$non_mito_idx, cell])
 
     # Assign probability of loss based on gene abundance
-    gene_totals <- damaged_count_matrix[gene_idx$non_mito_idx, cell]
+    gene_totals <-count_matrix[gene_idx$non_mito_idx, cell]
     probabilities <- gene_totals / total_count
 
     # Apply penalty to ribosomal genes and normalize
@@ -295,24 +302,27 @@ simulate_counts <- function(
     remaining_counts <- table(factor(transcripts[!transcripts %in% lost_transcripts], levels = gene_idx$non_mito_idx))
 
     # Update count matrix
-    damaged_count_matrix[gene_idx$non_mito_idx, cell] <- as.integer(remaining_counts)
+    count_matrix[gene_idx$non_mito_idx, cell] <- as.integer(remaining_counts)
   }
 
   # Consolidate & plot simulation output ----
 
   # Isolate indices for correct ordering of damage status
-  matched_indices <- match(colnames(damaged_count_matrix), damage_label$barcode)
+  matched_indices <- match(colnames(count_matrix), damage_label$barcode)
+
+  # Total counts
+  total_counts <- colSums(count_matrix)
 
   # Generate qc_summary with numeric values
   qc_summary <- data.frame(
     Cell = colnames(count_matrix),
     Damaged_Level = as.numeric(damage_label$damage_level[matched_indices]),
-    Original_Features = as.numeric(colSums(count_matrix != 0)),
-    New_Features = as.numeric(colSums(damaged_count_matrix != 0)),
-    Original_MitoProp = as.numeric(colSums(count_matrix[gene_idx$mito_idx, , drop = FALSE]) / colSums(count_matrix)),
-    New_MitoProp = as.numeric(colSums(damaged_count_matrix[gene_idx$mito_idx, , drop = FALSE]) / colSums(damaged_count_matrix)),
-    Original_RiboProp = as.numeric(colSums(count_matrix[gene_idx$ribo_idx, , drop = FALSE]) / colSums(count_matrix)),
-    New_RiboProp = as.numeric(colSums(damaged_count_matrix[gene_idx$ribo_idx, , drop = FALSE]) / colSums(damaged_count_matrix))
+    Original_Features = Original_Features,
+    New_Features = colSums(count_matrix != 0),
+    Original_MitoProp = Original_MitoProp,
+    New_MitoProp = colSums(count_matrix[gene_idx$mito_idx, , drop = FALSE]) / total_counts,
+    Original_RiboProp = Original_RiboProp,
+    New_RiboProp = colSums(count_matrix[gene_idx$ribo_idx, , drop = FALSE]) / total_counts
   )
 
   if (generate_plot){
@@ -323,16 +333,16 @@ simulate_counts <- function(
 
     # Return a list containing plot
     return(list(
-                matrix = damaged_count_matrix,
-                qc_summary = qc_summary,
-                plot = final_plot)
+      matrix = count_matrix,
+      qc_summary = qc_summary,
+      plot = final_plot)
     )
 
   }
 
   # Else return without plot
   return(list(
-    matrix = damaged_count_matrix,
+    matrix = count_matrix,
     qc_summary = qc_summary
   )
   )

@@ -26,13 +26,17 @@ Imports:
     ggpubr,
     Matrix,
     patchwork,
-    Seurat,
     scales,
     RcppHNSW,
     rlang,
     tidyr,
     withr
-Suggests: 
+Suggests:
+    Seurat,
+    SeuratData,
+    SingleCellExperiment,
+    SummarizedExperiment,
+    scRNAseq,
     knitr,
     rmarkdown
 VignetteBuilder: knitr

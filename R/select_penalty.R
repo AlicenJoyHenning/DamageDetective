@@ -29,7 +29,7 @@
 #' @param penalty_range Numerical vector of length 2 specifying the lower
 #'  and upper limit of values tested for the ribosomal penalty.
 #'
-#'  * Default is c(0.001, 0.5).
+#'  * Default is c(0.00001, 0.5).
 #' @param penalty_step Numeric specifying the value added to each increment
 #'  of penalty tested.
 #'
@@ -66,10 +66,9 @@
 #'  * Default is TRUE.
 #' @return Numeric representing the ideal ribosomal penalty for an input dataset.
 #' @importFrom dplyr %>% mutate if_else
-#' @importFrom stats quantile median
+#' @importFrom stats quantile
 #' @importFrom ggplot2 ggplot aes geom_point scale_color_gradientn labs theme_classic theme element_rect element_text
 #' @importFrom scales rescale
-#' @keywords Detection
 #' @export
 #' @examples
 #' data("test_counts", package = "DamageDetective")
@@ -87,7 +86,7 @@ select_penalty <- function(
     penalty_range = c(0.00001, 0.5),
     penalty_step = 0.005,
     max_penalty_trials = 10,
-    target_damage = c(0.1, 0.99),
+    target_damage = c(0.2, 0.99), # change from 0.1, more interested in this area
     damage_distribution = "right_skewed",
     distribution_steepness = "steep",
     beta_shape_parameters = NULL,
@@ -138,8 +137,15 @@ select_penalty <- function(
 
   # Define penalty values to test (starting from 0.001, increasing by 0.05)
   penalties <- seq(penalty_range[[1]], penalty_range[[2]], by = penalty_step)
-  penalty_results <- list()
-  best_dTNN_median <- Inf # Initialize best dTNN median to a very high value
+
+  # Initialize data frame for results
+  penalty_results <- data.frame(
+    Penalty = numeric(0),
+    Global_mean = numeric(0)
+  )
+
+  # Initialize best dTNN mean to a very high value
+  best_dTNN_mean <- Inf
 
   # Initialize counter for consecutive non-improving iterations
   stability_counter <- 0
@@ -167,6 +173,7 @@ select_penalty <- function(
       ribosome_penalty = penalty,
       damage_distribution = damage_distribution,
       distribution_steepness = distribution_steepness,
+      seed = seed,
       generate_plot = FALSE
     )
 
@@ -216,29 +223,37 @@ select_penalty <- function(
                                          labels = FALSE)
     artificial_cells$nearest_distance <- nearest_dists
 
-    # Median PC distance from true nearest neighbours (dTNN) for each damage level
-    dTNN_medians <- tapply(artificial_cells$nearest_distance, artificial_cells$damage_level, median)
-    current_median_dTNN <- median(dTNN_medians)
+    # Mean PC distance from true nearest neighbours (dTNN) for each damage level
+    dTNN_means <- tapply(artificial_cells$nearest_distance, artificial_cells$damage_level, mean)
+    current_mean_dTNN <- mean(dTNN_means)
 
     # Match output to cell in combined df
     combined_df$nearest_distance <- 0
     combined_df$nearest_distance[rownames(combined_df) %in% rownames(artificial_cells)] <-
       artificial_cells$nearest_distance[match(rownames(combined_df)[rownames(combined_df) %in% rownames(artificial_cells)], rownames(artificial_cells))]
 
-    penalty_results[[paste0("penalty_", penalty)]] <- list(
-      median = current_median_dTNN,
-      dTNN_medians = dTNN_medians
-      )
+    # Store results directly in the data frame
+    # Convert dTNN_means to a data frame with appropriate column names
+    dTNN_means_df <- as.data.frame(t(dTNN_means))  # Transpose to ensure correct shape
+    colnames(dTNN_means_df) <- paste0("Mean_", names(dTNN_means))  # Ensure unique column names
+
+    # Create a new row with the penalty and global mean
+    new_row <- data.frame(Penalty = penalty,
+                          Global_mean = mean(dTNN_means, na.rm = TRUE),
+                          dTNN_means_df)
+
+    # Bind the new row to penalty_results (ensuring column consistency)
+    penalty_results <- dplyr::bind_rows(penalty_results, new_row)
 
     # Phase Four: Stop if dTNN has stabilized ----
-    if (length(penalty_results) == 1) {
-      best_dTNN <-  current_median_dTNN
+    if (nrow(penalty_results) == 1) {
+      best_dTNN <-  current_mean_dTNN
       best_penalty <- penalty
     }
 
-    if (length(penalty_results) > 1) {
-      if (current_median_dTNN < best_dTNN) {
-        best_dTNN <- current_median_dTNN
+    if (nrow(penalty_results) > 1) {
+      if (current_mean_dTNN < best_dTNN) {
+        best_dTNN <- current_mean_dTNN
         best_penalty <- penalty
 
         # Reset stability counter on improvement
@@ -255,7 +270,14 @@ select_penalty <- function(
         }
       }
     }
+
+    # Ensure lowest mean is selected
+    best_penalty <- penalty_results$Penalty[which.min(penalty_results$Global_mean)]
+
   }
+
+  # Rename columns of output
+  colnames(penalty_results)[-(1:2)] <- paste0("Mean_", seq_along(colnames(penalty_results)[-(1:2)]))
 
   # Return the selected penalty along with penalty results
   if (return_output == "penalty"){
@@ -263,6 +285,8 @@ select_penalty <- function(
   }
 
   if (return_output == "full"){
+
+
     return(list(penalty_results = penalty_results,
                 selected_penalty = best_penalty))
   }

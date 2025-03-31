@@ -13,7 +13,6 @@ detect_damage(
   damage_distribution = "right_skewed",
   distribution_steepness = "moderate",
   beta_shape_parameters = NULL,
-  filter_threshold = 0.7,
   damage_levels = 5,
   damage_proportion = 0.15,
   seed = NULL,
@@ -21,6 +20,7 @@ detect_damage(
   kN = NULL,
   generate_plot = TRUE,
   palette = c("grey", "#7023FD", "#E60006"),
+  filter_threshold = 0.7,
   filter_counts = FALSE,
   verbose = TRUE
 )
@@ -102,12 +102,6 @@ offer.
 \item Default is 'NULL'
 }}
 
-\item{filter_threshold}{Numeric specifying the proportion of RNA loss
-above which a cell should be considered damaged.
-\itemize{
-\item Default is 0.75.
-}}
-
 \item{damage_levels}{Numeric specifying the number of distinct sets of
 artificial damaged cells simulated, each with a defined range of loss.
 Default ptions include,
@@ -176,6 +170,12 @@ create the continuous colour palette for colouring the 'damage_column'.
 \itemize{
 \item Default is a range from purple to red,
 c("grey", "#7023FD", "#E60006").
+}}
+
+\item{filter_threshold}{Numeric specifying the proportion of RNA loss
+above which a cell should be considered damaged.
+\itemize{
+\item Default is 0.75.
 }}
 
 \item{filter_counts}{Boolean specifying whether the output matrix
