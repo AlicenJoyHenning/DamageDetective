@@ -33,7 +33,6 @@ Imports:
     withr
 Suggests:
     Seurat,
-    SeuratData,
     SingleCellExperiment,
     SummarizedExperiment,
     scRNAseq,
