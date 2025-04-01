@@ -29,7 +29,7 @@
 
     <a class="navbar-brand me-2" href="index.html">DamageDetective</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.0.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.99.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -76,21 +76,20 @@
 <h2 id="description">Description<a class="anchor" aria-label="anchor" href="#description"></a>
 </h2>
 <p>Damaged cells are a class of low-quality artifact targeted during the quality control (QC) of single-cell RNA-seq (scRNA-seq) data. These are cells that, for unknown reasons, succumbed to stress before being sequenced and as a result are associated with gene expression data that fails to describe the cells in their true, viable states.</p>
-<p>Current approaches detect damage according to deviations in cell-level quality control metrics. These approaches assume all viable cells follow similar distributions across QC metrics, an assumption that does not hold in heterogeneous samples. More recent methods address this by analysing cells at a population level, isolating cells with similar distributions before assessing finer deviations. This assumes that all distinct populations represent true cells, meaning abundant damage is at risk of misclassification.</p>
-<p>Of potentially greater concern is the implicit assumption of all current approaches that damage is a binary classification. Damage exists on a non-linear, cell-type-specific spectrum whose correlation to QC deviation is uncertain. Ultimately, the filtering decisions of current approaches are controlled more by statistical definitions of deviation than biological definitions of damage.</p>
-<p><code>DamageDetective</code> takes a different approach inspired by <code>DoubletFinder</code><math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msup><mi></mi><mn>1</mn></msup><annotation encoding="application/x-tex">^1</annotation></semantics></math>, a high performing, community accepted tool for QC of doublets, another low quality scRNA-seq artifact. Here, rather than detecting damage by measuring the extent to which cells deviate from each other, damage is detected by measuring the extent to which cells deviate from artificially damaged profiles of themselves. <code>DamageDetective</code> estimates the damage severity of true cells as a score from 0 to 1, providing an intuitive, reproducible scale for damage filtering that is standardised across cell types, samples, and experiments.</p>
+<p>Current approaches detect damage according to deviations in cell-level quality control metrics. These approaches assume all viable cells follow similar distributions across QC metrics, an assumption that rarely holds in heterogeneous samples. More recent methods address this by analysing cells at a population level, isolating cells with similar distributions before assessing finer deviations. However, this assumes that all distinct distributions are associated with true cells, meaning abundant damage is at risk of being undetected. Ultimately, the filtering decisions of current approaches are controlled more by statistical definitions of deviation than biological definitions of damage.</p>
+<p><code>DamageDetective</code> takes a different approach inspired by <code>DoubletFinder</code><math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msup><mi></mi><mn>1</mn></msup><annotation encoding="application/x-tex">^1</annotation></semantics></math>, a high performing tool for doublet QC, another low quality scRNA-seq artifact. Here, rather than detecting damage by measuring the extent to which cells deviate from each other, damage is detected by measuring the extent to which cells deviate from artificially damaged profiles of themselves. <code>DamageDetective</code> estimates the damage severity of true cells as a score from 0 to 1, providing an intuitive, reproducible scale for filtering that is standardised across cell types, samples, and experiments.</p>
 <p>For more information, please refer to the articles provided on the <code>DamageDetective</code> <a href="https://alicenjoyhenning.github.io/DamageDetective/" title="https://alicenjoyhenning.github.io/DamageDetective/">website</a>.</p>
+<p><br></p>
 </div>
 <div class="section level2">
 <h2 id="installation">Installation<a class="anchor" aria-label="anchor" href="#installation"></a>
 </h2>
-<p><code>DamageDetective</code> can be installed from CRAN using,</p>
+<p><code>DamageDetective</code> can be installed from CRAN,</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html" class="external-link">install.packages</a></span><span class="op">(</span><span class="st">'DamageDetective'</span><span class="op">)</span></span></code></pre></div>
-<p>Alternatively, the latest development version can be installed directly from GitHub using,</p>
-<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://devtools.r-lib.org/" class="external-link">devtools</a></span><span class="op">)</span></span>
-<span><span class="fu">devtools</span><span class="fu">::</span><span class="fu"><a href="https://remotes.r-lib.org/reference/install_github.html" class="external-link">install_github</a></span><span class="op">(</span><span class="st">"AlicenJoyHenning/DamageDetective"</span>, build_vignettes <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
+<p>Or directly from GitHub,</p>
+<pre><code><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://devtools.r-lib.org/" class="external-link">devtools</a></span><span class="op">)</span></span>
+<span><span class="fu">devtools</span><span class="fu">::</span><span class="fu"><a href="https://remotes.r-lib.org/reference/install_github.html" class="external-link">install_github</a></span><span class="op">(</span><span class="st">"AlicenJoyHenning/DamageDetective"</span>, build_vignettes <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre>
 <p>To verify installation, run the following to see if you can view the package vignette and the function help pages,</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://alicenjoyhenning.github.io/DamageDetective">DamageDetective</a></span><span class="op">)</span></span>
@@ -100,15 +99,13 @@
 <div class="section level2">
 <h2 id="quick-start">Quick start<a class="anchor" aria-label="anchor" href="#quick-start"></a>
 </h2>
-<p>The demonstrations below can be followed immediately after loading the package and serve as a test to ensure all is running smoothly.</p>
+<p>The demonstrations below can be followed immediately after loading the package and serve as a test to ensure all is running smoothly. For more detailed examples and explanations, please refer to the package vignette.</p>
 <div class="section level3">
 <h3 id="prepare-input">Prepare input<a class="anchor" aria-label="anchor" href="#prepare-input"></a>
 </h3>
-<p>Damage detection is carried out by the <code>detect_damage</code> function. This requires only a count matrix to run, preferably in sparse format. We will use the dummy count matrix provided by <code>DamageDetective</code>, <code>test_counts</code>, a subset of the <a href="10.1038/s41591-020-0769-8%5D">(kotliarov-pbmc-2020)</a> PBMC dataset provided in the <code>scRNAseq</code><math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msup><mi></mi><mn>2</mn></msup><annotation encoding="application/x-tex">^2</annotation></semantics></math> package.</p>
+<p>Damage detection is carried out by the <code>detect_damage</code> function. This requires only a count matrix to run. We will use the dummy count matrix provided by <code>DamageDetective</code>, <code>test_counts</code>, a subset of the <a href="10.1038/s41591-020-0769-8%5D">(kotliarov-pbmc-2020)</a> PBMC dataset provided in the <code>scRNAseq</code><math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msup><mi></mi><mn>2</mn></msup><annotation encoding="application/x-tex">^2</annotation></semantics></math> package.</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://alicenjoyhenning.github.io/DamageDetective">DamageDetective</a></span><span class="op">)</span></span>
-<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://Matrix.R-forge.R-project.org" class="external-link">Matrix</a></span><span class="op">)</span></span>
-<span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/utils/data.html" class="external-link">data</a></span><span class="op">(</span><span class="st">"test_counts"</span>, package <span class="op">=</span> <span class="st">"DamageDetective"</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/dim.html" class="external-link">dim</a></span><span class="op">(</span><span class="va">test_counts</span><span class="op">)</span></span>
 <span><span class="co"># [1] 32738   500</span></span></code></pre></div>
@@ -121,7 +118,7 @@
 <h4 id="ribosome_penalty">
 <code>ribosome_penalty</code><a class="anchor" aria-label="anchor" href="#ribosome_penalty"></a>
 </h4>
-<p>While <code>detect_damage</code> requires only a count matrix as input, there are optional parameters that adjust the implementation of the function. Of these, we recommend <code>ribosome_penalty</code> be adjusted for each input dataset (see <a href="https://alicenjoyhenning.github.io/DamageDetective/articles/detection-vignette.html">vignette</a> for more details). This is done automatically using the <code>select_penalty</code> function. This requires the count matrix as input and will output a numeric of the optimal penalty.</p>
+<p>While <code>detect_damage</code> requires only a count matrix as input, there are optional parameters that adjust the implementation of the function. Of these, we recommend <code>ribosome_penalty</code> be adjusted for each input dataset. This is done automatically using the <code>select_penalty</code> function. This requires the count matrix as input and will output a numeric of the optimal penalty.</p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">penalty</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/select_penalty.html">select_penalty</a></span><span class="op">(</span></span>
 <span>  count_matrix <span class="op">=</span> <span class="va">test_counts</span>,</span>
@@ -131,7 +128,6 @@
 <span><span class="co"># View penalty</span></span>
 <span><span class="va">penalty</span></span>
 <span><span class="co"># [1] 1e-05</span></span></code></pre></div>
-<p><br></p>
 </div>
 <div class="section level4">
 <h4 id="filter_threshold">
@@ -257,7 +253,7 @@ Bioinformatics and Computational Biology</p>
 <div class="developers">
 <h2 data-toc-skip>Developers</h2>
 <ul class="list-unstyled">
-<li>Alicen Henning <br><small class="roles"> Author, maintainer, copyright holder </small>  </li>
+<li>Alicen Henning <br><small class="roles"> Author, maintainer, copyright holder </small> <a href="https://orcid.org/0009-0004-0535-1624" target="orcid.widget" aria-label="ORCID" class="external-link"><span class="fab fa-orcid orcid" aria-hidden="true"></span></a> </li>
 </ul>
 </div>
 

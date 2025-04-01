@@ -26,7 +26,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">DamageDetective</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.0.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.99.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -70,33 +70,352 @@
 
     
     
-<div class="section level2">
-<h2 id="tutorial-overview">Tutorial overview<a class="anchor" aria-label="anchor" href="#tutorial-overview"></a>
-</h2>
-<p>The goal of DamageDetective is to simplify the process of making
-informed and reproducible damaged cell filtering decisions. This
-tutorial provides an outline of the steps required to make this
-possible, including:<br>
-- <a href="#data-preparation">Data preparation</a><br>
-- <a href="#optimal-parameter-selection">Optimal parameter
-selection</a><br>
-- <a href="#damaged-cell-detection">Damaged cell detection</a></p>
-<p>All data used for this tutorial is publicly available in R through
-the</p>
+<div class="section level3">
+<h3 id="tutorial-overview">Tutorial overview<a class="anchor" aria-label="anchor" href="#tutorial-overview"></a>
+</h3>
+<p>The goal of <code>DamageDetective</code> is to simplify the process
+of making informed and reproducible damaged cell filtering decisions in
+single cell RNA sequencing (scRNA-seq) data pre-processing. This
+tutorial provides an outline of the steps needed to achieve this with
+<code>DamageDetective</code>,<br></p>
+<ul>
+<li>Data preparation</li>
+<li>Parameter selection</li>
+<li>Damaged cell detection</li>
+</ul>
+<p>Ensure the following packages are installed and made available in
+your R environment to follow along with the tutorial.</p>
+<ul>
+<li>
+<a href="https://github.com/AlicenJoyHenning/DamageDetective" class="external-link">DamageDetective</a>,
+<a href="https://github.com/satijalab/seurat-data" class="external-link">SeuratData</a>, <a href="https://github.com/satijalab/seurat" class="external-link">Seurat</a>, <a href="https://bioconductor.org/packages/release/data/experiment/html/scRNAseq.html" class="external-link">scRNAseq</a>
+, and <a href="https://bioconductor.org/packages/release/bioc/html/SingleCellExperiment.html" class="external-link">SingleCellExperiment</a>.</li>
+</ul>
+</div>
 <div class="section level3">
 <h3 id="data-preparation">Data preparation<a class="anchor" aria-label="anchor" href="#data-preparation"></a>
 </h3>
+<p>The entirety of this tutorial will take place in <code>R</code>, home
+to three popular scRNA-seq data storage types,</p>
+<ul>
+<li><p><code>Seurat</code> object</p></li>
+<li><p><code>SingleCellExperiment</code> (<code>sce</code>)
+class</p></li>
+<li><p>Or directly as a matrix compiled from the alignment output,
+<code>matrix.mtx</code>, <code>barcodes.tsv</code>, and
+<code>features.tsv</code>.</p></li>
+</ul>
+<p><code>DamageDetective</code> operates with data in a compressed,
+column-oriented sparse matrix (dgCMatrix). This format efficiently
+handles the sparse nature of single-cell data by indexing only nonzero
+elements within each column. As the damage simulation at the core of
+<code>DamageDetective</code> involves multiple column-wise operations,
+this is the preferred input format.</p>
+<p>Each of the above data types can act as the starting point to damage
+detection through conversion to a sparse matrix.</p>
+<div class="section level4">
+<h4 id="seurat-object">
+<code>Seurat</code> object<a class="anchor" aria-label="anchor" href="#seurat-object"></a>
+</h4>
+<p>We will use the <code>SeuratData</code> package to retrieve a
+publicly available <code>Seurat</code> object for demonstration. This
+object stores the data from peripheral blood mononuclear cells, or
+PBMCs, sequenced using the 10X Genomics platform.</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://alicenjoyhenning.github.io/DamageDetective">DamageDetective</a></span><span class="op">)</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="co"># Retrieve the dataset of interest</span></span>
+<span><span class="fu">SeuratData</span><span class="fu">::</span><span class="fu">InstallData</span><span class="op">(</span><span class="st">"pbmc3k"</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/utils/data.html" class="external-link">data</a></span><span class="op">(</span><span class="st">"pbmc3k"</span><span class="op">)</span></span></code></pre></div>
+<p>Upon loading, we see the <code>Seurat</code> object contains 2700
+cells and 13 714 features. The count matrix can be extracted from the
+assay slot of the object which, by default, is already in compressed
+column-oriented sparse form. The counts can now be used as input for
+<code>DamageDetective</code>.</p>
+<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># View dimensions &amp; class</span></span>
+<span><span class="co"># class(pbmc3k)[1]</span></span>
+<span><span class="co"># dim(pbmc3k)</span></span>
+<span><span class="co"># </span></span>
+<span><span class="co"># # Extract the count matrix</span></span>
+<span><span class="co"># pbmc3k_counts &lt;- pbmc3k[["RNA"]]$counts</span></span>
+<span><span class="co"># </span></span>
+<span><span class="co"># # View data</span></span>
+<span><span class="co"># class(pbmc3k_counts)[1]</span></span>
+<span><span class="co"># dim(pbmc3k_counts)</span></span></code></pre></div>
+</div>
+<div class="section level4">
+<h4 id="alignment-output">Alignment output<a class="anchor" aria-label="anchor" href="#alignment-output"></a>
+</h4>
+<p>We will use publicly available alignment data from the <a href="https://www.10xgenomics.com/datasets" class="external-link">10X Genomics website</a> for
+demonstration, specifically the ‘1k PBMCs from a healthy donor (v3)’
+data available <a href="https://www.10xgenomics.com/datasets/1-k-pbm-cs-from-a-healthy-donor-v-3-chemistry-3-standard-3-0-0" class="external-link">here</a>
+following the link named “Feature / cell matrix (filtered)”.</p>
+<p>The alignment output comes in the form of three files containing the
+row names (genes), column names (cell identifiers), and input values
+(counts) of the count matrix. These can be compiled using
+<code>Seurat</code>’s <code>ReadMtx</code> which simplifies the count
+matrix compilation into one function. This involves uncompressing zipped
+files, mapping feature names to HGNC gene symbols, and converting the
+matrix to sparse format. <code>ReadMtx</code> output can be used
+directly for <code>DamageDetective</code>.</p>
+<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># Set the file paths relative to location on your device</span></span>
+<span><span class="va">matrix_file</span> <span class="op">&lt;-</span> <span class="st">"~/Projects/demonstrations/matrix.mtx.gz"</span>     </span>
+<span><span class="va">barcodes_file</span> <span class="op">&lt;-</span> <span class="st">"~/Projects/demonstrations/barcodes.tsv.gz"</span> </span>
+<span><span class="va">features_file</span> <span class="op">&lt;-</span> <span class="st">"~/Projects/demonstrations/features.tsv.gz"</span> </span>
+<span></span>
+<span><span class="co"># Construct the sparse matrix</span></span>
+<span><span class="va">alignment_counts</span> <span class="op">&lt;-</span> <span class="fu">Seurat</span><span class="fu">::</span><span class="fu"><a href="https://satijalab.org/seurat/reference/ReadMtx.html" class="external-link">ReadMtx</a></span><span class="op">(</span></span>
+<span>  mtx <span class="op">=</span> <span class="va">matrix_file</span>,</span>
+<span>  cells <span class="op">=</span> <span class="va">barcodes_file</span>,</span>
+<span>  features <span class="op">=</span> <span class="va">features_file</span></span>
+<span><span class="op">)</span></span></code></pre></div>
+<p>Upon converting, we see this dataset contains 1222 cells and 33 538
+genes.</p>
+<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># View output</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/class.html" class="external-link">class</a></span><span class="op">(</span><span class="va">alignment_counts</span><span class="op">)</span><span class="op">[</span><span class="fl">1</span><span class="op">]</span></span>
+<span><span class="co">#&gt; [1] "dgCMatrix"</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/dim.html" class="external-link">dim</a></span><span class="op">(</span><span class="va">alignment_counts</span><span class="op">)</span></span>
+<span><span class="co">#&gt; [1] 33538  1222</span></span></code></pre></div>
+</div>
+<div class="section level4">
+<h4 id="sce-object">
+<code>sce</code> object<a class="anchor" aria-label="anchor" href="#sce-object"></a>
+</h4>
+<p>We will use the <code>scRNAseq</code> package to retrieve a publicly
+available <code>sce</code> object for demonstration. This object stores
+PBMC data of multiple samples from a study investigating influenza and
+yellow fever vaccine responsiveness. We will focus on the “234_d0”
+sample coming from an individual with a high vaccine responsiveness.</p>
+<p>Upon loading, we see the object contains 2358 cells and 32 738
+features. The count matrix is stored as a delayed matrix within the
+assay slot of the <code>sce</code> object. This format enables
+memory-efficient operations by delaying computations until explicitly
+requested, rather than storing all values in memory upfront. However,
+<code>DamageDetective</code> computations require repeated access to the
+matrix and delays at each request greatly accumulate to slow down the
+process. Thus, we must convert the delayed matrix to the required
+<code>DamageDetective</code> format of a sparse matrix using a dense
+matrix intermediate.</p>
+<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># Retrieve multisample dataset</span></span>
+<span><span class="va">pbmc_sce</span> <span class="op">&lt;-</span> <span class="fu">scRNAseq</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/scRNAseq/man/fetchDataset.html" class="external-link">fetchDataset</a></span><span class="op">(</span><span class="st">"kotliarov-pbmc-2020"</span>, <span class="st">"2024-04-18"</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># Extract barcodes of the sample of interest</span></span>
+<span><span class="va">metadata</span> <span class="op">&lt;-</span> <span class="fu">SummarizedExperiment</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/SummarizedExperiment/man/SummarizedExperiment-class.html" class="external-link">colData</a></span><span class="op">(</span><span class="va">pbmc_sce</span><span class="op">)</span></span>
+<span><span class="va">sample_sce</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/subset.html" class="external-link">subset</a></span><span class="op">(</span><span class="va">metadata</span>, <span class="va">sample</span> <span class="op">==</span> <span class="st">"234_d0"</span><span class="op">)</span></span>
+<span><span class="va">sample_sce</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">rownames</a></span><span class="op">(</span><span class="va">sample_sce</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># Isolate counts from multisample and subset for sample of interest</span></span>
+<span><span class="va">pbmc_counts</span> <span class="op">&lt;-</span> <span class="fu">SummarizedExperiment</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/SummarizedExperiment/man/SummarizedExperiment-class.html" class="external-link">assay</a></span><span class="op">(</span><span class="va">pbmc_sce</span>, <span class="st">"counts"</span><span class="op">)</span></span>
+<span><span class="va">sample_counts</span>  <span class="op">&lt;-</span> <span class="va">pbmc_counts</span><span class="op">[</span>, <span class="va">sample_sce</span><span class="op">]</span></span>
+<span></span>
+<span><span class="co"># Convert delayed to sparse format</span></span>
+<span><span class="va">sample_counts</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">as.matrix</a></span><span class="op">(</span><span class="va">sample_counts</span><span class="op">)</span></span>
+<span><span class="va">sample_counts</span> <span class="op">&lt;-</span> <span class="fu">as</span><span class="op">(</span><span class="va">sample_counts</span>, <span class="st">"dgCMatrix"</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># View output</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/class.html" class="external-link">class</a></span><span class="op">(</span><span class="va">sample_counts</span><span class="op">)</span><span class="op">[</span><span class="fl">1</span><span class="op">]</span></span>
+<span><span class="co">#&gt; [1] "dgCMatrix"</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/dim.html" class="external-link">dim</a></span><span class="op">(</span><span class="va">sample_counts</span><span class="op">)</span></span>
+<span><span class="co">#&gt; [1] 32738  2358</span></span></code></pre></div>
+</div>
 </div>
 <div class="section level3">
-<h3 id="optimal-parameter-selection">Optimal parameter selection<a class="anchor" aria-label="anchor" href="#optimal-parameter-selection"></a>
+<h3 id="parameter-selection">Parameter selection<a class="anchor" aria-label="anchor" href="#parameter-selection"></a>
 </h3>
+<p>Damage detection is carried out by the <code>detect_damage</code>
+function that requires only one input to run, the count matrix, but
+accepts additional parameters.</p>
+<p>These can be divided into two categories, those that adjust the
+computation and will result in a different output, <strong>computation
+parameters</strong>, and those that adjust how the user receives the
+output of the computation but cannot change it, <strong>aesthetic
+parameters</strong>. Each will be explored briefly before deciding on
+appropriate selections.</p>
+<div class="section level4">
+<h4 id="computational-parameters">Computational parameters<a class="anchor" aria-label="anchor" href="#computational-parameters"></a>
+</h4>
+<p><strong>Dataset-defined</strong><br>
+For some parameters, the choice of input is predetermined by the input
+data and in most cases needs no alteration from the default case. This
+includes specifying the <code>organism</code> from which the data came
+(human is default) and whether the data contains
+<code>annotated_celltypes</code> (default is FALSE).</p>
+<p>The <code>ribosome_penalty</code> parameter is determined by the
+input data but requires some computational work to uncover, work that
+must be done for each input dataset. This parameter accounts for the
+unexpectedly lower probability of ribosomal RNA loss observed in real
+single cell data than what is expected based on transcript abundance
+alone.</p>
+<p>The images</p>
+<p>loss of cytoplasmic RNA</p>
+<p><br></p>
+<p><strong>Table summarising <code>detect_damage</code>
+parameters</strong></p>
+<table class="table">
+<colgroup>
+<col width="20%">
+<col width="20%">
+<col width="20%">
+<col width="20%">
+<col width="20%">
+</colgroup>
+<thead><tr class="header">
+<th>Parameter</th>
+<th>Description</th>
+<th>Options</th>
+<th>Default</th>
+<th>Recommendations</th>
+</tr></thead>
+<tbody><tr class="odd">
+<td>seed</td>
+<td>Number set to make the output of random sampling reproducible</td>
+<td>any integer</td>
+<td>7</td>
+<td>-</td>
+</tr></tbody>
+</table>
+</div>
+<div class="section level4">
+<h4 id="aesthetic-parameters">Aesthetic parameters<a class="anchor" aria-label="anchor" href="#aesthetic-parameters"></a>
+</h4>
+<p>This</p>
+<pre><code>organism = "Hsap",
+annotated_celltypes = FALSE,
+target_damage = c(0.1, 0.8),
+damage_distribution = "right_skewed",
+distribution_steepness = "moderate",
+beta_shape_parameters = NULL,</code></pre>
+</div>
 </div>
 <div class="section level3">
 <h3 id="damaged-cell-detection">Damaged cell detection<a class="anchor" aria-label="anchor" href="#damaged-cell-detection"></a>
 </h3>
 </div>
+<div class="section level3">
+<h3 id="session-information">Session Information<a class="anchor" aria-label="anchor" href="#session-information"></a>
+</h3>
+<pre><code><span><span class="co">#&gt; R version 4.4.3 (2025-02-28)</span></span>
+<span><span class="co">#&gt; Platform: x86_64-pc-linux-gnu</span></span>
+<span><span class="co">#&gt; Running under: Ubuntu 24.04.2 LTS</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; Matrix products: default</span></span>
+<span><span class="co">#&gt; BLAS:   /usr/lib/x86_64-linux-gnu/openblas-pthread/libblas.so.3 </span></span>
+<span><span class="co">#&gt; LAPACK: /usr/lib/x86_64-linux-gnu/openblas-pthread/libopenblasp-r0.3.26.so;  LAPACK version 3.12.0</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; locale:</span></span>
+<span><span class="co">#&gt;  [1] LC_CTYPE=C.UTF-8       LC_NUMERIC=C           LC_TIME=C.UTF-8       </span></span>
+<span><span class="co">#&gt;  [4] LC_COLLATE=C.UTF-8     LC_MONETARY=C.UTF-8    LC_MESSAGES=C.UTF-8   </span></span>
+<span><span class="co">#&gt;  [7] LC_PAPER=C.UTF-8       LC_NAME=C              LC_ADDRESS=C          </span></span>
+<span><span class="co">#&gt; [10] LC_TELEPHONE=C         LC_MEASUREMENT=C.UTF-8 LC_IDENTIFICATION=C   </span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; time zone: UTC</span></span>
+<span><span class="co">#&gt; tzcode source: system (glibc)</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; attached base packages:</span></span>
+<span><span class="co">#&gt; [1] stats     graphics  grDevices utils     datasets  methods   base     </span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; loaded via a namespace (and not attached):</span></span>
+<span><span class="co">#&gt;   [1] RcppAnnoy_0.0.22            splines_4.4.3              </span></span>
+<span><span class="co">#&gt;   [3] later_1.4.1                 BiocIO_1.16.0              </span></span>
+<span><span class="co">#&gt;   [5] bitops_1.0-9                filelock_1.0.3             </span></span>
+<span><span class="co">#&gt;   [7] tibble_3.2.1                polyclip_1.10-7            </span></span>
+<span><span class="co">#&gt;   [9] XML_3.99-0.18               fastDummies_1.7.5          </span></span>
+<span><span class="co">#&gt;  [11] httr2_1.1.2                 lifecycle_1.0.4            </span></span>
+<span><span class="co">#&gt;  [13] ensembldb_2.30.0            globals_0.16.3             </span></span>
+<span><span class="co">#&gt;  [15] lattice_0.22-6              MASS_7.3-64                </span></span>
+<span><span class="co">#&gt;  [17] alabaster.base_1.6.1        magrittr_2.0.3             </span></span>
+<span><span class="co">#&gt;  [19] plotly_4.10.4               sass_0.4.9                 </span></span>
+<span><span class="co">#&gt;  [21] rmarkdown_2.29              jquerylib_0.1.4            </span></span>
+<span><span class="co">#&gt;  [23] yaml_2.3.10                 httpuv_1.6.15              </span></span>
+<span><span class="co">#&gt;  [25] Seurat_5.2.1                sctransform_0.4.1          </span></span>
+<span><span class="co">#&gt;  [27] spam_2.11-1                 sp_2.2-0                   </span></span>
+<span><span class="co">#&gt;  [29] spatstat.sparse_3.1-0       reticulate_1.42.0          </span></span>
+<span><span class="co">#&gt;  [31] cowplot_1.1.3               pbapply_1.7-2              </span></span>
+<span><span class="co">#&gt;  [33] DBI_1.2.3                   RColorBrewer_1.1-3         </span></span>
+<span><span class="co">#&gt;  [35] abind_1.4-8                 scRNAseq_2.20.0            </span></span>
+<span><span class="co">#&gt;  [37] zlibbioc_1.52.0             Rtsne_0.17                 </span></span>
+<span><span class="co">#&gt;  [39] GenomicRanges_1.58.0        purrr_1.0.4                </span></span>
+<span><span class="co">#&gt;  [41] AnnotationFilter_1.30.0     RCurl_1.98-1.17            </span></span>
+<span><span class="co">#&gt;  [43] BiocGenerics_0.52.0         rappdirs_0.3.3             </span></span>
+<span><span class="co">#&gt;  [45] GenomeInfoDbData_1.2.13     IRanges_2.40.1             </span></span>
+<span><span class="co">#&gt;  [47] S4Vectors_0.44.0            ggrepel_0.9.6              </span></span>
+<span><span class="co">#&gt;  [49] irlba_2.3.5.1               alabaster.sce_1.6.0        </span></span>
+<span><span class="co">#&gt;  [51] listenv_0.9.1               spatstat.utils_3.1-3       </span></span>
+<span><span class="co">#&gt;  [53] goftest_1.2-3               RSpectra_0.16-2            </span></span>
+<span><span class="co">#&gt;  [55] spatstat.random_3.3-3       fitdistrplus_1.2-2         </span></span>
+<span><span class="co">#&gt;  [57] parallelly_1.43.0           pkgdown_2.1.1              </span></span>
+<span><span class="co">#&gt;  [59] codetools_0.2-20            DelayedArray_0.32.0        </span></span>
+<span><span class="co">#&gt;  [61] tidyselect_1.2.1            UCSC.utils_1.2.0           </span></span>
+<span><span class="co">#&gt;  [63] farver_2.1.2                matrixStats_1.5.0          </span></span>
+<span><span class="co">#&gt;  [65] stats4_4.4.3                BiocFileCache_2.14.0       </span></span>
+<span><span class="co">#&gt;  [67] spatstat.explore_3.4-2      GenomicAlignments_1.42.0   </span></span>
+<span><span class="co">#&gt;  [69] jsonlite_2.0.0              progressr_0.15.1           </span></span>
+<span><span class="co">#&gt;  [71] ggridges_0.5.6              survival_3.8-3             </span></span>
+<span><span class="co">#&gt;  [73] systemfonts_1.2.1           tools_4.4.3                </span></span>
+<span><span class="co">#&gt;  [75] ragg_1.3.3                  ica_1.0-3                  </span></span>
+<span><span class="co">#&gt;  [77] Rcpp_1.0.14                 glue_1.8.0                 </span></span>
+<span><span class="co">#&gt;  [79] gridExtra_2.3               SparseArray_1.6.2          </span></span>
+<span><span class="co">#&gt;  [81] xfun_0.51                   MatrixGenerics_1.18.1      </span></span>
+<span><span class="co">#&gt;  [83] GenomeInfoDb_1.42.3         HDF5Array_1.34.0           </span></span>
+<span><span class="co">#&gt;  [85] gypsum_1.2.0                dplyr_1.1.4                </span></span>
+<span><span class="co">#&gt;  [87] BiocManager_1.30.25         fastmap_1.2.0              </span></span>
+<span><span class="co">#&gt;  [89] rhdf5filters_1.18.1         digest_0.6.37              </span></span>
+<span><span class="co">#&gt;  [91] R6_2.6.1                    mime_0.13                  </span></span>
+<span><span class="co">#&gt;  [93] textshaping_1.0.0           colorspace_2.1-1           </span></span>
+<span><span class="co">#&gt;  [95] scattermore_1.2             tensor_1.5                 </span></span>
+<span><span class="co">#&gt;  [97] spatstat.data_3.1-6         RSQLite_2.3.9              </span></span>
+<span><span class="co">#&gt;  [99] tidyr_1.3.1                 generics_0.1.3             </span></span>
+<span><span class="co">#&gt; [101] data.table_1.17.0           rtracklayer_1.66.0         </span></span>
+<span><span class="co">#&gt; [103] httr_1.4.7                  htmlwidgets_1.6.4          </span></span>
+<span><span class="co">#&gt; [105] S4Arrays_1.6.0              uwot_0.2.3                 </span></span>
+<span><span class="co">#&gt; [107] pkgconfig_2.0.3             gtable_0.3.6               </span></span>
+<span><span class="co">#&gt; [109] blob_1.2.4                  lmtest_0.9-40              </span></span>
+<span><span class="co">#&gt; [111] SingleCellExperiment_1.28.1 XVector_0.46.0             </span></span>
+<span><span class="co">#&gt; [113] htmltools_0.5.8.1           dotCall64_1.2              </span></span>
+<span><span class="co">#&gt; [115] ProtGenerics_1.38.0         alabaster.matrix_1.6.1     </span></span>
+<span><span class="co">#&gt; [117] SeuratObject_5.0.2          scales_1.3.0               </span></span>
+<span><span class="co">#&gt; [119] Biobase_2.66.0              png_0.1-8                  </span></span>
+<span><span class="co">#&gt; [121] spatstat.univar_3.1-2       knitr_1.50                 </span></span>
+<span><span class="co">#&gt; [123] rjson_0.2.23                reshape2_1.4.4             </span></span>
+<span><span class="co">#&gt; [125] nlme_3.1-167                curl_6.2.2                 </span></span>
+<span><span class="co">#&gt; [127] rhdf5_2.50.2                cachem_1.1.0               </span></span>
+<span><span class="co">#&gt; [129] zoo_1.8-13                  stringr_1.5.1              </span></span>
+<span><span class="co">#&gt; [131] BiocVersion_3.20.0          KernSmooth_2.23-26         </span></span>
+<span><span class="co">#&gt; [133] parallel_4.4.3              miniUI_0.1.1.1             </span></span>
+<span><span class="co">#&gt; [135] AnnotationDbi_1.68.0        restfulr_0.0.15            </span></span>
+<span><span class="co">#&gt; [137] desc_1.4.3                  alabaster.schemas_1.6.0    </span></span>
+<span><span class="co">#&gt; [139] pillar_1.10.1               grid_4.4.3                 </span></span>
+<span><span class="co">#&gt; [141] vctrs_0.6.5                 RANN_2.6.2                 </span></span>
+<span><span class="co">#&gt; [143] promises_1.3.2              dbplyr_2.5.0               </span></span>
+<span><span class="co">#&gt; [145] xtable_1.8-4                cluster_2.1.8              </span></span>
+<span><span class="co">#&gt; [147] evaluate_1.0.3              GenomicFeatures_1.58.0     </span></span>
+<span><span class="co">#&gt; [149] Rsamtools_2.22.0            cli_3.6.4                  </span></span>
+<span><span class="co">#&gt; [151] compiler_4.4.3              rlang_1.1.5                </span></span>
+<span><span class="co">#&gt; [153] crayon_1.5.3                future.apply_1.11.3        </span></span>
+<span><span class="co">#&gt; [155] plyr_1.8.9                  fs_1.6.5                   </span></span>
+<span><span class="co">#&gt; [157] stringi_1.8.7               alabaster.se_1.6.0         </span></span>
+<span><span class="co">#&gt; [159] BiocParallel_1.40.0         viridisLite_0.4.2          </span></span>
+<span><span class="co">#&gt; [161] deldir_2.0-4                munsell_0.5.1              </span></span>
+<span><span class="co">#&gt; [163] Biostrings_2.74.1           lazyeval_0.2.2             </span></span>
+<span><span class="co">#&gt; [165] spatstat.geom_3.3-6         Matrix_1.7-2               </span></span>
+<span><span class="co">#&gt; [167] ExperimentHub_2.14.0        RcppHNSW_0.6.0             </span></span>
+<span><span class="co">#&gt; [169] patchwork_1.3.0             bit64_4.6.0-1              </span></span>
+<span><span class="co">#&gt; [171] future_1.34.0               Rhdf5lib_1.28.0            </span></span>
+<span><span class="co">#&gt; [173] ggplot2_3.5.1               KEGGREST_1.46.0            </span></span>
+<span><span class="co">#&gt; [175] shiny_1.10.0                alabaster.ranges_1.6.0     </span></span>
+<span><span class="co">#&gt; [177] SummarizedExperiment_1.36.0 AnnotationHub_3.14.0       </span></span>
+<span><span class="co">#&gt; [179] ROCR_1.0-11                 igraph_2.1.4               </span></span>
+<span><span class="co">#&gt; [181] memoise_2.0.1               bslib_0.9.0                </span></span>
+<span><span class="co">#&gt; [183] bit_4.6.0</span></span></code></pre>
+</div>
+<div class="section level2">
+<h2 id="references">References<a class="anchor" aria-label="anchor" href="#references"></a>
+</h2>
+<p>Satija R, Hoffman P, Butler A (2025). <em>SeuratData: Install and
+Manage Seurat Datasets</em>. R package version 0.2.2.9002, commit
+3e51f44303069b64f5dc4d68e6a3d4a343f55c39, <a href="https://github.com/satijalab/seurat-data" class="external-link uri">https://github.com/satijalab/seurat-data</a>.</p>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside>
