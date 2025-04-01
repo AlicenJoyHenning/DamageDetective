@@ -30,6 +30,8 @@ data.
 }
 \details{
 This function visualizes the distribution of features and proportions of
-mitochondrial and ribosomal genes for cells with altered counts. It also adds a reference point to help assess the quality of altered data against the expected distributions.
+mitochondrial and ribosomal genes for cells with altered counts. It also
+adds a reference point to help assess the quality of altered data against
+the expected distributions.
 }
 \keyword{internal}

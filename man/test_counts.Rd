@@ -22,7 +22,8 @@ data(test_counts)
 A sparse matrix of PBMC single-cell gene expression data for function testing.
 }
 \details{
-This dataset consists of an abridged sparse matrix originally derived from PBMC single-cell RNA sequencing data.
+This dataset consists of an abridged sparse matrix originally derived from
+PBMC single-cell RNA sequencing data.
 The data was processed and stored in a sparse matrix format.
 }
 \keyword{datasets}

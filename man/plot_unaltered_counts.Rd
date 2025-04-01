@@ -22,6 +22,7 @@ data.
 }
 \details{
 This function visualizes the distribution of features and proportions of
-mitochondrial and ribosomal genes for unaltered cells. It provides a reference plot to assess the original data's quality before any alterations.
+mitochondrial and ribosomal genes for unaltered cells. It provides a
+reference plot to assess the original data's quality before any alterations.
 }
 \keyword{internal}

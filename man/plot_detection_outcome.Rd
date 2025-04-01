@@ -21,7 +21,8 @@ color scaling.}
 coloring the damage levels.}
 }
 \value{
-A \code{ggplot2} object representing the scatter plot of quality control metrics.
+A \code{ggplot2} object representing the scatter plot of quality
+control metrics.
 }
 \description{
 Function to generate a plot showing the distribution of quality control

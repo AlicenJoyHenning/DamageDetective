@@ -19,7 +19,6 @@
 #' @importFrom dplyr select rename mutate filter bind_rows
 #' @importFrom tidyr pivot_longer
 #' @importFrom scales rescale
-#' @export
 #' @keywords internal
 plot_simulation_outcome <- function(
     qc_summary,
@@ -62,11 +61,12 @@ plot_simulation_outcome <- function(
 #' @param palette A character vector specifying the color gradient used for
 #' coloring the damage levels.
 #'
-#' @return A `ggplot2` object representing the scatter plot of quality control metrics.
-#' @importFrom ggplot2 ggplot aes geom_point facet_wrap scale_y_continuous labs theme_minimal
+#' @return A `ggplot2` object representing the scatter plot of quality
+#' control metrics.
+#' @importFrom ggplot2 ggplot aes geom_point facet_wrap
+#' @importFrom ggplot2 scale_y_continuous labs theme_minimal
 #' @importFrom dplyr select rename mutate filter bind_rows
 #' @importFrom scales rescale
-#' @export
 #' @keywords internal
 plot_detection_outcome <- function(
     qc_summary,
@@ -75,7 +75,10 @@ plot_detection_outcome <- function(
 ) {
   # Isolate columns of interest
   qc_summary_long <- qc_summary %>%
-    dplyr::select(.data$features, .data$mt.prop, .data$rb.prop, .data$DamageDetective) %>%
+    dplyr::select(.data$features,
+                  .data$mt.prop,
+                  .data$rb.prop,
+                  .data$DamageDetective) %>%
     dplyr::rename(
       Features = .data$features,
       `Mito. prop` = .data$mt.prop,
@@ -88,9 +91,14 @@ plot_detection_outcome <- function(
     )
 
   # Create scatter plot showing QC metric distribution
-  final_plot <- ggplot2::ggplot(qc_summary_long, aes(x = .data$X_Value, y = .data$`Mito. prop`, color = .data$DamageDetective)) +
+  final_plot <- ggplot2::ggplot(qc_summary_long,
+                                aes(x = .data$X_Value,
+                                    y = .data$`Mito. prop`,
+                                    color = .data$DamageDetective)) +
     ggplot2::geom_point(alpha = 0.7, size = 0.7) +
-    facet_wrap(~ .data$X_Variable, scales = "free_x", strip.position = "bottom") +
+    facet_wrap(~ .data$X_Variable,
+               scales = "free_x",
+               strip.position = "bottom") +
     ggplot2::scale_color_gradientn(
       colours = palette,
       values = scales::rescale(target_damage),
@@ -126,7 +134,9 @@ plot_detection_outcome <- function(
 #' data.
 #'
 #' This function visualizes the distribution of features and proportions of
-#' mitochondrial and ribosomal genes for cells with altered counts. It also adds a reference point to help assess the quality of altered data against the expected distributions.
+#' mitochondrial and ribosomal genes for cells with altered counts. It also
+#' adds a reference point to help assess the quality of altered data against
+#' the expected distributions.
 #'
 #' @param qc_summary A data frame containing the quality control summary for
 #' cells.
@@ -137,11 +147,11 @@ plot_detection_outcome <- function(
 #'
 #' @return A list containing the plot object and the reference row used for
 #' comparison.
-#' @importFrom ggplot2 ggplot aes geom_point facet_wrap scale_y_continuous labs theme_minimal
+#' @importFrom ggplot2 ggplot aes geom_point facet_wrap
+#' @importFrom ggplot2 scale_y_continuous labs theme_minimal
 #' @importFrom dplyr select rename mutate filter bind_rows
 #' @importFrom tidyr pivot_longer
 #' @importFrom scales rescale
-#' @export
 #' @keywords internal
 plot_altered_counts <- function(
     qc_summary,
@@ -158,7 +168,10 @@ plot_altered_counts <- function(
       names_pattern = "(Original|New)_(.*)"
     ) %>%
     dplyr::mutate(
-      State = factor(ifelse(.data$State == "Original", "Original", "Altered"), levels = c("Original", "Altered"))
+      State = factor(ifelse(
+        .data$State == "Original", "Original", "Altered"),
+        levels = c("Original", "Altered")
+      )
     ) %>%
     dplyr::rename(
       `Ribo. prop` = RiboProp
@@ -181,9 +194,14 @@ plot_altered_counts <- function(
   qc_summary_long_filtered <- bind_rows(qc_summary_long_filtered, new_row)
 
   # Create scatter plot showing QC metric distribution
-  plot <- ggplot2::ggplot(qc_summary_long_filtered, aes(x = .data$X_Value, y = .data$MitoProp, color = .data$Damaged_Level)) +
+  plot <- ggplot2::ggplot(qc_summary_long_filtered,
+                          aes(x = .data$X_Value,
+                              y = .data$MitoProp,
+                              color = .data$Damaged_Level)) +
     ggplot2::geom_point(alpha = 0.7, size = 0.7) +
-    facet_wrap(~ .data$X_Variable, scales = "free_x", strip.position = "bottom") +
+    facet_wrap(~ .data$X_Variable,
+               scales = "free_x",
+               strip.position = "bottom") +
     ggplot2::scale_color_gradientn(
       colours = palette,
       values = scales::rescale(target_damage),
@@ -223,7 +241,8 @@ plot_altered_counts <- function(
 #' data.
 #'
 #' This function visualizes the distribution of features and proportions of
-#' mitochondrial and ribosomal genes for unaltered cells. It provides a reference plot to assess the original data's quality before any alterations.
+#' mitochondrial and ribosomal genes for unaltered cells. It provides a
+#' reference plot to assess the original data's quality before any alterations.
 #'
 #' @param qc_summary A data frame containing the quality control summary for
 #' cells.
@@ -231,10 +250,10 @@ plot_altered_counts <- function(
 #'
 #' @return A `ggplot2` object representing the scatter plot of quality control
 #'  metrics for unaltered cells.
-#' @importFrom ggplot2 ggplot aes geom_point facet_wrap scale_y_continuous labs theme_minimal
+#' @importFrom ggplot2 ggplot aes geom_point facet_wrap scale_y_continuous
+#'  labs theme_minimal
 #' @importFrom dplyr select rename mutate filter bind_rows
 #' @importFrom scales rescale
-#' @export
 #' @keywords internal
 plot_unaltered_counts <- function(
     qc_summary,
@@ -250,7 +269,12 @@ plot_unaltered_counts <- function(
       names_pattern = "(Original|New)_(.*)"
     ) %>%
     dplyr::mutate(
-      State = factor(ifelse(.data$State == "Original", "Original", "Altered"), levels = c("Original", "Altered"))
+      State = factor(
+        ifelse(
+          .data$State == "Original", "Original", "Altered"
+        ),
+        levels = c("Original", "Altered")
+      )
     ) %>%
     dplyr::rename(
       `Ribo. prop` = .data$RiboProp
@@ -266,10 +290,12 @@ plot_unaltered_counts <- function(
   qc_summary_long_filtered <- bind_rows(qc_summary_long_filtered, reference)
 
   # Create scatter plot showing QC metric distribution
-  plot <- ggplot2::ggplot(qc_summary_long_filtered, aes(x = .data$X_Value, y = .data$MitoProp)) +
+  plot <- ggplot2::ggplot(qc_summary_long_filtered,
+                          aes(x = .data$X_Value, y = .data$MitoProp)) +
     ggplot2::geom_point(alpha = 0.7, size = 0.7, colour = "grey") +
-    ggplot2::facet_wrap(~ X_Variable, scales = "free_x", strip.position = "bottom") +
-    # ggplot2::scale_y_continuous(limits = c(0, 1)) +
+    ggplot2::facet_wrap(~ X_Variable,
+                        scales = "free_x",
+                        strip.position = "bottom") +
     ggplot2::labs(x = NULL, y = "Mito. prop", color = "Damage score") +
     ggplot2::theme_minimal(base_size = 10) +
     ggplot2::theme(

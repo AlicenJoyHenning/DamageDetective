@@ -93,8 +93,8 @@ a symmetric distribution between them. There are three valid options:
 \item Default is "right_skewed"
 }}
 
-\item{distribution_steepness}{String specifying how concentrated the spread of
-damaged cells are about the mean of the target distribution specified in
+\item{distribution_steepness}{String specifying how concentrated the spread
+of damaged cells are about the mean of the target distribution specified in
 'target_damage'. Here, an increase in steepness manifests in a more
 apparent skewness.There are three valid options:
 \itemize{

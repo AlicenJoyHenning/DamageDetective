@@ -55,13 +55,13 @@ Each of the above data types can act as the starting point to damage detection t
 
 We will use the `SeuratData` package to retrieve a publicly available `Seurat` object for demonstration. This object stores the data from peripheral blood mononuclear cells, or PBMCs, sequenced using the 10X Genomics platform.
 
-```{r, eval=FALSE}
+```{r eval=FALSE, seurat_data}
 # Retrieve the dataset of interest
 SeuratData::InstallData("pbmc3k")
 data("pbmc3k")
 ```
 
-```{r, echo=FALSE, eval=TRUE}
+```{r echo=FALSE, retrieve_seurat}
 # Circumventing the inability of the vignette to load directly from SeuratData
 pbmc3k <- readRDS("~/Projects/demonstrations/pbmc3k.rds")
 ```
@@ -74,7 +74,7 @@ class(pbmc3k)[1]
 dim(pbmc3k)
 
 # Extract the count matrix
-pbmc3k_counts <- pbmc3k@assays$RNA$counts
+pbmc3k_counts <- pbmc3k[["RNA"]]$counts
 
 # View data
 class(pbmc3k_counts)[1]
@@ -85,12 +85,24 @@ dim(pbmc3k_counts)
 
 We will use publicly available alignment data from the [10X Genomics website](https://www.10xgenomics.com/datasets) for demonstration, specifically the '1k PBMCs from a healthy donor (v3)' data available [here](https://www.10xgenomics.com/datasets/1-k-pbm-cs-from-a-healthy-donor-v-3-chemistry-3-standard-3-0-0) following the link named "Feature / cell matrix (filtered)". 
 
+```{r echo=FALSE, retrieve_alignment}
+url <- "https://cf.10xgenomics.com/samples/cell-exp/3.0.0/pbmc_1k_v3/pbmc_1k_v3_filtered_feature_bc_matrix.tar.gz"
+
+# Set a temporary directory
+temp_dir <- tempdir()
+tar_file <- file.path(temp_dir, "pbmc_1k_v3_filtered_feature_bc_matrix.tar.gz")
+
+# Download files
+download.file(url, tar_file, mode = "wb", quiet = TRUE)
+untar(tar_file, exdir = temp_dir)
+extracted_dir <- file.path(temp_dir, "filtered_feature_bc_matrix")
+alignment_counts <- Seurat::Read10X(extracted_dir)
+
+```
+
 The alignment output comes in the form of three files containing the row names (genes), column names (cell identifiers), and input values (counts) of the count matrix. These can be compiled using `Seurat`'s `ReadMtx` which simplifies the count matrix compilation into one function. This involves uncompressing zipped files, mapping feature names to HGNC gene symbols, and converting the matrix to sparse format. `ReadMtx` output can be used directly for `DamageDetective`.
 
-Upon converting, we see this dataset contains 1222 cells and 33 538 genes.
-
-
-```{r}
+```{r eval=FALSE, demonstrate_alignment_conversion}
 # Set the file paths relative to location on your device
 matrix_file <- "~/Projects/demonstrations/matrix.mtx.gz"     
 barcodes_file <- "~/Projects/demonstrations/barcodes.tsv.gz" 
@@ -102,7 +114,11 @@ alignment_counts <- Seurat::ReadMtx(
   cells = barcodes_file,
   features = features_file
 )
+```
 
+Upon converting, we see this dataset contains 1222 cells and 33 538 genes.
+
+```{r view_output}
 # View output
 class(alignment_counts)[1]
 dim(alignment_counts)
@@ -114,7 +130,7 @@ We will use the `scRNAseq` package to retrieve a publicly available `sce` object
 
 Upon loading, we see the object contains 2358 cells and 32 738 features. The count matrix is stored as a delayed matrix within the assay slot of the `sce` object. This format enables memory-efficient operations by delaying computations until explicitly requested, rather than storing all values in memory upfront. However, `DamageDetective` computations require repeated access to the matrix and delays at each request greatly accumulate to slow down the process. Thus, we must convert the delayed matrix to the required `DamageDetective` format of a sparse matrix using a dense matrix intermediate.
 
-```{r}
+```{r sce_data}
 # Retrieve multisample dataset
 pbmc_sce <- scRNAseq::fetchDataset("kotliarov-pbmc-2020", "2024-04-18")
 
@@ -187,6 +203,13 @@ This
 
 ## Damaged cell detection
 
+
+## Session Information
+```{r session-info, echo=FALSE}
+sessionInfo()
+```
+
+
 # References
 
-1.  Satija R, Hoffman P, Butler A (2025). *SeuratData: Install and Manage Seurat Datasets*. R package version 0.2.2.9002, commit 3e51f44303069b64f5dc4d68e6a3d4a343f55c39, <https://github.com/satijalab/seurat-data>.
+Satija R, Hoffman P, Butler A (2025). *SeuratData: Install and Manage Seurat Datasets*. R package version 0.2.2.9002, commit 3e51f44303069b64f5dc4d68e6a3d4a343f55c39, <https://github.com/satijalab/seurat-data>.

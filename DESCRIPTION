@@ -1,9 +1,11 @@
 Package: DamageDetective
 Type: Package
 Title: Detecting Damaged Cells in Single-Cell RNA Sequencing Data
-Version: 0.0.1
-Authors@R: 
-    person("Alicen", "Henning", email = "alicen.jhb@gmail.com", role = c("aut", "cre", "cph"))
+Version: 0.99.0
+Authors@R:
+    person("Alicen", "Henning", email = "alicen.jhb@gmail.com",
+    role = c("aut", "cre", "cph"),
+    comment = c(ORCID = "0009-0004-0535-1624"))
 Description: DamageDetective detects and filters damaged cells in single-cell 
     RNA sequencing (scRNA-seq) datasets using a novel approach inspired by 
     DoubletFinder. It compares each cell’s gene expression profile to simulated 
@@ -14,10 +16,10 @@ Description: DamageDetective detects and filters damaged cells in single-cell
     cleaning scRNA-seq data across diverse cell types, samples, and experiments.
 License: AGPL (>= 3)
 Encoding: UTF-8
-LazyData: true
+LazyData: false
 RoxygenNote: 7.3.2
 Depends: 
-    R (>= 3.5)
+    R (>= 4.4.0)
 Roxygen: list(markdown = TRUE)
 Imports: 
     cowplot,

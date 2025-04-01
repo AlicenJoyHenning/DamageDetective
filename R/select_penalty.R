@@ -67,7 +67,6 @@
 #' @return Numeric representing the ideal ribosomal penalty for an input dataset.
 #' @importFrom dplyr %>% mutate if_else
 #' @importFrom stats quantile
-#' @importFrom ggplot2 ggplot aes geom_point scale_color_gradientn labs theme_classic theme element_rect element_text
 #' @importFrom scales rescale
 #' @export
 #' @examples
@@ -86,7 +85,7 @@ select_penalty <- function(
     penalty_range = c(0.00001, 0.5),
     penalty_step = 0.005,
     max_penalty_trials = 10,
-    target_damage = c(0.2, 0.99), # change from 0.1, more interested in this area
+    target_damage = c(0.2, 0.99),
     damage_distribution = "right_skewed",
     distribution_steepness = "steep",
     beta_shape_parameters = NULL,
@@ -97,69 +96,114 @@ select_penalty <- function(
     ribosome_penalty = NULL,
     seed = NULL,
     verbose = TRUE
-){
-  # Data preparations ----
-
-  # Verify inputs
-  check_penalty_inputs(
-    mito_quantile,
-    penalty_range,
-    penalty_step,
-    max_penalty_trials,
-    stability_limit,
-    return_output
+) {
+  # Data preparation
+  .check_penalty_inputs(
+    mito_quantile, penalty_range, penalty_step,
+    max_penalty_trials, stability_limit, return_output
   )
 
-  # Retrieve genes corresponding to the organism of interest
   gene_idx <- get_organism_indices(count_matrix, organism)
+  df <- .prepare_penalty_data(count_matrix, gene_idx, mito_quantile)
 
-  # Collect mito & ribo information
+  # Subset low mitochondrial proportion cells
+  filtered_cells <- rownames(df)[df$mito <= quantile(df$mito, probs = mito_quantile, na.rm = TRUE)]
+  filtered_matrix <- count_matrix[, filtered_cells]
+
+  # Iterate through penalties to generate artificial cells
+  penalties <- seq(penalty_range[[1]], penalty_range[[2]], by = penalty_step)
+  penalty_results <- .iterate_penalties(
+    penalties, filtered_matrix, df, target_damage, damage_distribution,
+    distribution_steepness, beta_shape_parameters, damage_proportion,
+    stability_limit, max_penalty_trials, seed, verbose
+  )
+
+  # Return the selected penalty or full results
+  return(.finalise_penalty_output(penalty_results, return_output))
+}
+
+.check_penalty_inputs <- function(
+    mito_quantile, penalty_range, penalty_step,
+    max_penalty_trials, stability_limit, return_output
+) {
+  if (!is.numeric(mito_quantile) ||
+      mito_quantile > 1 ||
+      mito_quantile  < 0) {
+    stop("Please ensure 'mito_quantile' is a numeric between 0 and 1.")
+  }
+
+  if (length(penalty_range) != 2) {
+    stop("Please ensure 'penalty_range' is a numerical vector of length 2.")
+  }
+
+  if (penalty_range[[1]] > penalty_range[[2]] ||
+      penalty_range[[1]] < 0 ||
+      penalty_range[[2]] > 1){
+    stop("Please ensure 'penalty_range' provides values between 0 and 1.")
+  }
+
+  if (!is.numeric(penalty_step) ||
+      penalty_step < 0 ||
+      penalty_step > 1){
+    stop("Please ensure 'penalty_step' is a numeric between 0 and 1.")
+  }
+
+  if (!is.numeric(max_penalty_trials) ||
+      max_penalty_trials > 1000){
+    stop("Please ensure 'max_penalty_trials' lies within a reasonable range.")
+  }
+
+  if (!is.numeric(stability_limit) ||
+      stability_limit > 1000){
+    stop("Please ensure 'stability_limit' lies within a reasonable range.")
+  }
+
+  if (!return_output %in% c("penalty", "full")){
+    stop("Please ensure 'return_output' is one of 'penalty' or 'full'.")
+  }
+}
+
+.prepare_penalty_data <- function(count_matrix, gene_idx, mito_quantile) {
   mito <- colSums(count_matrix[gene_idx$mito_idx, , drop = FALSE]) / colSums(count_matrix)
   ribo <- colSums(count_matrix[gene_idx$ribo_idx, , drop = FALSE]) / colSums(count_matrix)
   features <- colSums(count_matrix != 0)
 
-  df <- data.frame(mito = mito,
-                   ribo = ribo,
-                   features = features,
-                   row.names = colnames(count_matrix))
+  df <- data.frame(
+    mito = mito,
+    ribo = ribo,
+    features = features,
+    row.names = colnames(count_matrix)
+  )
 
-  # Identify high mito. proportion cells (likely damaged) for simulation
   mito_top <- quantile(df$mito, probs = mito_quantile, na.rm = TRUE)
   df$mito_label <- ifelse(df$mito > mito_top, "high_mito", "low_mito")
   df$damage_label <- "cell"
   df$Damaged_Level <- 0
 
-  # Subset low mito. proportion cells
-  filtered_cells <- rownames(df)[df$mito <= mito_top]
-  filtered_matrix <- count_matrix[, filtered_cells]
+  return(df)
+}
 
-  # Phase Two: Iterate through penalties to generate artificial cells ----
-
-  # Define penalty values to test (starting from 0.001, increasing by 0.05)
-  penalties <- seq(penalty_range[[1]], penalty_range[[2]], by = penalty_step)
-
-  # Initialize data frame for results
+.iterate_penalties <- function(
+    penalties, filtered_matrix, df, target_damage, damage_distribution,
+    distribution_steepness, beta_shape_parameters, damage_proportion,
+    stability_limit, max_penalty_trials, seed, verbose
+) {
   penalty_results <- data.frame(
     Penalty = numeric(0),
     Global_mean = numeric(0)
   )
 
-  # Initialize best dTNN mean to a very high value
   best_dTNN_mean <- Inf
-
-  # Initialize counter for consecutive non-improving iterations
   stability_counter <- 0
-  max_penalty_trials <- max_penalty_trials
   penalty_count <- 0
 
   for (penalty in penalties) {
-
     if (penalty_count >= max_penalty_trials) {
       message("Maximum penalty trials reached (", max_penalty_trials, "). Stopping.")
       break
     }
 
-    penalty_count <- penalty_count + 1  # Increase count of penalties tested
+    penalty_count <- penalty_count + 1
 
     if (verbose) {
       message("Testing penalty of ", penalty, "...")
@@ -177,117 +221,114 @@ select_penalty <- function(
       generate_plot = FALSE
     )
 
-    # Extract QC metrics from output
-    df_damaged <- penalty_output$qc_summary
-    df_damaged <- df_damaged %>%
-      dplyr::filter(.data$Damaged_Level != 0)
+    # Extract QC metrics and compute dTNN
+    df_damaged <- .extract_damaged_cells(penalty_output$qc_summary)
+    combined_df <- .combine_true_and_artificial_cells(df, df_damaged)
+    dTNN_means <- .compute_dTNN(combined_df)
 
-    # Rename columns
-    colnames(df_damaged)[colnames(df_damaged) == "New_RiboProp"] <- "ribo"
-    colnames(df_damaged)[colnames(df_damaged) == "New_MitoProp"] <- "mito"
-    colnames(df_damaged)[colnames(df_damaged) == "New_Features"] <- "features"
+    # Store results
+    penalty_results <- .store_penalty_results(
+      penalty_results, penalty, dTNN_means, stability_counter,
+      best_dTNN_mean, stability_limit
+    )
 
-    # Rename columns and isolate the relevant columns  (mito, ribo, and damage_label)
-    df_damaged <- df_damaged[, c("ribo", "mito", "features", "Damaged_Level")]
-
-    # Assign artificial label
-    df_damaged$damage_label <- "artificial"
-    df_damaged$mito_label <- "-"
-
-    # Combine true and artificial cells
-    combined_df <- rbind(df, df_damaged)
-
-    # Phase Three: PCA to compare penalty iterations ----
-    # Best iteration must minimise the PC distance between artificial cells and true cells
-
-    # Run PCA between all artificial and true cells
-    pca_result <- prcomp(combined_df[, c("mito", "ribo", "features")], center = TRUE, scale. = TRUE)
-    combined_df$pca1 <- pca_result$x[, 1]
-    combined_df$pca2 <- pca_result$x[, 2]
-
-    # Separate true and artificial cells for distance calculation
-    true_cells <- combined_df %>%
-      dplyr::filter(.data$damage_label == "cell")
-    artificial_cells <- combined_df %>%
-      dplyr::filter(.data$damage_label == "artificial")
-
-    # Compute the nearest true cell for each artificial cell
-    dists <- sqrt((outer(artificial_cells$pca1, true_cells$pca1, "-")^2) +
-                    (outer(artificial_cells$pca2, true_cells$pca2, "-")^2))
-    nearest_dists <- apply(dists, 1, min)  # Distance to nearest true cell
-
-    # Group artificial cells into their corresponding damage level
-    artificial_cells$damage_level <- cut(artificial_cells$Damaged_Level,
-                                         breaks = seq(0, 1, by = 0.1),
-                                         include.lowest = TRUE,
-                                         labels = FALSE)
-    artificial_cells$nearest_distance <- nearest_dists
-
-    # Mean PC distance from true nearest neighbours (dTNN) for each damage level
-    dTNN_means <- tapply(artificial_cells$nearest_distance, artificial_cells$damage_level, mean)
-    current_mean_dTNN <- mean(dTNN_means)
-
-    # Match output to cell in combined df
-    combined_df$nearest_distance <- 0
-    combined_df$nearest_distance[rownames(combined_df) %in% rownames(artificial_cells)] <-
-      artificial_cells$nearest_distance[match(rownames(combined_df)[rownames(combined_df) %in% rownames(artificial_cells)], rownames(artificial_cells))]
-
-    # Store results directly in the data frame
-    # Convert dTNN_means to a data frame with appropriate column names
-    dTNN_means_df <- as.data.frame(t(dTNN_means))  # Transpose to ensure correct shape
-    colnames(dTNN_means_df) <- paste0("Mean_", names(dTNN_means))  # Ensure unique column names
-
-    # Create a new row with the penalty and global mean
-    new_row <- data.frame(Penalty = penalty,
-                          Global_mean = mean(dTNN_means, na.rm = TRUE),
-                          dTNN_means_df)
-
-    # Bind the new row to penalty_results (ensuring column consistency)
-    penalty_results <- dplyr::bind_rows(penalty_results, new_row)
-
-    # Phase Four: Stop if dTNN has stabilized ----
-    if (nrow(penalty_results) == 1) {
-      best_dTNN <-  current_mean_dTNN
-      best_penalty <- penalty
-    }
-
-    if (nrow(penalty_results) > 1) {
-      if (current_mean_dTNN < best_dTNN) {
-        best_dTNN <- current_mean_dTNN
-        best_penalty <- penalty
-
-        # Reset stability counter on improvement
-        stability_counter <- 0
-
-      } else {
-        # Increase counter when worsening
-        stability_counter <- stability_counter + 1
-
-        # Stop if additional trials after worsening are not improving
-        if (stability_counter > stability_limit) {
-          message("Stopping early: dTNN is no longer improving.")
-          break
-        }
+    # Update best dTNN mean and stability counter
+    best_dTNN_mean <- min(best_dTNN_mean, mean(dTNN_means, na.rm = TRUE))
+    if (mean(dTNN_means, na.rm = TRUE) >= best_dTNN_mean) {
+      stability_counter <- stability_counter + 1
+      if (stability_counter > stability_limit) {
+        message("Stopping early: dTNN is no longer improving.")
+        break
       }
+    } else {
+      stability_counter <- 0
     }
-
-    # Ensure lowest mean is selected
-    best_penalty <- penalty_results$Penalty[which.min(penalty_results$Global_mean)]
-
   }
 
-  # Rename columns of output
-  colnames(penalty_results)[-(1:2)] <- paste0("Mean_", seq_along(colnames(penalty_results)[-(1:2)]))
+  return(penalty_results)
+}
 
-  # Return the selected penalty along with penalty results
-  if (return_output == "penalty"){
+.extract_damaged_cells <- function(qc_summary) {
+  df_damaged <- qc_summary %>%
+    dplyr::filter(.data$Damaged_Level != 0)
+
+  colnames(df_damaged)[colnames(df_damaged) == "New_RiboProp"] <- "ribo"
+  colnames(df_damaged)[colnames(df_damaged) == "New_MitoProp"] <- "mito"
+  colnames(df_damaged)[colnames(df_damaged) == "New_Features"] <- "features"
+
+  df_damaged <- df_damaged[, c("ribo", "mito", "features", "Damaged_Level")]
+  df_damaged$damage_label <- "artificial"
+  df_damaged$mito_label <- "-"
+
+  return(df_damaged)
+}
+
+.combine_true_and_artificial_cells <- function(df, df_damaged) {
+  combined_df <- rbind(df, df_damaged)
+
+  pca_result <- prcomp(
+    combined_df[, c("mito", "ribo", "features")],
+    center = TRUE, scale. = TRUE
+  )
+  combined_df$pca1 <- pca_result$x[, 1]
+  combined_df$pca2 <- pca_result$x[, 2]
+
+  return(combined_df)
+}
+
+.compute_dTNN <- function(combined_df) {
+  true_cells <- combined_df %>%
+    dplyr::filter(.data$damage_label == "cell")
+  artificial_cells <- combined_df %>%
+    dplyr::filter(.data$damage_label == "artificial")
+
+  dists <- sqrt((outer(artificial_cells$pca1, true_cells$pca1, "-")^2) +
+                  (outer(artificial_cells$pca2, true_cells$pca2, "-")^2))
+  nearest_dists <- apply(dists, 1, min)
+
+  artificial_cells$nearest_distance <- nearest_dists
+  artificial_cells$damage_level <- cut(
+    artificial_cells$Damaged_Level,
+    breaks = seq(0, 1, by = 0.1),
+    include.lowest = TRUE,
+    labels = FALSE
+  )
+
+  dTNN_means <- tapply(
+    artificial_cells$nearest_distance, artificial_cells$damage_level, mean
+  )
+
+  return(dTNN_means)
+}
+
+.store_penalty_results <- function(
+    penalty_results, penalty, dTNN_means, stability_counter,
+    best_dTNN_mean, stability_limit
+) {
+  dTNN_means_df <- as.data.frame(t(dTNN_means))
+  colnames(dTNN_means_df) <- paste0("Mean_", names(dTNN_means))
+
+  new_row <- data.frame(
+    Penalty = penalty,
+    Global_mean = mean(dTNN_means, na.rm = TRUE),
+    dTNN_means_df
+  )
+
+  penalty_results <- dplyr::bind_rows(penalty_results, new_row)
+  return(penalty_results)
+}
+
+.finalise_penalty_output <- function(penalty_results, return_output) {
+  best_penalty <- penalty_results$Penalty[which.min(penalty_results$Global_mean)]
+
+  if (return_output == "penalty") {
     return(best_penalty)
   }
 
-  if (return_output == "full"){
-
-
-    return(list(penalty_results = penalty_results,
-                selected_penalty = best_penalty))
+  if (return_output == "full") {
+    return(list(
+      penalty_results = penalty_results,
+      selected_penalty = best_penalty
+    ))
   }
 }
