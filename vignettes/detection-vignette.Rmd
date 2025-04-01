@@ -63,22 +63,22 @@ data("pbmc3k")
 
 ```{r echo=FALSE, retrieve_seurat}
 # Circumventing the inability of the vignette to load directly from SeuratData
-pbmc3k <- readRDS("~/Projects/demonstrations/pbmc3k.rds")
+# pbmc3k <- readRDS("~/Projects/demonstrations/pbmc3k.rds")
 ```
 
 Upon loading, we see the `Seurat` object contains 2700 cells and 13 714 features. The count matrix can be extracted from the assay slot of the object which, by default, is already in compressed column-oriented sparse form. The counts can now be used as input for `DamageDetective`. 
 
 ```{r}
 # View dimensions & class
-class(pbmc3k)[1]
-dim(pbmc3k)
-
-# Extract the count matrix
-pbmc3k_counts <- pbmc3k[["RNA"]]$counts
-
-# View data
-class(pbmc3k_counts)[1]
-dim(pbmc3k_counts)
+# class(pbmc3k)[1]
+# dim(pbmc3k)
+# 
+# # Extract the count matrix
+# pbmc3k_counts <- pbmc3k[["RNA"]]$counts
+# 
+# # View data
+# class(pbmc3k_counts)[1]
+# dim(pbmc3k_counts)
 ```
 
 ### Alignment output
