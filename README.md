@@ -123,7 +123,7 @@ dim(detection_results$output)
 
 <br>
 
-Alternatively, if `filter_counts` is set to `FALSE`, a data frame will be given as output containing the damage scores for each barcode. This is provided for the user if they wish to interact with the `DamageDetective` results more directly. From here, a user can filter their data as done by `filter_counts`.
+Alternatively, if `filter_counts` is set to `FALSE`, a data frame will be given as output containing the damage scores for each barcode. This is provided for the user if they wish to interact with the `DamageDetective` results more directly. From here, a user can filter their manually data as done by `filter_counts` automatically.
 
 ``` r
 # Perform damage detection

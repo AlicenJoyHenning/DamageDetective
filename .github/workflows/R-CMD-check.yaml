@@ -17,11 +17,12 @@ jobs:
       fail-fast: false
       matrix:
         config:
-          - {os: macos-latest,   r: 'release'}
-          - {os: windows-latest, r: 'release'}
-          - {os: ubuntu-latest,   r: 'devel', http-user-agent: 'release'}
-          - {os: ubuntu-latest,   r: 'release'}
-          - {os: ubuntu-latest,   r: 'oldrel-1'}
+          - {os: macos-latest, r: 'release', build_vignettes: 'true'}
+          - {os: windows-latest, r: 'release', build_vignettes: 'true'}
+          - {os: ubuntu-latest, r: 'devel', http-user-agent: 'release', build_vignettes: 'true'}
+          - {os: ubuntu-latest, r: 'release', build_vignettes: 'true'}
+          - {os: ubuntu-latest, r: 'oldrel-1', build_vignettes: 'false'}
+
 
     env:
       GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
@@ -46,4 +47,4 @@ jobs:
       - uses: r-lib/actions/check-r-package@v2
         with:
           upload-snapshots: true
-          build_args: 'c("--no-manual","--compact-vignettes=gs+qpdf")'
+          build_args: ${{ matrix.config.build_vignettes && 'c("--no-manual", "--compact-vignettes=gs+qpdf")' || 'c("--no-manual", "--no-build-vignettes")' }}

@@ -129,7 +129,7 @@ alignment_counts <- Seurat::ReadMtx(
 )
 ```
 
-```{r echo = FALSE, clean_temp}
+```{r echo=FALSE, clean_temp}
 unlink(extracted_dir, recursive = TRUE, force = TRUE)
 ```
 
