@@ -75,9 +75,8 @@
 </h3>
 <p>The goal of <code>DamageDetective</code> is to simplify the process
 of making informed and reproducible damaged cell filtering decisions in
-single cell RNA sequencing (scRNA-seq) data pre-processing. This
-tutorial provides an outline of the steps needed to achieve this with
-<code>DamageDetective</code>,<br></p>
+scRNA-seq pre-processing. This tutorial provides an outline of the steps
+needed to achieve this with <code>DamageDetective</code>,<br></p>
 <ul>
 <li>Data preparation</li>
 <li>Parameter selection</li>
@@ -132,15 +131,19 @@ column-oriented sparse form. The counts can now be used as input for
 <code>DamageDetective</code>.</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># View dimensions &amp; class</span></span>
-<span><span class="co"># class(pbmc3k)[1]</span></span>
-<span><span class="co"># dim(pbmc3k)</span></span>
-<span><span class="co"># </span></span>
-<span><span class="co"># # Extract the count matrix</span></span>
-<span><span class="co"># pbmc3k_counts &lt;- pbmc3k[["RNA"]]$counts</span></span>
-<span><span class="co"># </span></span>
-<span><span class="co"># # View data</span></span>
-<span><span class="co"># class(pbmc3k_counts)[1]</span></span>
-<span><span class="co"># dim(pbmc3k_counts)</span></span></code></pre></div>
+<span><span class="fu"><a href="https://rdrr.io/r/base/class.html" class="external-link">class</a></span><span class="op">(</span><span class="va">pbmc3k</span><span class="op">)</span><span class="op">[</span><span class="fl">1</span><span class="op">]</span></span>
+<span><span class="co">#&gt; [1] "Seurat"</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/dim.html" class="external-link">dim</a></span><span class="op">(</span><span class="va">pbmc3k</span><span class="op">)</span></span>
+<span><span class="co">#&gt; [1] 13714  2700</span></span>
+<span> </span>
+<span><span class="co"># Extract the count matrix</span></span>
+<span><span class="va">pbmc3k_counts</span> <span class="op">&lt;-</span> <span class="va">pbmc3k</span><span class="op">[[</span><span class="st">"RNA"</span><span class="op">]</span><span class="op">]</span><span class="op">$</span><span class="va">counts</span></span>
+<span></span>
+<span><span class="co"># View data</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/class.html" class="external-link">class</a></span><span class="op">(</span><span class="va">pbmc3k_counts</span><span class="op">)</span><span class="op">[</span><span class="fl">1</span><span class="op">]</span> </span>
+<span><span class="co">#&gt; [1] "dgCMatrix"</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/dim.html" class="external-link">dim</a></span><span class="op">(</span><span class="va">pbmc3k_counts</span><span class="op">)</span></span>
+<span><span class="co">#&gt; [1] 13714  2700</span></span></code></pre></div>
 </div>
 <div class="section level4">
 <h4 id="alignment-output">Alignment output<a class="anchor" aria-label="anchor" href="#alignment-output"></a>
