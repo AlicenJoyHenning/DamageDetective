@@ -18,7 +18,7 @@ jobs:
       fail-fast: false
       matrix:
         config:
-         # - {os: macos-12, r: 'latest'}
+          - {os: macos-12, r: 'latest'}
           - {os: windows-latest, r: 'release'}
           - {os: ubuntu-latest,   r: 'devel', http-user-agent: 'release'}
           - {os: ubuntu-latest,   r: 'release'}
@@ -74,16 +74,6 @@ jobs:
       - name: Update URLs
         if: runner.os != 'Windows'
         run: Rscript -e 'urlchecker::url_update(".")'
-
-      # Check the installed version of scRNAseq
-      - name: Check installed scRNAseq version
-        run: |
-          Rscript -e 'if (requireNamespace("scRNAseq", quietly = TRUE)) {
-          package_version <- as.character(packageVersion("scRNAseq"))
-          cat("scRNAseq version:", package_version, "\n")
-         } else {
-          cat("scRNAseq is not installed.\n")
-         }'
 
       # Build and check the R package
       - uses: r-lib/actions/check-r-package@v2

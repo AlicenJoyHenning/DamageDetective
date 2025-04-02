@@ -12,9 +12,9 @@
 
 ## Description
 
-[View on <a href="https://alicenjoyhenning.github.io/DamageDetective/" target="_blank">DamageDetective website</a>]{style="background-color: #ADD8E6; padding: 2px 5px; border-radius: 4px;"}
+[**View on DamageDetective website**](https://alicenjoyhenning.github.io/DamageDetective/)
 
-Damaged cells are a class of low-quality artifact targeted during the quality control (QC) of single-cell RNA-seq (scRNA-seq) data. These are cells that succumbed to stress before being sequenced and as a result are associated with gene expression data that fails to describe the cells in their true, viable states.
+Damaged cells are a class of low-quality artefact targeted during the quality control (QC) of single-cell RNA-seq (scRNA-seq) data. These are cells that succumbed to stress before being sequenced and as a result are associated with gene expression data that fails to describe the cells in their true, viable states.
 
 Current approaches detect damage according to deviations in cell-level quality control metrics. These approaches assume all viable cells follow similar distributions across QC metrics, an assumption that rarely holds in heterogeneous samples. More recent methods address this by analysing cells at a population level, isolating cells with similar distributions before assessing deviations in QC metrics. However, this assumes that every distinct distribution is associated with a true cell population, meaning abundant damage is at risk of misclassification. Ultimately, the filtering decisions of current approaches are controlled more by statistical definitions of deviation than biological definitions of damage.
 
