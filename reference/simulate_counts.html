@@ -55,6 +55,8 @@ existing cells.</p>
 <span>  beta_shape_parameters <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  ribosome_penalty <span class="op">=</span> <span class="fl">0.001</span>,</span>
 <span>  generate_plot <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  palette <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"grey"</span>, <span class="st">"#7023FD"</span>, <span class="st">"#E60006"</span><span class="op">)</span>,</span>
+<span>  plot_ribosomal_penalty <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  display_plot <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  seed <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  organism <span class="op">=</span> <span class="st">"Hsap"</span></span>
@@ -137,6 +139,20 @@ single cell data.</p><ul><li><p>Default is TRUE.</p></li>
 </ul></dd>
 
 
+<dt id="arg-palette">palette<a class="anchor" aria-label="anchor" href="#arg-palette"></a></dt>
+<dd><p>Character vector containing three colours to create the
+continuous palette for damaged cells.</p><ul><li><p>Default is c("grey", "#7023FD", "#E60006").</p></li>
+</ul></dd>
+
+
+<dt id="arg-plot-ribosomal-penalty">plot_ribosomal_penalty<a class="anchor" aria-label="anchor" href="#arg-plot-ribosomal-penalty"></a></dt>
+<dd><p>Boolean specifying whether the output QC plot
+should focus on only the ribosomal proportion or contain additional QC
+information. If TRUE, this can be useful for visualising the impact of
+the ribosomal penalty parameter.</p><ul><li><p>Default is FALSE.</p></li>
+</ul></dd>
+
+
 <dt id="arg-display-plot">display_plot<a class="anchor" aria-label="anchor" href="#arg-display-plot"></a></dt>
 <dd><p>Boolean specifying whether the output QC plot should
 be displayed in the global environment. Naturally, this is only relevant
@@ -175,7 +191,7 @@ metrics of the alteration.</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
-    <p><code>DamageDetective</code> models damage in single-cell RNA sequencing data as the
+    <p>'DamageDetective' models damage in single-cell RNA sequencing data as the
 loss of cytoplasmic RNA, where cells experiencing greater RNA loss are assumed
 to be more extensively damaged, while those with minimal loss are considered
 largely intact. The perturbation process introduces RNA loss into existing

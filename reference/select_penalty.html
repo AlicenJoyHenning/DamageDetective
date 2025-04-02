@@ -39,7 +39,7 @@ ideal ribosome_penalty value for the input data."><meta property="og:image" cont
     </div>
 
     <div class="ref-description section level2">
-    <p>Recommended prerequisite function to <code><a href="detect_damage.html">detect_damage()</a></code> that estimates the
+    <p>Recommended prerequisite function to detect_damage() that estimates the
 ideal <code>ribosome_penalty</code> value for the input data.</p>
     </div>
 
@@ -222,7 +222,7 @@ adjust for this, the probability scores of ribosomal gene loss are multiplied
 by a numerical value (<code>ribosome_penalty</code>) between 0 and 1. Lower values
 (closer to zero) better approximate true data, with a default of 0.01,
 though this can often be greatly refined for the input data.</p>
-<p>Refinement follows a similar workflow to <code>detect_damage</code>, but rather than
+<p>Refinement follows a similar workflow to detect_damage(), but rather than
 evaluating the similarity of true cells to sets of artificial cells to
 infer their level of damage, we evaluate the similarity of artificial cells
 to true cells to infer the effectiveness of their approximation to true
