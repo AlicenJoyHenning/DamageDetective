@@ -10,19 +10,19 @@
 
 [Description](#description) \| [Installation](#installation) \| [Quick start](#quick-start) \| [Authors](#authors) \| [License](#license) \| [References](#references)
 
-## Description
+## Description {#description}
 
-Jump to [website](https://alicenjoyhenning.github.io/DamageDetective/ "https://alicenjoyhenning.github.io/DamageDetective/")
+[![](https://img.shields.io/badge/Jump-to-website-DamageDetective-blue)](https://alicenjoyhenning.github.io/DamageDetective/)
 
 Damaged cells are a class of low-quality artifact targeted during the quality control (QC) of single-cell RNA-seq (scRNA-seq) data. These are cells that succumbed to stress before being sequenced and as a result are associated with gene expression data that fails to describe the cells in their true, viable states.
 
-Current approaches detect damage according to deviations in cell-level quality control metrics. These approaches assume all viable cells follow similar distributions across QC metrics, an assumption that rarely holds in heterogeneous samples. More recent methods address this by analysing cells at a population level, isolating cells with similar distributions before assessing finer deviations. However, this assumes that all distinct distributions are associated with true cells meaning abundant damage is at risk of misclassification. Ultimately, the filtering decisions of current approaches are controlled more by statistical definitions of deviation than biological definitions of damage.
+Current approaches detect damage according to deviations in cell-level quality control metrics. These approaches assume all viable cells follow similar distributions across QC metrics, an assumption that rarely holds in heterogeneous samples. More recent methods address this by analysing cells at a population level, isolating cells with similar distributions before assessing deviations in QC metrics. However, this assumes that every distinct distribution is associated with a true cell population, meaning abundant damage is at risk of misclassification. Ultimately, the filtering decisions of current approaches are controlled more by statistical definitions of deviation than biological definitions of damage.
 
 `DamageDetective` takes a different approach inspired by `DoubletFinder`$^1$, a high performing tool for doublet QC, another low quality scRNA-seq artifact. Here, rather than detecting damage by measuring the extent to which cells deviate from each other, damage is detected by measuring the extent to which cells deviate from artificially damaged profiles of themselves. `DamageDetective` estimates the damage severity of true cells as a score from 0 to 1, providing an intuitive, reproducible scale for filtering that is standardised across cell types, samples, and experiments.
 
 <br>
 
-## Installation
+## Installation {#installation}
 
 `DamageDetective` can be installed from CRAN,
 
@@ -46,10 +46,9 @@ help(package = "DamageDetective")
 
 <br> <br>
 
-## Quick start
+## Quick start {#quick-start}
 
 The demonstrations below can be followed immediately after loading the package and serve as a test to ensure all is running smoothly. For more detailed examples and explanations, please refer to the package vignette.
-
 
 ### Prepare input
 
@@ -157,11 +156,11 @@ dim(filtered_matrix)
 # [1] 32738   470
 ```
 
-## License
+## License {#license}
 
 `DamageDetective` is made available for public use through the [GNU AGPL-3.0](https://opensource.org/licenses/AGPL-3.0) license.
 
-## Authors
+## Authors {#authors}
 
 **Alicen Henning**\
 Stellenbosch University, Cape Town, South Africa\
@@ -169,7 +168,7 @@ Bioinformatics and Computational Biology
 
 This work was done under the supervision of Prof Marlo Möller, Prof Gian van der Spuy, and Prof André Loxton.
 
-## References
+## References {#references}
 
 1.  McGinnis, C. S., Murrow, L. M., & Gartner, Z. J. (2019). DoubletFinder: Doublet Detection in Single-Cell RNA Sequencing Data Using Artificial Nearest Neighbors. *Cell Systems, 8*(4), 329-337.e4. <https://doi.org/10.1016/j.cels.2019.03.003>
 

@@ -45,7 +45,7 @@ jobs:
         run: |
           brew update
           brew install qpdf || brew upgrade qpdf
-      
+
       # Ensure Homebrew is updated (macOS)
       - name: Update Homebrew (macOS only)
         if: runner.os == 'macOS'
@@ -74,6 +74,16 @@ jobs:
       - name: Update URLs
         if: runner.os != 'Windows'
         run: Rscript -e 'urlchecker::url_update(".")'
+
+      # Check the installed version of scRNAseq
+      - name: Check installed scRNAseq version
+        run: |
+          Rscript -e 'if (requireNamespace("scRNAseq", quietly = TRUE)) {
+            package_version <- packageVersion("scRNAseq")
+            cat("scRNAseq version:", package_version, "\n")
+          } else {
+            cat("scRNAseq is not installed.\n")
+          }'
 
       # Build and check the R package
       - uses: r-lib/actions/check-r-package@v2
