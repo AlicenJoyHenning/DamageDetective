@@ -39,6 +39,7 @@ Suggests:
     SummarizedExperiment,
     scRNAseq,
     knitr,
+    rappdirs,
     rmarkdown
 VignetteBuilder: knitr
 URL: https://alicenjoyhenning.github.io/DamageDetective, https://github.com/alicenjoyhenning/DamageDetective

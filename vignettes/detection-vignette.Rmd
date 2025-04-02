@@ -89,7 +89,7 @@ We will use publicly available alignment data from the [10X Genomics website](ht
 url <- "https://cf.10xgenomics.com/samples/cell-exp/3.0.0/pbmc_1k_v3/pbmc_1k_v3_filtered_feature_bc_matrix.tar.gz"
 
 # Define a persistent directory for downloads
-persistent_dir <- file.path(user_data_dir("DamageDetective"), "datasets")
+persistent_dir <- file.path(rappdirs::user_data_dir("DamageDetective"), "datasets")
 dir.create(persistent_dir, showWarnings = FALSE, recursive = TRUE)
 
 # Download files
@@ -205,10 +205,6 @@ This
 
 
 ## Damaged cell detection
-
-```{r echo=FALSE}
-unlink(tempdir(), recursive = TRUE, force = TRUE)
-```
 
 ## Session Information
 ```{r session-info, echo=FALSE}
