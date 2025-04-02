@@ -29,7 +29,12 @@ Ensure the following packages are installed and made available in your R environ
 
 ```{r, include=FALSE, message=FALSE, warning=FALSE}
 
-invisible(lapply(c("Seurat", "SingleCellExperiment", "scRNAseq"), requireNamespace, quietly = TRUE))
+library("Seurat")
+library("SingleCellExperiment")
+library("scRNAseq")
+
+# invisible(lapply(c("Seurat", "SingleCellExperiment", "scRNAseq"), library, character.only = TRUE))
+
 
 ```
 

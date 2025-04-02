@@ -19,7 +19,7 @@ Encoding: UTF-8
 LazyData: false
 RoxygenNote: 7.3.2
 Depends: 
-    R (>= 3.7.0)
+    R (>= 3.5.0)
 Roxygen: list(markdown = TRUE)
 Imports: 
     cowplot,
@@ -39,7 +39,6 @@ Suggests:
     SummarizedExperiment,
     scRNAseq,
     knitr,
-    rappdirs,
     rmarkdown
 VignetteBuilder: knitr
 URL: https://alicenjoyhenning.github.io/DamageDetective, https://github.com/alicenjoyhenning/DamageDetective
