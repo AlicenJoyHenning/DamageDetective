@@ -29,7 +29,7 @@ Ensure the following packages are installed and made available in your R environ
 
 ```{r, include=FALSE, message=FALSE, warning=FALSE}
 
-invisible(lapply(c("Seurat", "SingleCellExperiment", "scRNAseq"), requireNamespace, quietly = TRUE))
+invisible(lapply(c("Seurat", "SingleCellExperiment", "scRNAseq", "rappdirs"), requireNamespace, quietly = TRUE))
 
 ```
 
@@ -88,14 +88,17 @@ We will use publicly available alignment data from the [10X Genomics website](ht
 ```{r echo=FALSE, retrieve_alignment}
 url <- "https://cf.10xgenomics.com/samples/cell-exp/3.0.0/pbmc_1k_v3/pbmc_1k_v3_filtered_feature_bc_matrix.tar.gz"
 
-# Set a temporary directory
-temp_dir <- tempdir()
-tar_file <- file.path(temp_dir, "pbmc_1k_v3_filtered_feature_bc_matrix.tar.gz")
+# Define a persistent directory for downloads
+persistent_dir <- file.path(user_data_dir("DamageDetective"), "datasets")
+dir.create(persistent_dir, showWarnings = FALSE, recursive = TRUE)
 
 # Download files
+tar_file <- file.path(persistent_dir, "pbmc_1k_v3_filtered_feature_bc_matrix.tar.gz")
 download.file(url, tar_file, mode = "wb", quiet = TRUE)
-untar(tar_file, exdir = temp_dir)
-extracted_dir <- file.path(temp_dir, "filtered_feature_bc_matrix")
+
+# Extract files
+untar(tar_file, exdir = persistent_dir)
+extracted_dir <- file.path(persistent_dir, "filtered_feature_bc_matrix")
 alignment_counts <- Seurat::Read10X(extracted_dir)
 
 ```
