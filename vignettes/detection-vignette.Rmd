@@ -16,7 +16,7 @@ knitr::opts_chunk$set(
 
 ## Tutorial overview
 
-The goal of `DamageDetective` is to simplify the process of making informed and reproducible damaged cell filtering decisions in single cell RNA sequencing (scRNA-seq) data pre-processing. This tutorial provides an outline of the steps needed to achieve this with `DamageDetective`,\
+The goal of `DamageDetective` is to simplify the process of making informed and reproducible damaged cell filtering decisions in scRNA-seq pre-processing. This tutorial provides an outline of the steps needed to achieve this with `DamageDetective`,\
 
 -   Data preparation
 -   Parameter selection
@@ -68,22 +68,28 @@ data("pbmc3k")
 
 ```{r echo=FALSE, retrieve_seurat}
 # Circumventing the inability of the vignette to load directly from SeuratData
-# pbmc3k <- readRDS("~/Projects/demonstrations/pbmc3k.rds")
+url <- "https://zenodo.org/records/15117856/files/pbmc3k.rds?download=1"
+
+# Downlaod file from temp path
+temp_file <- file.path(tempdir(), "pbmc3k.rds")
+download.file(url, temp_file, mode = "wb")
+pbmc3k <- readRDS(temp_file)
+
 ```
 
 Upon loading, we see the `Seurat` object contains 2700 cells and 13 714 features. The count matrix can be extracted from the assay slot of the object which, by default, is already in compressed column-oriented sparse form. The counts can now be used as input for `DamageDetective`. 
 
 ```{r}
 # View dimensions & class
-# class(pbmc3k)[1]
-# dim(pbmc3k)
-# 
-# # Extract the count matrix
-# pbmc3k_counts <- pbmc3k[["RNA"]]$counts
-# 
-# # View data
-# class(pbmc3k_counts)[1]
-# dim(pbmc3k_counts)
+class(pbmc3k)[1]
+dim(pbmc3k)
+ 
+# Extract the count matrix
+pbmc3k_counts <- pbmc3k[["RNA"]]$counts
+
+# View data
+class(pbmc3k_counts)[1] 
+dim(pbmc3k_counts)
 ```
 
 ### Alignment output
@@ -95,7 +101,7 @@ url <- "https://cf.10xgenomics.com/samples/cell-exp/3.0.0/pbmc_1k_v3/pbmc_1k_v3_
 
 # Set a temporary directory
 temp_dir <- tempdir()
-tar_file <- file.path(temp_dir, "pbmc_1k_v3_filtered_feature_bc_matrix.tar.gz")
+tar_file <- file.path(tempdir(), "pbmc_1k_v3_filtered_feature_bc_matrix.tar.gz")
 
 # Download files
 download.file(url, tar_file, mode = "wb", quiet = TRUE)

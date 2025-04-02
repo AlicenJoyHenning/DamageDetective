@@ -18,7 +18,7 @@ Damaged cells are a class of low-quality artifact targeted during the quality co
 
 Current approaches detect damage according to deviation in cell-level QC metrics. These approaches assume all viable cells follow the same distributions across QC metrics, an assumption that does not hold in heterogeneous samples. More recent approaches address this by analysing cells at a population level, isolating cells with similar distributions before detecting deviations within them. However, this assumes all distinct distributions are associated with viable populations, meaning damaged cells are at risk of misclassification if they are abundant enough to form distinct populations. Ultimately, filtering decisions of all current approaches rely more on binary definitions of deviation than biological definitions of damage.
 
-`DamageDetective` takes a different approach, rather than detecting damage by measuring the extent to which cells deviate from each other, damage is detected by measuring the extent to which cells deviate from artificially damaged profiles of themselves. This is inspired by the approach of `DoubletFinder`$^1$, a high performing tool for doublet QC, another low quality scRNA-seq artifact. `DamageDetective` estimates the damage severity of true cells as a score from 0 to 1, providing an intuitive scale for filtering that is standardised across cell types, samples, and experiments. 
+`DamageDetective` takes a different approach, rather than detecting damage by measuring the extent to which cells deviate from each other, damage is detected by measuring the extent to which cells deviate from artificially damaged profiles of themselves. This is inspired by the approach of `DoubletFinder`$^1$, a high performing tool for doublet QC, another low quality scRNA-seq artifact. `DamageDetective` estimates the damage severity of true cells as a score from 0 to 1, providing an intuitive scale for filtering that is standardised across cell types, samples, and experiments.
 
 <br>
 
@@ -30,7 +30,7 @@ Current approaches detect damage according to deviation in cell-level QC metrics
 install.packages('DamageDetective')
 ```
 
-Or is directly available through GitHub,
+Or is available directly through GitHub,
 
 ```         
 library(devtools)
