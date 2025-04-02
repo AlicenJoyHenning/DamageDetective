@@ -310,3 +310,84 @@ plot_unaltered_counts <- function(
 
   return(plot)
 }
+
+#' plot_ribosomal_penalty
+#'
+#' Function to generate a scatter plot of the simulated data focusing on
+#' ribosomal proportion.
+#'
+#' This function visualizes the distribution of mitochondrial and ribosomal
+#' proportion for cells with altered counts.
+#'
+#' @param qc_summary A data frame containing the quality control summary for
+#' cells.
+#' @param palette A character vector specifying the color gradient used for
+#' coloring the damage levels.
+#' @param target_damage Numeric vector specifying the target damage levels for
+#' color scaling.
+#'
+#' @return A ggplot2 plot
+#' @importFrom ggplot2 ggplot aes geom_point facet_wrap
+#' @importFrom ggplot2 scale_y_continuous labs theme_minimal
+#' @importFrom dplyr select rename mutate filter bind_rows
+#' @importFrom tidyr pivot_longer
+#' @importFrom scales rescale
+#' @keywords internal
+plot_ribosomal_penalty <- function(
+    qc_summary,
+    palette = c("grey", "#7023FD", "#E60006"),
+    target_damage = c(0.5, 1)
+){
+  # Isolate altered counts for visualizing QC metrics
+  altered_data <- qc_summary %>%
+    tidyr::pivot_longer(
+      cols = c(Original_MitoProp, New_MitoProp,
+               Original_RiboProp, New_RiboProp),
+      names_to = c("State", ".value"),
+      names_pattern = "(Original|New)_(.*)"
+    ) %>%
+    dplyr::mutate(
+      State = factor(ifelse(
+        .data$State == "Original", "Original", "Altered"),
+        levels = c("Original", "Altered")
+      )
+    ) %>%
+    dplyr::rename(
+      `Ribo. prop` = RiboProp
+    ) %>%
+    dplyr::filter(.data$State == "Altered")
+
+
+  # Create scatter plot showing QC metric distribution
+  plot <- ggplot2::ggplot(altered_data,
+                                  aes(x = .data$`Ribo. prop`,
+                                      y = .data$MitoProp,
+                                      color = .data$Damaged_Level)) +
+    ggplot2::geom_point(alpha = 0.7, size = 0.7) +
+    ggplot2::scale_color_gradientn(
+      colours = palette,
+      values = scales::rescale(target_damage),
+      limits = c(0, 1),
+      guide = guide_colorbar(
+        title.position = "top",
+        barwidth = 10
+      )
+    ) +
+    ggplot2::scale_y_continuous(limits = c(0, 1)) +
+    ggplot2::labs(x = "Ribo. prop", y = "Mito. prop", color = "Damage score") +
+    ggplot2::theme_minimal(base_size = 10) +
+    ggplot2::theme(
+      panel.background = element_rect(fill = "#F5F5F5", color = NA),
+      panel.grid.minor = element_blank(),
+      axis.ticks = element_blank(),
+      axis.title.y = element_text(face = "bold", size = 10, vjust = 2),
+      axis.title.x = element_text(face = "bold"),
+      legend.position = "bottom",
+      legend.title = element_text(face = "bold", hjust = 0.5, vjust = 2, size = 10),
+      legend.margin = margin(t = 0, b = 0),
+      legend.key.height = unit(0.5, "cm")
+    )
+
+  return(plot)
+
+}

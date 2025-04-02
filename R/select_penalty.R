@@ -1,6 +1,6 @@
 #' select_penalty
 #'
-#' Recommended prerequisite function to `detect_damage()` that estimates the
+#' Recommended prerequisite function to detect_damage() that estimates the
 #' ideal `ribosome_penalty` value for the input data.
 #'
 #' Based on observations of true single cell data, we find that ribosomal RNA
@@ -10,7 +10,7 @@
 #' (closer to zero) better approximate true data, with a default of 0.01,
 #' though this can often be greatly refined for the input data.
 #'
-#' Refinement follows a similar workflow to `detect_damage`, but rather than
+#' Refinement follows a similar workflow to detect_damage(), but rather than
 #' evaluating the similarity of true cells to sets of artificial cells to
 #' infer their level of damage, we evaluate the similarity of artificial cells
 #' to true cells to infer the effectiveness of their approximation to true

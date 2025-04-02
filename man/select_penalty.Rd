@@ -177,7 +177,7 @@ should be displayed in the console.
 Numeric representing the ideal ribosomal penalty for an input dataset.
 }
 \description{
-Recommended prerequisite function to \code{detect_damage()} that estimates the
+Recommended prerequisite function to detect_damage() that estimates the
 ideal \code{ribosome_penalty} value for the input data.
 }
 \details{
@@ -188,7 +188,7 @@ by a numerical value (\code{ribosome_penalty}) between 0 and 1. Lower values
 (closer to zero) better approximate true data, with a default of 0.01,
 though this can often be greatly refined for the input data.
 
-Refinement follows a similar workflow to \code{detect_damage}, but rather than
+Refinement follows a similar workflow to detect_damage(), but rather than
 evaluating the similarity of true cells to sets of artificial cells to
 infer their level of damage, we evaluate the similarity of artificial cells
 to true cells to infer the effectiveness of their approximation to true

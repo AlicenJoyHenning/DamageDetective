@@ -14,11 +14,14 @@
 
 [**View on DamageDetective website**](https://alicenjoyhenning.github.io/DamageDetective/)
 
-Damaged cells are an artifact of single-cell RNA-seq (scRNA-seq) data . These are cells that succumbed to stress before, or in the process of, being sequenced, and as a result capture gene expression data that fails to describe the cells in their viable states.
+Damaged cells are an artifact of single-cell RNA-seq (scRNA-seq) data. These are cells that succumbed to stress before, or in the process of, being sequenced and as a result capture gene expression data that fails to describe the cells in their viable states. As such, these cells are important targets for quality control (QC) filtering. 
 
-Current approaches detect damage according to deviation in cell-level QC metrics. These approaches assume all viable cells follow the same distributions across QC metrics, an assumption that does not hold in heterogeneous samples. More recent approaches address this by analysing cells at a population level, isolating cells with similar distributions before detecting deviations within them. However, this assumes all distinct distributions are associated with viable populations, meaning damaged cells are at risk of misclassification if they are abundant enough to form distinct populations. Ultimately, filtering decisions of all current approaches rely more on binary definitions of deviation than biological definitions of damage.
+Current approaches detect damage according to deviation in cell-level QC metrics. These approaches assume all viable cells follow similar distributions across QC metrics, an assumption that does not hold in heterogeneous samples. 
 
-`DamageDetective` takes a different approach, rather than detecting damage by measuring the extent to which cells deviate from each other, damage is detected by measuring the extent to which cells deviate from artificially damaged profiles of themselves. This is inspired by the approach of `DoubletFinder`$^1$, a high performing tool for doublet QC, another low quality scRNA-seq artifact. `DamageDetective` estimates the damage severity of true cells as a score from 0 to 1, providing an intuitive scale for filtering that is standardised across cell types, samples, and experiments.
+More recent approaches address this by analysing cells at a population level, isolating cells with similar distributions before addressing deviations within them. This assumes all distinct distributions are associated with viable populations, putting damaged cells at risk of misclassification if they are abundant. Ultimately, filtering decisions of all current approaches rely more on statistical definitions of deviation than biological definitions of damage.
+
+`DamageDetective` takes a different approach, rather than detecting damage by measuring the extent to which cells deviate from each other, damage is detected by measuring the extent to which cells deviate from artificially damaged profiles of themselves. This is inspired by the approach of `DoubletFinder`$^1$, a high performing QC tool for filtering doublets, another prominent scRNA-seq artifact. By comparing the expression profiles of true cells to sets of artificially damaged cells, `DamageDetective` estimates the damage severity of true cells as a score from 0 to 1. This provides an intuitive scale for filtering that is standardised across cell types, samples, and experiments.
+
 
 <br>
 

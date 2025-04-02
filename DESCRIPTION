@@ -35,9 +35,6 @@ Imports:
     withr
 Suggests:
     Seurat,
-    SingleCellExperiment,
-    SummarizedExperiment,
-    scRNAseq,
     knitr,
     rmarkdown
 VignetteBuilder: knitr

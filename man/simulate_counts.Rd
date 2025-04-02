@@ -14,6 +14,8 @@ simulate_counts(
   beta_shape_parameters = NULL,
   ribosome_penalty = 0.001,
   generate_plot = TRUE,
+  palette = c("grey", "#7023FD", "#E60006"),
+  plot_ribosomal_penalty = FALSE,
   display_plot = TRUE,
   seed = NULL,
   organism = "Hsap"
@@ -91,6 +93,20 @@ single cell data.
 \item Default is TRUE.
 }}
 
+\item{palette}{Character vector containing three colours to create the
+continuous palette for damaged cells.
+\itemize{
+\item Default is c("grey", "#7023FD", "#E60006").
+}}
+
+\item{plot_ribosomal_penalty}{Boolean specifying whether the output QC plot
+should focus on only the ribosomal proportion or contain additional QC
+information. If TRUE, this can be useful for visualising the impact of
+the ribosomal penalty parameter.
+\itemize{
+\item Default is FALSE.
+}}
+
 \item{display_plot}{Boolean specifying whether the output QC plot should
 be displayed in the global environment. Naturally, this is only relevant
 when generate_plot is TRUE.
@@ -135,7 +151,7 @@ Function to simulate damaged cells by perturbing the gene expression of
 existing cells.
 }
 \details{
-\code{DamageDetective} models damage in single-cell RNA sequencing data as the
+'DamageDetective' models damage in single-cell RNA sequencing data as the
 loss of cytoplasmic RNA, where cells experiencing greater RNA loss are assumed
 to be more extensively damaged, while those with minimal loss are considered
 largely intact. The perturbation process introduces RNA loss into existing

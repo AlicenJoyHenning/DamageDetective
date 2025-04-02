@@ -1,9 +1,23 @@
-.Rproj.user
-.Rhistory
+# R Data files
 .RData
 .Ruserdata
+
+# RStudio project files
+.Rproj.user
+DamageDetective.Rproj
+
+# macOS system files
 .DS_Store
-inst/doc
-docs
-/doc/
-/Meta/
+
+# R history
+.Rhistory
+
+# Documentation directories
+inst/doc/
+docs/
+
+# Metadata
+Meta/
+
+# Ignore the 'doc' directory
+doc/
