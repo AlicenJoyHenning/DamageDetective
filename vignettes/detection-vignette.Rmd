@@ -203,6 +203,9 @@ This
 
 ## Damaged cell detection
 
+```{r echo=FALSE}
+unlink(tempdir(), recursive = TRUE, force = TRUE)
+```
 
 ## Session Information
 ```{r session-info, echo=FALSE}
