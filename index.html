@@ -76,8 +76,8 @@
 <h2 id="description">Description<a class="anchor" aria-label="anchor" href="#description"></a>
 </h2>
 <p><a href="https://alicenjoyhenning.github.io/DamageDetective/"><strong>View on DamageDetective website</strong></a></p>
-<p>Damaged cells are a class of low-quality artefact targeted during the quality control (QC) of single-cell RNA-seq (scRNA-seq) data. These are cells that succumbed to stress before being sequenced and as a result are associated with gene expression data that fails to describe the cells in their true, viable states.</p>
-<p>Current approaches detect damage according to deviations in cell-level quality control metrics. These approaches assume all viable cells follow similar distributions across QC metrics, an assumption that rarely holds in heterogeneous samples. More recent methods address this by analysing cells at a population level, isolating cells with similar distributions before assessing deviations in QC metrics. However, this assumes that every distinct distribution is associated with a true cell population, meaning abundant damage is at risk of misclassification. Ultimately, the filtering decisions of current approaches are controlled more by statistical definitions of deviation than biological definitions of damage.</p>
+<p>Damaged cells are a class of low-quality artifact targeted during the quality control (QC) of single-cell RNA-seq (scRNA-seq) data. These are cells that succumbed to stress before being sequenced and as a result contain gene expression data that fails to describe the cells in their true, viable states.</p>
+<p>Current approaches detect damage according to deviation in cell-level QC metrics. These approaches assume all viable cells follow similar distributions across QC metrics, an assumption that does not hold in heterogeneous samples. More recent methods address this by analysing cells at a population level, isolating cells with similar distributions before assessing deviations within amoung them. Howevere, this assumes that all distinct distributions are associated with viable cell populations meaning if damaged cells are abundant enough to form a distinct population, they are at risk of misclassification. Ultimately, the filtering decisions of current approaches are controlled more by statistical definitions of deviation than biological definitions of damage.</p>
 <p><code>DamageDetective</code> takes a different approach inspired by <code>DoubletFinder</code><math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msup><mi></mi><mn>1</mn></msup><annotation encoding="application/x-tex">^1</annotation></semantics></math>, a high performing tool for doublet QC, another low quality scRNA-seq artifact. Here, rather than detecting damage by measuring the extent to which cells deviate from each other, damage is detected by measuring the extent to which cells deviate from artificially damaged profiles of themselves. <code>DamageDetective</code> estimates the damage severity of true cells as a score from 0 to 1, providing an intuitive, reproducible scale for filtering that is standardised across cell types, samples, and experiments.</p>
 <p><br></p>
 </div>
@@ -118,7 +118,7 @@
 <h4 id="ribosome_penalty">
 <code>ribosome_penalty</code><a class="anchor" aria-label="anchor" href="#ribosome_penalty"></a>
 </h4>
-<p>While <code>detect_damage</code> requires only a count matrix as input, there are optional parameters that adjust the implementation of the function. Of these, we recommend <code>ribosome_penalty</code> be adjusted for each input dataset. This is done automatically using the <code>select_penalty</code> function. This requires the count matrix as input and will output a numeric of the optimal penalty.</p>
+<p>While <code>detect_damage</code> requires only a count matrix as input, there are optional parameters that control the implementation of the function. Of these, we recommend <code>ribosome_penalty</code> be adjusted for each input dataset. This can be done automatically using the <code>select_penalty</code> function. This requires the count matrix as input and will output a numeric of the optimal penalty.</p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">penalty</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/select_penalty.html">select_penalty</a></span><span class="op">(</span></span>
 <span>  count_matrix <span class="op">=</span> <span class="va">test_counts</span>,</span>
@@ -223,7 +223,6 @@ Bioinformatics and Computational Biology</p>
 <li><p>McGinnis, C. S., Murrow, L. M., &amp; Gartner, Z. J. (2019). DoubletFinder: Doublet Detection in Single-Cell RNA Sequencing Data Using Artificial Nearest Neighbors. <em>Cell Systems, 8</em>(4), 329-337.e4. <a href="https://doi.org/10.1016/j.cels.2019.03.003" class="external-link uri">https://doi.org/10.1016/j.cels.2019.03.003</a></p></li>
 <li><p>Risso D, Cole M (2024). <em>scRNAseq: Collection of Public Single-Cell RNA-Seq Datasets</em>. <a href="doi:10.18129/B9.bioc.scRNAseq" class="uri">doi:10.18129/B9.bioc.scRNAseq</a> <a href="https://doi.org/10.18129/B9.bioc.scRNAseq" class="external-link uri">https://doi.org/10.18129/B9.bioc.scRNAseq</a>, R package version 2.20.0, <a href="https://bioconductor.org/packages/scRNAseq" class="external-link uri">https://bioconductor.org/packages/scRNAseq</a>.</p></li>
 </ol>
-<hr>
 </div>
 </div>
   </main><aside class="col-md-3"><div class="links">
