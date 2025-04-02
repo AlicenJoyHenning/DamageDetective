@@ -14,23 +14,23 @@
 
 [**View on DamageDetective website**](https://alicenjoyhenning.github.io/DamageDetective/)
 
-Damaged cells are a class of low-quality artifact targeted during the quality control (QC) of single-cell RNA-seq (scRNA-seq) data. These are cells that succumbed to stress before, or in the process of being sequenced, and as a result capture gene expression data that fails to describe the cells in their true, viable states.
+Damaged cells are a class of low-quality artifact targeted during the quality control (QC) of single-cell RNA-seq (scRNA-seq) data. These are cells that succumbed to stress before, or in the process of, being sequenced, and as a result capture gene expression data that fails to describe the cells in their viable states.
 
-Current approaches detect damage according to deviation in cell-level QC metrics. These approaches assume all viable cells follow the same distributions across QC metrics, an assumption that does not hold in heterogeneous samples. More recent approaches address this by analysing cells at a population level, isolating cells with similar distributions before assessing deviations within them. However, this assumes all distinct distributions are associated with viable cell populations, meaning damaged cells are at risk of misclassification if they are abundant enough to form distinct populations. Ultimately, the filtering decisions of current approaches are controlled more by binary definitions of deviation than biological definitions of damage.
+Current approaches detect damage according to deviation in cell-level QC metrics. These approaches assume all viable cells follow the same distributions across QC metrics, an assumption that does not hold in heterogeneous samples. More recent approaches address this by analysing cells at a population level, isolating cells with similar distributions before detecting deviations within them. However, this assumes all distinct distributions are associated with viable populations, meaning damaged cells are at risk of misclassification if they are abundant enough to form distinct populations. Ultimately, filtering decisions of all current approaches rely more on binary definitions of deviation than biological definitions of damage.
 
-`DamageDetective` takes a different approach inspired by `DoubletFinder`$^1$, a high performing tool for doublet QC, another low quality scRNA-seq artifact. Here, rather than detecting damage by measuring the extent to which cells deviate from each other, damage is detected by measuring the extent to which cells deviate from artificially damaged profiles of themselves. `DamageDetective` estimates the damage severity of true cells as a score from 0 to 1, providing an intuitive scale for filtering that is standardised and reproducible across cell types, samples, and experiments.
+`DamageDetective` takes a different approach, rather than detecting damage by measuring the extent to which cells deviate from each other, damage is detected by measuring the extent to which cells deviate from artificially damaged profiles of themselves. This is inspired by the approach of `DoubletFinder`$^1$, a high performing tool for doublet QC, another low quality scRNA-seq artifact. `DamageDetective` estimates the damage severity of true cells as a score from 0 to 1, providing an intuitive scale for filtering that is standardised across cell types, samples, and experiments. 
 
 <br>
 
 ## Installation
 
-`DamageDetective` can be installed from CRAN,
+`DamageDetective` can soon be installed from CRAN,
 
 ``` r
 install.packages('DamageDetective')
 ```
 
-Or directly from GitHub,
+Or is directly available through GitHub,
 
 ```         
 library(devtools)
@@ -51,11 +51,11 @@ help(package = "DamageDetective")
 The demonstrations below can be followed immediately after loading the package 
 and serve as a test to ensure all is running smoothly. For more detailed 
 examples and explanations, please refer to the package articles available on 
-our website.
+our [website](https://alicenjoyhenning.github.io/DamageDetective/).
 
 ### Prepare input
 
-Damage detection is carried out by the `detect_damage` function that requires only a count matrix to run. We will use the dummy count matrix provided by `DamageDetective`, `test_counts`, a subset of the [(kotliarov-pbmc-2020)](10.1038/s41591-020-0769-8%5D) PBMC dataset provided in the `scRNAseq`$^2$ package.
+Damage detection is carried out by the `detect_damage` function that requires a count matrix to run. We will use the dummy count matrix provided by `DamageDetective`, `test_counts`, a subset of the [(kotliarov-pbmc-2020)](10.1038/s41591-020-0769-8%5D) PBMC dataset provided in the `scRNAseq`$^2$ package.
 
 ``` r
 library(DamageDetective)
