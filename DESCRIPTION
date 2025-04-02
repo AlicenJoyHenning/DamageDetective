@@ -37,7 +37,7 @@ Suggests:
     Seurat,
     SingleCellExperiment,
     SummarizedExperiment,
-    scRNAseq (>= 2.11.0),
+    scRNAseq,
     knitr,
     rmarkdown
 VignetteBuilder: knitr
