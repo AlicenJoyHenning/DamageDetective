@@ -39,6 +39,8 @@ library("scRNAseq")
 ```
 
 
+<br>
+
 
 ## Data preparation
 
@@ -94,7 +96,7 @@ dim(pbmc3k_counts)
 
 ### Alignment output
 
-We will use publicly available alignment data from the [10X Genomics website](https://www.10xgenomics.com/datasets) for demonstration, specifically the '1k PBMCs from a healthy donor (v3)' data available [here](https://www.10xgenomics.com/datasets/1-k-pbm-cs-from-a-healthy-donor-v-3-chemistry-3-standard-3-0-0) following the link named "Feature / cell matrix (filtered)". 
+We will use publicly available alignment data from the 10X Genomics website for demonstration, specifically the '1k PBMCs from a healthy donor (v3)' data available [here](https://www.10xgenomics.com/datasets/1-k-pbm-cs-from-a-healthy-donor-v-3-chemistry-3-standard-3-0-0) following the link named "Feature / cell matrix (filtered)". 
 
 ```{r echo=FALSE, retrieve_alignment}
 url <- "https://cf.10xgenomics.com/samples/cell-exp/3.0.0/pbmc_1k_v3/pbmc_1k_v3_filtered_feature_bc_matrix.tar.gz"
@@ -127,7 +129,7 @@ alignment_counts <- Seurat::ReadMtx(
 )
 ```
 
-```{r remove_temp}
+```{r echo = FALSE, clean_temp}
 unlink(extracted_dir, recursive = TRUE, force = TRUE)
 ```
 
@@ -143,7 +145,7 @@ dim(alignment_counts)
 
 We will use the `scRNAseq` package to retrieve a publicly available `sce` object for demonstration. This object stores PBMC data of multiple samples from a study investigating influenza and yellow fever vaccine responsiveness. We will focus on the "234_d0" sample coming from an individual with a high vaccine responsiveness.
 
-Upon loading, we see the object contains 2358 cells and 32 738 features. The count matrix is stored as a delayed matrix within the assay slot of the `sce` object. This format enables memory-efficient operations by delaying computations until explicitly requested, rather than storing all values in memory upfront. However, `DamageDetective` computations require repeated access to the matrix and delays at each request greatly accumulate to slow down the process. Thus, we must convert the delayed matrix to the required `DamageDetective` format of a sparse matrix using a dense matrix intermediate.
+Upon loading, we see the object contains 2358 cells and 32 738 features. The count matrix is stored as a delayed matrix within the assay slot of the `sce` object. This format enables memory-efficient operations by delaying computations until explicitly requested, rather than storing all values in memory upfront. However, `DamageDetective` computations require repeated access to the matrix and delays at each request greatly accumulate to slow down the process. We can convert the delayed matrix to a sparse matrix using a dense matrix intermediate.
 
 ```{r sce_data}
 # Retrieve multisample dataset
@@ -171,15 +173,16 @@ dim(sample_counts)
 ## Parameter selection
 Damage detection is carried out by the `detect_damage` function that requires only one input to run, the count matrix, but accepts additional parameters. 
 
-These can be divided into two categories, those that adjust the computation and will result in a different output, **computation parameters**, and those that adjust how the user receives the output of the computation but cannot change it, **aesthetic parameters**. Each will be explored briefly before deciding on appropriate selections.
+These can be divided into two categories, those that will result in a different output, **computational parameters**, and those that adjust how the user receives the output but cannot change it, **aesthetic parameters**. Each will be explored briefly before making the appropriate selections.
 
 ### Computational parameters
 **Dataset-defined**  
-For some parameters, the choice of input is predetermined by the input data and in most cases needs no alteration from the default case. This includes specifying the `organism` from which the data came (human is default) and whether the data contains `annotated_celltypes` (default is FALSE). 
+For some parameters, the choice of input is predetermined by the input data. This includes the `organism` from which the data came and whether the data contains cell type annotations, `annotated_celltypes`. In most cases, these need no alteration from the default (`Hsap` and `FALSE`).
 
-The `ribosome_penalty` parameter is determined by the input data but requires some computational work to uncover, work that must be done for each input dataset. This parameter accounts for the unexpectedly lower probability of ribosomal RNA loss observed in real single cell data than what is expected based on transcript abundance alone. 
+The `ribosome_penalty` parameter is also determined by the input data but requires some work to uncover. This parameter accounts for the unexpectedly lower probability of ribosomal RNA loss observed in real single cell data than what is expected based on transcript abundance alone. This is essential for generating artificial cells.
 
-The images
+This can be 
+
 
 
 loss of cytoplasmic RNA 
