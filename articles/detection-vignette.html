@@ -90,6 +90,7 @@ your R environment to follow along with the tutorial.</p>
 <a href="https://github.com/satijalab/seurat-data" class="external-link">SeuratData</a>, <a href="https://github.com/satijalab/seurat" class="external-link">Seurat</a>, <a href="https://bioconductor.org/packages/release/data/experiment/html/scRNAseq.html" class="external-link">scRNAseq</a>
 , and <a href="https://bioconductor.org/packages/release/bioc/html/SingleCellExperiment.html" class="external-link">SingleCellExperiment</a>.</li>
 </ul>
+<p><br></p>
 </div>
 <div class="section level3">
 <h3 id="data-preparation">Data preparation<a class="anchor" aria-label="anchor" href="#data-preparation"></a>
@@ -148,9 +149,9 @@ column-oriented sparse form. The counts can now be used as input for
 <div class="section level4">
 <h4 id="alignment-output">Alignment output<a class="anchor" aria-label="anchor" href="#alignment-output"></a>
 </h4>
-<p>We will use publicly available alignment data from the <a href="https://www.10xgenomics.com/datasets" class="external-link">10X Genomics website</a> for
-demonstration, specifically the ‘1k PBMCs from a healthy donor (v3)’
-data available <a href="https://www.10xgenomics.com/datasets/1-k-pbm-cs-from-a-healthy-donor-v-3-chemistry-3-standard-3-0-0" class="external-link">here</a>
+<p>We will use publicly available alignment data from the 10X Genomics
+website for demonstration, specifically the ‘1k PBMCs from a healthy
+donor (v3)’ data available <a href="https://www.10xgenomics.com/datasets/1-k-pbm-cs-from-a-healthy-donor-v-3-chemistry-3-standard-3-0-0" class="external-link">here</a>
 following the link named “Feature / cell matrix (filtered)”.</p>
 <p>The alignment output comes in the form of three files containing the
 row names (genes), column names (cell identifiers), and input values
@@ -172,11 +173,9 @@ directly for <code>DamageDetective</code>.</p>
 <span>  cells <span class="op">=</span> <span class="va">barcodes_file</span>,</span>
 <span>  features <span class="op">=</span> <span class="va">features_file</span></span>
 <span><span class="op">)</span></span></code></pre></div>
-<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/unlink.html" class="external-link">unlink</a></span><span class="op">(</span><span class="va">extracted_dir</span>, recursive <span class="op">=</span> <span class="cn">TRUE</span>, force <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
 <p>Upon converting, we see this dataset contains 1222 cells and 33 538
 genes.</p>
-<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># View output</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/class.html" class="external-link">class</a></span><span class="op">(</span><span class="va">alignment_counts</span><span class="op">)</span><span class="op">[</span><span class="fl">1</span><span class="op">]</span></span>
 <span><span class="co">#&gt; [1] "dgCMatrix"</span></span>
@@ -199,10 +198,9 @@ memory-efficient operations by delaying computations until explicitly
 requested, rather than storing all values in memory upfront. However,
 <code>DamageDetective</code> computations require repeated access to the
 matrix and delays at each request greatly accumulate to slow down the
-process. Thus, we must convert the delayed matrix to the required
-<code>DamageDetective</code> format of a sparse matrix using a dense
-matrix intermediate.</p>
-<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
+process. We can convert the delayed matrix to a sparse matrix using a
+dense matrix intermediate.</p>
+<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Retrieve multisample dataset</span></span>
 <span><span class="va">pbmc_sce</span> <span class="op">&lt;-</span> <span class="fu">scRNAseq</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/scRNAseq/man/fetchDataset.html" class="external-link">fetchDataset</a></span><span class="op">(</span><span class="st">"kotliarov-pbmc-2020"</span>, <span class="st">"2024-04-18"</span><span class="op">)</span></span>
 <span></span>
@@ -232,28 +230,27 @@ matrix intermediate.</p>
 <p>Damage detection is carried out by the <code>detect_damage</code>
 function that requires only one input to run, the count matrix, but
 accepts additional parameters.</p>
-<p>These can be divided into two categories, those that adjust the
-computation and will result in a different output, <strong>computation
-parameters</strong>, and those that adjust how the user receives the
-output of the computation but cannot change it, <strong>aesthetic
-parameters</strong>. Each will be explored briefly before deciding on
-appropriate selections.</p>
+<p>These can be divided into two categories, those that will result in a
+different output, <strong>computational parameters</strong>, and those
+that adjust how the user receives the output but cannot change it,
+<strong>aesthetic parameters</strong>. Each will be explored briefly
+before making the appropriate selections.</p>
 <div class="section level4">
 <h4 id="computational-parameters">Computational parameters<a class="anchor" aria-label="anchor" href="#computational-parameters"></a>
 </h4>
 <p><strong>Dataset-defined</strong><br>
 For some parameters, the choice of input is predetermined by the input
-data and in most cases needs no alteration from the default case. This
-includes specifying the <code>organism</code> from which the data came
-(human is default) and whether the data contains
-<code>annotated_celltypes</code> (default is FALSE).</p>
-<p>The <code>ribosome_penalty</code> parameter is determined by the
-input data but requires some computational work to uncover, work that
-must be done for each input dataset. This parameter accounts for the
-unexpectedly lower probability of ribosomal RNA loss observed in real
-single cell data than what is expected based on transcript abundance
-alone.</p>
-<p>The images</p>
+data. This includes the <code>organism</code> from which the data came
+and whether the data contains cell type annotations,
+<code>annotated_celltypes</code>. In most cases, these need no
+alteration from the default (<code>Hsap</code> and
+<code>FALSE</code>).</p>
+<p>The <code>ribosome_penalty</code> parameter is also determined by the
+input data but requires some work to uncover. This parameter accounts
+for the unexpectedly lower probability of ribosomal RNA loss observed in
+real single cell data than what is expected based on transcript
+abundance alone. This is essential for generating artificial cells.</p>
+<p>This can be</p>
 <p>loss of cytoplasmic RNA</p>
 <p><br></p>
 <p><strong>Table summarising <code>detect_damage</code>
