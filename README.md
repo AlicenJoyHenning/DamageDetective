@@ -14,9 +14,9 @@
 
 [**View on DamageDetective website**](https://alicenjoyhenning.github.io/DamageDetective/)
 
-Damaged cells are a class of low-quality artefact targeted during the quality control (QC) of single-cell RNA-seq (scRNA-seq) data. These are cells that succumbed to stress before being sequenced and as a result are associated with gene expression data that fails to describe the cells in their true, viable states.
+Damaged cells are a class of low-quality artifact targeted during the quality control (QC) of single-cell RNA-seq (scRNA-seq) data. These are cells that succumbed to stress before being sequenced and as a result contain gene expression data that fails to describe the cells in their true, viable states.
 
-Current approaches detect damage according to deviations in cell-level quality control metrics. These approaches assume all viable cells follow similar distributions across QC metrics, an assumption that rarely holds in heterogeneous samples. More recent methods address this by analysing cells at a population level, isolating cells with similar distributions before assessing deviations in QC metrics. However, this assumes that every distinct distribution is associated with a true cell population, meaning abundant damage is at risk of misclassification. Ultimately, the filtering decisions of current approaches are controlled more by statistical definitions of deviation than biological definitions of damage.
+Current approaches detect damage according to deviation in cell-level QC metrics. These approaches assume all viable cells follow similar distributions across QC metrics, an assumption that does not hold in heterogeneous samples. More recent methods address this by analysing cells at a population level, isolating cells with similar distributions before assessing deviations within amoung them. Howevere, this assumes that all distinct distributions are associated with viable cell populations meaning if damaged cells are abundant enough to form a distinct population, they are at risk of misclassification. Ultimately, the filtering decisions of current approaches are controlled more by statistical definitions of deviation than biological definitions of damage.
 
 `DamageDetective` takes a different approach inspired by `DoubletFinder`$^1$, a high performing tool for doublet QC, another low quality scRNA-seq artifact. Here, rather than detecting damage by measuring the extent to which cells deviate from each other, damage is detected by measuring the extent to which cells deviate from artificially damaged profiles of themselves. `DamageDetective` estimates the damage severity of true cells as a score from 0 to 1, providing an intuitive, reproducible scale for filtering that is standardised across cell types, samples, and experiments.
 
@@ -67,7 +67,7 @@ dim(test_counts)
 
 #### `ribosome_penalty`
 
-While `detect_damage` requires only a count matrix as input, there are optional parameters that adjust the implementation of the function. Of these, we recommend `ribosome_penalty` be adjusted for each input dataset. This is done automatically using the `select_penalty` function. This requires the count matrix as input and will output a numeric of the optimal penalty.
+While `detect_damage` requires only a count matrix as input, there are optional parameters that control the implementation of the function. Of these, we recommend `ribosome_penalty` be adjusted for each input dataset. This can be done automatically using the `select_penalty` function. This requires the count matrix as input and will output a numeric of the optimal penalty.
 
 ``` r
 penalty <- select_penalty(
@@ -174,4 +174,3 @@ This work was done under the supervision of Prof Marlo Möller, Prof Gian van de
 
 2.  Risso D, Cole M (2024). *scRNAseq: Collection of Public Single-Cell RNA-Seq Datasets*. <doi:10.18129/B9.bioc.scRNAseq> <https://doi.org/10.18129/B9.bioc.scRNAseq>, R package version 2.20.0, <https://bioconductor.org/packages/scRNAseq>.
 
-------------------------------------------------------------------------
