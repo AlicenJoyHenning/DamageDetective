@@ -10,9 +10,9 @@
 
 [Description](#description) \| [Installation](#installation) \| [Quick start](#quick-start) \| [Authors](#authors) \| [License](#license) \| [References](#references)
 
-## Description {#description}
+## Description
 
-[![](https://img.shields.io/badge/Jump-to-website-DamageDetective-blue)](https://alicenjoyhenning.github.io/DamageDetective/)
+[View on <a href="https://alicenjoyhenning.github.io/DamageDetective/" target="_blank">DamageDetective website</a>]{style="background-color: #ADD8E6; padding: 2px 5px; border-radius: 4px;"}
 
 Damaged cells are a class of low-quality artifact targeted during the quality control (QC) of single-cell RNA-seq (scRNA-seq) data. These are cells that succumbed to stress before being sequenced and as a result are associated with gene expression data that fails to describe the cells in their true, viable states.
 
@@ -22,7 +22,7 @@ Current approaches detect damage according to deviations in cell-level quality c
 
 <br>
 
-## Installation {#installation}
+## Installation
 
 `DamageDetective` can be installed from CRAN,
 
@@ -46,7 +46,7 @@ help(package = "DamageDetective")
 
 <br> <br>
 
-## Quick start {#quick-start}
+## Quick start
 
 The demonstrations below can be followed immediately after loading the package and serve as a test to ensure all is running smoothly. For more detailed examples and explanations, please refer to the package vignette.
 
@@ -156,11 +156,11 @@ dim(filtered_matrix)
 # [1] 32738   470
 ```
 
-## License {#license}
+## License
 
 `DamageDetective` is made available for public use through the [GNU AGPL-3.0](https://opensource.org/licenses/AGPL-3.0) license.
 
-## Authors {#authors}
+## Authors
 
 **Alicen Henning**\
 Stellenbosch University, Cape Town, South Africa\
@@ -168,7 +168,7 @@ Bioinformatics and Computational Biology
 
 This work was done under the supervision of Prof Marlo Möller, Prof Gian van der Spuy, and Prof André Loxton.
 
-## References {#references}
+## References
 
 1.  McGinnis, C. S., Murrow, L. M., & Gartner, Z. J. (2019). DoubletFinder: Doublet Detection in Single-Cell RNA Sequencing Data Using Artificial Nearest Neighbors. *Cell Systems, 8*(4), 329-337.e4. <https://doi.org/10.1016/j.cels.2019.03.003>
 

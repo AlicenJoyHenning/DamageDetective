@@ -79,11 +79,11 @@ jobs:
       - name: Check installed scRNAseq version
         run: |
           Rscript -e 'if (requireNamespace("scRNAseq", quietly = TRUE)) {
-            package_version <- packageVersion("scRNAseq")
-            cat("scRNAseq version:", package_version, "\n")
-          } else {
-            cat("scRNAseq is not installed.\n")
-          }'
+          package_version <- as.character(packageVersion("scRNAseq"))
+          cat("scRNAseq version:", package_version, "\n")
+         } else {
+          cat("scRNAseq is not installed.\n")
+         }'
 
       # Build and check the R package
       - uses: r-lib/actions/check-r-package@v2
