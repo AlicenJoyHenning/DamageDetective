@@ -50,7 +50,7 @@ get_organism_indices <- function(
     MALAT1 <- organism$MALAT1
   }
 
-  # Isolate gene set indices (consistent across cells, not subsetting the matrix)
+  # Isolate gene set indices (consistent across cells, not subsetting)
   mito_idx <- grep(mito_pattern, rownames(count_matrix), ignore.case = FALSE)
   nucl_idx <- which(rownames(count_matrix) %in% nuclear)
   mito_idx <- c(mito_idx, nucl_idx)

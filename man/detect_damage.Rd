@@ -113,7 +113,8 @@ Default ptions include,
 c(0.7, 0.9), c(0.9, 0.99999).
 }
 
-A user can also provide a list specifying sets with their own ranges of loss,
+A user can also provide a list specifying sets with their own ranges of
+loss,
 \itemize{
 \item damage_levels = list(
 pANN_50 = c(0.1, 0.5),

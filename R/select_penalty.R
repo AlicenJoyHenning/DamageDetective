@@ -64,7 +64,8 @@
 #'  should be displayed in the console.
 #'
 #'  * Default is TRUE.
-#' @return Numeric representing the ideal ribosomal penalty for an input dataset.
+#' @return Numeric representing the ideal ribosomal penalty for an input
+#'  dataset.
 #' @importFrom dplyr %>% mutate if_else
 #' @importFrom stats quantile
 #' @importFrom scales rescale
@@ -107,7 +108,8 @@ select_penalty <- function(
   df <- .prepare_penalty_data(count_matrix, gene_idx, mito_quantile)
 
   # Subset low mitochondrial proportion cells
-  filtered_cells <- rownames(df)[df$mito <= quantile(df$mito, probs = mito_quantile, na.rm = TRUE)]
+  threshold <- quantile(df$mito, probs = mito_quantile, na.rm = TRUE)
+  filtered_cells <- rownames(df)[df$mito <= threshold]
   filtered_matrix <- count_matrix[, filtered_cells]
 
   # Iterate through penalties to generate artificial cells
@@ -164,8 +166,10 @@ select_penalty <- function(
 }
 
 .prepare_penalty_data <- function(count_matrix, gene_idx, mito_quantile) {
-  mito <- colSums(count_matrix[gene_idx$mito_idx, , drop = FALSE]) / colSums(count_matrix)
-  ribo <- colSums(count_matrix[gene_idx$ribo_idx, , drop = FALSE]) / colSums(count_matrix)
+  mito <- colSums(count_matrix[gene_idx$mito_idx, , drop = FALSE]) /
+    colSums(count_matrix)
+  ribo <- colSums(count_matrix[gene_idx$ribo_idx, , drop = FALSE]) /
+    colSums(count_matrix)
   features <- colSums(count_matrix != 0)
 
   df <- data.frame(
@@ -199,7 +203,8 @@ select_penalty <- function(
 
   for (penalty in penalties) {
     if (penalty_count >= max_penalty_trials) {
-      message("Maximum penalty trials reached (", max_penalty_trials, "). Stopping.")
+      message("Maximum penalty trials reached (",
+              max_penalty_trials, "). Stopping.")
       break
     }
 
@@ -319,7 +324,8 @@ select_penalty <- function(
 }
 
 .finalise_penalty_output <- function(penalty_results, return_output) {
-  best_penalty <- penalty_results$Penalty[which.min(penalty_results$Global_mean)]
+  min_index <- which.min(penalty_results$Global_mean)
+  best_penalty <- penalty_results$Penalty[min_index]
 
   if (return_output == "penalty") {
     return(best_penalty)

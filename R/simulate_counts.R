@@ -4,14 +4,15 @@
 #' existing cells.
 #'
 #' 'DamageDetective' models damage in single-cell RNA sequencing data as the
-#' loss of cytoplasmic RNA, where cells experiencing greater RNA loss are assumed
-#' to be more extensively damaged, while those with minimal loss are considered
-#' largely intact. The perturbation process introduces RNA loss into existing
-#' cells and is controlled by three key parameters: the **target proportion of
-#' damage**,  which specifies the fraction of cells to be perturbed; the
-#' **target level of damage**, which defines the extent of RNA loss across
-#' cells; and the **target distribution of damage**, which determines how the
-#' different levels of RNA loss are distributed across cells.
+#' loss of cytoplasmic RNA, where cells experiencing greater RNA loss are
+#' assumed to be more extensively damaged, while those with minimal loss are
+#' considered largely intact. The perturbation process introduces RNA loss into
+#' existing cells and is controlled by three key parameters: the **target
+#' proportion of damage**,  which specifies the fraction of cells to be
+#' perturbed; the **target level of damage**, which defines the extent of RNA
+#' loss across cells; and the **target distribution of damage**, which
+#' determines how the different levels of RNA loss are distributed across
+#' cells.
 #'
 #' Based on these parameters, cells are randomly selected and assigned a target
 #' proportion of RNA loss. The total number of transcripts to be removed is
@@ -234,8 +235,9 @@ simulate_counts <- function(
 ) {
   # Check that count matrix is given
   if (is.null(count_matrix)) stop("Please provide 'count_matrix' input.")
-  if (!inherits(count_matrix, "matrix") & !inherits(count_matrix, "CsparseMatrix")) {
-    stop("Please ensure 'count_matrix' is a matrix or a sparse matrix (dgCMatrix).")
+  if (!inherits(count_matrix, "matrix") &
+      !inherits(count_matrix, "CsparseMatrix")) {
+    stop("Please ensure 'count_matrix' is a sparse matrix (dgCMatrix).")
   }
 
   # Ensure user adjustments to default parameters are executable
@@ -248,7 +250,7 @@ simulate_counts <- function(
   }
   if (!is.null(beta_shape_parameters) &
       length(beta_shape_parameters) != 2) {
-    stop("Please ensure 'beta_shape_parameters' is a numeric vector of length 2.")
+    stop("Please ensure 'beta_shape_parameters' is of length 2.")
   }
   if (!is.numeric(target_damage) || length(target_damage) != 2 ||
       target_damage[1] < 0 || target_damage[2] > 1 ||
@@ -264,7 +266,8 @@ simulate_counts <- function(
     stop("Please ensure 'damage_distribution' is one of 'right_skewed',
          'left_skewed', or 'symmetric'.")
   }
-  if (!is.numeric(ribosome_penalty) || ribosome_penalty < 0 || ribosome_penalty > 1) {
+  if (!is.numeric(ribosome_penalty) || ribosome_penalty < 0 ||
+      ribosome_penalty > 1) {
     stop("Please ensure 'ribosome_penalty' is a numeric between 0 and 1.")
   }
   if (!organism %in% c("Hsap", "Mmus") & length(organism) != 3) {
@@ -320,7 +323,8 @@ simulate_counts <- function(
       )
     }
 
-    damaged_cell_selections <- unlist(lapply(names(damage_per_type), function(ct) {
+    damaged_cell_selections <- unlist(lapply(names(damage_per_type),
+                                             function(ct) {
       cells_of_type <- which(cell_types == ct)
       withr::with_seed(seed, {
         sample(cells_of_type, size = damage_per_type[ct], replace = FALSE)
@@ -339,7 +343,8 @@ simulate_counts <- function(
     damaged_cell_selections, shape_params, target_damage, seed
 ) {
   damage_levels <- withr::with_seed(seed, {
-    stats::rbeta(length(damaged_cell_selections), shape1 = shape_params[1], shape2 = shape_params[2])
+    stats::rbeta(length(damaged_cell_selections),
+                 shape1 = shape_params[1], shape2 = shape_params[2])
   })
 
   damage_levels <- target_damage[1] +
@@ -389,7 +394,8 @@ simulate_counts <- function(
 
     gene_totals <- count_matrix[gene_idx$non_mito_idx, cell]
     probabilities <- gene_totals / total_count
-    probabilities[gene_idx$ribo_idx] <- probabilities[gene_idx$ribo_idx] * ribosome_penalty
+    probabilities[gene_idx$ribo_idx] <- probabilities[gene_idx$ribo_idx] *
+      ribosome_penalty
     probabilities <- probabilities / sum(probabilities)
 
     prob_repeated <- rep(probabilities, times = gene_totals)

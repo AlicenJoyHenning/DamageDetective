@@ -152,14 +152,15 @@ existing cells.
 }
 \details{
 'DamageDetective' models damage in single-cell RNA sequencing data as the
-loss of cytoplasmic RNA, where cells experiencing greater RNA loss are assumed
-to be more extensively damaged, while those with minimal loss are considered
-largely intact. The perturbation process introduces RNA loss into existing
-cells and is controlled by three key parameters: the \strong{target proportion of
-damage},  which specifies the fraction of cells to be perturbed; the
-\strong{target level of damage}, which defines the extent of RNA loss across
-cells; and the \strong{target distribution of damage}, which determines how the
-different levels of RNA loss are distributed across cells.
+loss of cytoplasmic RNA, where cells experiencing greater RNA loss are
+assumed to be more extensively damaged, while those with minimal loss are
+considered largely intact. The perturbation process introduces RNA loss into
+existing cells and is controlled by three key parameters: the \strong{target
+proportion of damage},  which specifies the fraction of cells to be
+perturbed; the \strong{target level of damage}, which defines the extent of RNA
+loss across cells; and the \strong{target distribution of damage}, which
+determines how the different levels of RNA loss are distributed across
+cells.
 
 Based on these parameters, cells are randomly selected and assigned a target
 proportion of RNA loss. The total number of transcripts to be removed is

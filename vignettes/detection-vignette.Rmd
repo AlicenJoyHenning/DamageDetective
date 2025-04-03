@@ -147,6 +147,8 @@ You will see that as you increase the penalty, i.e. go from values closer to 1 t
 
 ![A scatter plot showing the effect of ribosomal penalty on alignment output.](../man/figures/ribosome_penalty_alignment.svg)
 
+<br>
+
 Plots like that shown above can be generated as follows where,
 
 -   `count_matrix` requires your data in sparse matrix form
@@ -197,7 +199,7 @@ It also inherits parameters of the `simulate_counts` function above including `d
 ```{r select_penalty}
 selected_penalty <- DamageDetective::select_penalty(
   count_matrix = alignment_counts,
-  max_penalty_trials = 2, # shortened for vignette, default is 10
+  max_penalty_trials = 3, # shortened for vignette, default is 10
   seed = 7, 
   verbose = TRUE
 )
@@ -219,6 +221,8 @@ Though not strictly necessary, the `select_penalty` function can be adjusted to 
 -   `return_output` returns a table showing the mean distances for each estimate giving a better idea of how the estimates differ.
 
 It also inherits parameters of the `simulate_counts` function above including `damage_proportion`.
+
+<br>
 
 ### Undefined Computational Parameters
 
@@ -245,7 +249,7 @@ Of the default options, we find 5 sets strikes an ideal balance. Going above 5 b
 While shifting from the default options is not recommended, it is possible should a user feel it necessary through specification in a list,
 
 ```{r eval = FALSE}
-damage_levels = list(
+damage_levels <- list(
   pANN_50 = c(0.1, 0.5),
   pANN_100 = c(0.5, 1)
 )
@@ -263,6 +267,8 @@ It should be noted that increasing the size of the set too greatly increases the
 
 -   **`filter_counts`**: Determines the output format (filtered matrix or dataframe).
 -   **`palette`**: Sets the color palette for damaged cells in plots.
+
+<br>
 
 # Damaged Cell Detection
 

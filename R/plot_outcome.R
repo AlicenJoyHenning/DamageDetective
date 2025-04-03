@@ -120,7 +120,8 @@ plot_detection_outcome <- function(
       strip.text = element_text(face = "bold", size = 9),
       strip.placement = "outside",
       legend.position = "bottom",
-      legend.title = element_text(face = "bold", hjust = 0.5, vjust = 2, size = 10),
+      legend.title = element_text(
+        face = "bold", hjust = 0.5, vjust = 2, size = 10),
       legend.margin = margin(t = 0, b = 0),
       legend.key.height = unit(0.5, "cm")
     )
@@ -185,7 +186,8 @@ plot_altered_counts <- function(
 
   # Randomly select a row to create a ribo. reference point
   template_row <- qc_summary_long_filtered %>%
-    dplyr::filter(.data$X_Variable == "Ribo. prop", .data$Damaged_Level == 0) %>%
+    dplyr::filter(.data$X_Variable == "Ribo. prop",
+                  .data$Damaged_Level == 0) %>%
     dplyr::slice_sample(n = 1)
 
   new_row <- template_row %>%
@@ -223,7 +225,8 @@ plot_altered_counts <- function(
       strip.text = element_text(face = "bold", size = 9),
       strip.placement = "outside",
       legend.position = "bottom",
-      legend.title = element_text(face = "bold", hjust = 0.5, vjust = 2, size = 10),
+      legend.title = element_text(
+        face = "bold", hjust = 0.5, vjust = 2, size = 10),
       legend.margin = margin(t = 0, b = 0),
       legend.key.height = unit(0.5, "cm")
     )
@@ -383,7 +386,8 @@ plot_ribosomal_penalty <- function(
       axis.title.y = element_text(face = "bold", size = 10, vjust = 2),
       axis.title.x = element_text(face = "bold"),
       legend.position = "bottom",
-      legend.title = element_text(face = "bold", hjust = 0.5, vjust = 2, size = 10),
+      legend.title = element_text(
+        face = "bold", hjust = 0.5, vjust = 2, size = 10),
       legend.margin = margin(t = 0, b = 0),
       legend.key.height = unit(0.5, "cm")
     )

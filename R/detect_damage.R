@@ -45,7 +45,8 @@
 #'  * 7 : c(0.00001, 0.08), c(0.1, 0.3), c(0.3, 0.4), c(0.4, 0.5), c(0.5, 0.7),
 #'  c(0.7, 0.9), c(0.9, 0.99999).
 #'
-#'  A user can also provide a list specifying sets with their own ranges of loss,
+#'  A user can also provide a list specifying sets with their own ranges of
+#'  loss,
 #'
 #'  * damage_levels = list(
 #'    pANN_50 = c(0.1, 0.5),
@@ -207,7 +208,8 @@ detect_damage <- function(
     probs = mito_quantile,
     na.rm = TRUE
   )
-  filtered_cells <- rownames(mito_ribo_data)[mito_ribo_data[, "mito"] <= mito_top]
+  filtered_cells <- rownames(mito_ribo_data)[mito_ribo_data[, "mito"] <=
+                                               mito_top]
   return(filtered_cells)
 }
 
@@ -362,8 +364,10 @@ detect_damage <- function(
 
 .compute_pANN <- function(barcode_set, metadata_stored, neighbour_indices, kN) {
   vapply(rownames(metadata_stored), function(cell) {
+
     # Get the neighbours for the cell (excluding itself)
-    neighbours <- neighbour_indices[which(rownames(metadata_stored) == cell), -1]
+    index <- which(rownames(metadata_stored) == cell)
+    neighbours <- neighbour_indices[index, -1]
     neighbour_barcodes <- rownames(metadata_stored)[neighbours]
 
     # Compute proportion of neighbours in the barcode set
@@ -371,7 +375,9 @@ detect_damage <- function(
   }, FUN.VALUE = numeric(1))
 }
 
-.compile_pANN <- function(metadata_stored, neighbour_indices, ranges, kN, verbose) {
+.compile_pANN <- function(
+    metadata_stored, neighbour_indices, ranges, kN, verbose
+) {
   # Isolate columns & ensure cell names are present
   metadata_columns <- c("features", "counts", "mt.prop", "rb.prop",
                         "malat1", "Damage_level")

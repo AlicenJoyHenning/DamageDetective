@@ -174,7 +174,8 @@ should be displayed in the console.
 }}
 }
 \value{
-Numeric representing the ideal ribosomal penalty for an input dataset.
+Numeric representing the ideal ribosomal penalty for an input
+dataset.
 }
 \description{
 Recommended prerequisite function to detect_damage() that estimates the

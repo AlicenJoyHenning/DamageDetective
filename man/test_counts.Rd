@@ -13,13 +13,14 @@ A sparse matrix with:
 }
 }
 \source{
-\url{https://doi.org/10.1038/s41591-020-0769-8}
+\doi{10.1038/s41591-020-0769-8}
 }
 \usage{
 data(test_counts)
 }
 \description{
-A sparse matrix of PBMC single-cell gene expression data for function testing.
+A sparse matrix of PBMC single-cell gene expression data for function
+testing.
 }
 \details{
 This dataset consists of an abridged sparse matrix originally derived from
