@@ -35,11 +35,8 @@ cells is therefore an essential step in scRNA-seq quality control (QC).
 Current approaches detect damage according to deviations in cell-level
 QC metrics. This outlier-based detection assumes viable cells follow a
 unimodal distribution where being deviant is equivalent to being damage.
-However, this assumption does not hold in heterogeneous scRNA-seq data
-where differences in QC metrics are common. Often this introduces a
-damage filtering bias relative to cell type abundance.
-
-More recent approaches address this by detecting damage at a local
+However, this assumption does not hold in heterogeneous scRNA-seq data. Often, this introduces a
+damage filtering bias relative to cell type abundance. More recent approaches address this by detecting damage at a local
 scale, isolating cells with similar distributions before addressing
 deviations within them. However, this assumes all distinct distributions
 are associated with viable cell populations, meaning abundant damage is
@@ -58,14 +55,12 @@ artificial cells with known levels of damage is computed. The damage
 level of the set to which a true cell shows the highest proximity is
 assigned to the true cell, outputted as a score ranging from 0 to 1.
 This provides an intuitive scale for filtering that is standardised
-across cell types, sample origins, and experimental designs.
+across cell types, sample origin, and experimental design.
 
-`DamageDetective` runs using platform-agnostic data types in order to
-integrate seamlessly into any single-cell analysis workflow. However,
-the popularised R data types for scRNA-seq, `Seurat` and
-`SingleCellExperiment` objects, as well as alignment output, can also be
-used ([package
-tutorials](https://alicenjoyhenning.github.io/DamageDetective/articles/detection-vignette.html)).\
+
+> `DamageDetective` runs using platform-agnostic data types in order to integrate seamlessly into any single-cell analysis workflow. However, the popularised R data types for scRNA-seq, `Seurat` and `SingleCellExperiment` objects, as well as alignment output, can also be used ([package
+tutorials](https://alicenjoyhenning.github.io/DamageDetective/articles/detection-vignette.html)).
+
 <br>
 
 ## Installation
