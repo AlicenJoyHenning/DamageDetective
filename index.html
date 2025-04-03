@@ -17,8 +17,8 @@
 <script src="deps/bootstrap-5.3.1/bootstrap.bundle.min.js"></script><link href="deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
 <link href="deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet">
 <script src="deps/headroom-0.11.0/headroom.min.js"></script><script src="deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="deps/search-1.0.0/fuse.min.js"></script><script src="deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="pkgdown.js"></script><meta property="og:title" content="Detecting Damaged Cells in Single-Cell RNA Sequencing Data">
-<meta name="description" content="DamageDetective detects and filters damaged cells in single-cell RNA sequencing (scRNA-seq) datasets using a novel approach inspired by DoubletFinder. It compares each cell’s gene expression profile to simulated “damaged” versions of itself, quantifying damage severity based on the probabilistic escape of cytoplasmic RNA. This results in a damage score ranging from 0 to 1 for each cell. By aligning with biological definitions of damage, the method offers a more reliable and standardised approach for cleaning scRNA-seq data across diverse cell types, samples, and experiments.">
-<meta property="og:description" content="DamageDetective detects and filters damaged cells in single-cell RNA sequencing (scRNA-seq) datasets using a novel approach inspired by DoubletFinder. It compares each cell’s gene expression profile to simulated “damaged” versions of itself, quantifying damage severity based on the probabilistic escape of cytoplasmic RNA. This results in a damage score ranging from 0 to 1 for each cell. By aligning with biological definitions of damage, the method offers a more reliable and standardised approach for cleaning scRNA-seq data across diverse cell types, samples, and experiments.">
+<meta name="description" content="Detects and filters damaged cells in single-cell RNA sequencing (scRNA-seq) data using a novel approach inspired by DoubletFinder. Damage is detected by measuring the extent to which cells deviate from artificially damaged profiles of themselves, simulated through the probabilistic escape of cytoplasmic RNA. As output, a damage score ranging from 0 to 1 is given for each cell providing an intuitive scale for filtering that is standardised across cell types, samples, and experiments.">
+<meta property="og:description" content="Detects and filters damaged cells in single-cell RNA sequencing (scRNA-seq) data using a novel approach inspired by DoubletFinder. Damage is detected by measuring the extent to which cells deviate from artificially damaged profiles of themselves, simulated through the probabilistic escape of cytoplasmic RNA. As output, a damage score ranging from 0 to 1 is given for each cell providing an intuitive scale for filtering that is standardised across cell types, samples, and experiments.">
 <meta property="og:image" content="https://alicenjoyhenning.github.io/DamageDetective/logo.svg">
 </head>
 <body>
@@ -93,7 +93,7 @@
 <span><span class="fu">devtools</span><span class="fu">::</span><span class="fu"><a href="https://remotes.r-lib.org/reference/install_github.html" class="external-link">install_github</a></span><span class="op">(</span><span class="st">"AlicenJoyHenning/DamageDetective"</span>, build_vignettes <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre>
 <p>To verify installation, run the following to see if you can view the package vignette and the function help pages,</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://alicenjoyhenning.github.io/DamageDetective">DamageDetective</a></span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://alicenjoyhenning.github.io/DamageDetective/">DamageDetective</a></span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/utils/help.html" class="external-link">help</a></span><span class="op">(</span>package <span class="op">=</span> <span class="st">"DamageDetective"</span><span class="op">)</span></span></code></pre></div>
 <p><br><br></p>
 </div>
@@ -106,7 +106,7 @@
 </h3>
 <p>Damage detection is carried out by the <code>detect_damage</code> function that requires a count matrix to run. We will use the dummy count matrix provided by <code>DamageDetective</code>, <code>test_counts</code>, a subset of the <a href="10.1038/s41591-020-0769-8%5D">(kotliarov-pbmc-2020)</a> PBMC dataset provided in the <code>scRNAseq</code><math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msup><mi></mi><mn>2</mn></msup><annotation encoding="application/x-tex">^2</annotation></semantics></math> package.</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://alicenjoyhenning.github.io/DamageDetective">DamageDetective</a></span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://alicenjoyhenning.github.io/DamageDetective/">DamageDetective</a></span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/utils/data.html" class="external-link">data</a></span><span class="op">(</span><span class="st">"test_counts"</span>, package <span class="op">=</span> <span class="st">"DamageDetective"</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/dim.html" class="external-link">dim</a></span><span class="op">(</span><span class="va">test_counts</span><span class="op">)</span></span>
 <span><span class="co"># [1] 32738   500</span></span></code></pre></div>
@@ -206,7 +206,7 @@
 <div class="section level2">
 <h2 id="license">License<a class="anchor" aria-label="anchor" href="#license"></a>
 </h2>
-<p><code>DamageDetective</code> is made available for public use through the <a href="https://opensource.org/licenses/AGPL-3.0" class="external-link">GNU AGPL-3.0</a> license.</p>
+<p><code>DamageDetective</code> is made available for public use through the <a href="https://opensource.org/license/agpl-v3" class="external-link">GNU AGPL-3.0</a></p>
 </div>
 <div class="section level2">
 <h2 id="authors">Authors<a class="anchor" aria-label="anchor" href="#authors"></a>

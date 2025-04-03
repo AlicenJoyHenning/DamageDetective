@@ -142,7 +142,7 @@ Genomics platform.</p>
 names (genes), column names (cell identifiers), and input values (gene
 expression values) of the count matrix. These can be compiled using
 ReadMtx, a function offered by Seurat which simplifies the count matrix
-compilation into one function. This involves uncompressing zipped files,
+compilation into one function. This involves decompressing zipped files,
 mapping feature names to HGNC gene symbols, and converting the matrix to
 sparse format. ReadMtx output can be used directly for
 DamageDetective.</p>
@@ -248,22 +248,11 @@ ribosome_penalty is a multiplicative reduction factor meaning a value of
 1 is the same as introducing no penalty while values increasingly closer
 to zero introduce increasingly greater reductions.</p>
 </blockquote>
-<p><img src="../reference/figures/ribosome_penalty_alignment.svg" alt="A scatter plot showing the effect of ribosomal penalty on alignment output.">
-- <code>sce</code> output</p>
-<p>The same can be seen using the counts extracted from the
-<code>sce</code> object.</p>
-<p><img src="../reference/figures/ribosome_penalty.svg" alt="A scatter plot showing the effect of ribosomal penalty on counts from a SingleCellExperiment object.">
-- <code>Seurat</code> output</p>
-<p>In the case of the <code>Seurat</code> object, we see little overlap
-between coloured and grey dots. This is because, unlike the data from
-alignment and the <code>sce</code> object, the <code>Seurat</code>
-object contains filtered counts where damaged cells have already been
-removed. Since we do not expect to see any damaged cells, we do not
-expect to see simulated damage cells matching any of the true cells. In
-this case, the choice of <code>ribosome_penalty</code> is not as
-important.</p>
-<p><img src="../reference/figures/ribosome_penalty_seurat.svg" alt="A scatter plot showing the effect of ribosomal penalty on a Seurat object."><br></p>
-<p>Plots like those shown above can be generated as follows where,</p>
+<div class="float">
+<img src="../reference/figures/ribosome_penalty_alignment.svg" alt="A scatter plot showing the effect of ribosomal penalty on alignment output."><div class="figcaption">A scatter plot showing the effect of ribosomal
+penalty on alignment output.</div>
+</div>
+<p>Plots like that shown above can be generated as follows where,</p>
 <ul>
 <li><p><code>count_matrix</code> requires your data in sparse matrix
 form</p></li>
@@ -443,18 +432,7 @@ than a third of the size of the input data is discouraged.</p>
 format (filtered matrix or dataframe).</li>
 <li>
 <strong><code>palette</code></strong>: Sets the color palette for
-damaged cells in plots.
-<ul>
-<li><p>Purple, blue: c(“grey”, “#6AB6AB”, “#7023FD”)<br><img src="../reference/figures/purple_blue.svg" alt="A plot showing palette adjustments with purple and blue colors."></p></li>
-<li>
-<p>Orange, red: c(“grey”, “#FFB67F”, “#E56E6E”)</p>
-<div class="float">
-<img src="../reference/figures/orange_red.svg" alt="A plot showing palette adjustments with orange and red colors."><div class="figcaption">A plot showing palette adjustments with orange
-and red colors.</div>
-</div>
-</li>
-</ul>
-</li>
+damaged cells in plots.</li>
 </ul>
 </div>
 </div>
