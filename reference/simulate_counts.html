@@ -9,7 +9,7 @@ existing cells."><meta property="og:image" content="https://alicenjoyhenning.git
 
     <a class="navbar-brand me-2" href="../index.html">DamageDetective</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.99.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -192,14 +192,15 @@ metrics of the alteration.</p>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
     <p>'DamageDetective' models damage in single-cell RNA sequencing data as the
-loss of cytoplasmic RNA, where cells experiencing greater RNA loss are assumed
-to be more extensively damaged, while those with minimal loss are considered
-largely intact. The perturbation process introduces RNA loss into existing
-cells and is controlled by three key parameters: the <strong>target proportion of
-damage</strong>,  which specifies the fraction of cells to be perturbed; the
-<strong>target level of damage</strong>, which defines the extent of RNA loss across
-cells; and the <strong>target distribution of damage</strong>, which determines how the
-different levels of RNA loss are distributed across cells.</p>
+loss of cytoplasmic RNA, where cells experiencing greater RNA loss are
+assumed to be more extensively damaged, while those with minimal loss are
+considered largely intact. The perturbation process introduces RNA loss into
+existing cells and is controlled by three key parameters: the <strong>target
+proportion of damage</strong>,  which specifies the fraction of cells to be
+perturbed; the <strong>target level of damage</strong>, which defines the extent of RNA
+loss across cells; and the <strong>target distribution of damage</strong>, which
+determines how the different levels of RNA loss are distributed across
+cells.</p>
 <p>Based on these parameters, cells are randomly selected and assigned a target
 proportion of RNA loss. The total number of transcripts to be removed is
 determined, and perturbation is applied through weighted sampling without

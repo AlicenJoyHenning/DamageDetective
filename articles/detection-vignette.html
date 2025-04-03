@@ -26,7 +26,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">DamageDetective</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.99.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -252,6 +252,7 @@ to zero introduce increasingly greater reductions.</p>
 <img src="../reference/figures/ribosome_penalty_alignment.svg" alt="A scatter plot showing the effect of ribosomal penalty on alignment output."><div class="figcaption">A scatter plot showing the effect of ribosomal
 penalty on alignment output.</div>
 </div>
+<p><br></p>
 <p>Plots like that shown above can be generated as follows where,</p>
 <ul>
 <li><p><code>count_matrix</code> requires your data in sparse matrix
@@ -312,13 +313,14 @@ function above including <code>damage_proportion</code>.</p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">selected_penalty</span> <span class="op">&lt;-</span> <span class="fu">DamageDetective</span><span class="fu">::</span><span class="fu"><a href="../reference/select_penalty.html">select_penalty</a></span><span class="op">(</span></span>
 <span>  count_matrix <span class="op">=</span> <span class="va">alignment_counts</span>,</span>
-<span>  max_penalty_trials <span class="op">=</span> <span class="fl">2</span>, <span class="co"># shortened for vignette, default is 10</span></span>
+<span>  max_penalty_trials <span class="op">=</span> <span class="fl">3</span>, <span class="co"># shortened for vignette, default is 10</span></span>
 <span>  seed <span class="op">=</span> <span class="fl">7</span>, </span>
 <span>  verbose <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span><span class="op">)</span></span>
 <span><span class="co">#&gt; Testing penalty of 1e-05...</span></span>
 <span><span class="co">#&gt; Testing penalty of 0.00501...</span></span>
-<span><span class="co">#&gt; Maximum penalty trials reached (2). Stopping.</span></span>
+<span><span class="co">#&gt; Testing penalty of 0.01001...</span></span>
+<span><span class="co">#&gt; Maximum penalty trials reached (3). Stopping.</span></span>
 <span><span class="va">selected_penalty</span></span>
 <span><span class="co">#&gt; [1] 1e-05</span></span></code></pre></div>
 <p>The output above reveals that the <code>select_penalty</code>
@@ -349,6 +351,7 @@ differ.</p></li>
 </ul>
 <p>It also inherits parameters of the <code>simulate_counts</code>
 function above including <code>damage_proportion</code>.</p>
+<p><br></p>
 </div>
 <div class="section level4">
 <h4 id="undefined-computational-parameters">Undefined Computational Parameters<a class="anchor" aria-label="anchor" href="#undefined-computational-parameters"></a>
@@ -404,7 +407,7 @@ large datasets (over 10 000 cells).</p>
 possible should a user feel it necessary through specification in a
 list,</p>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">damage_levels</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
+<code class="sourceCode R"><span><span class="va">damage_levels</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
 <span>  pANN_50 <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.1</span>, <span class="fl">0.5</span><span class="op">)</span>,</span>
 <span>  pANN_100 <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.5</span>, <span class="fl">1</span><span class="op">)</span></span>
 <span><span class="op">)</span></span></code></pre></div>
@@ -434,6 +437,7 @@ format (filtered matrix or dataframe).</li>
 <strong><code>palette</code></strong>: Sets the color palette for
 damaged cells in plots.</li>
 </ul>
+<p><br></p>
 </div>
 </div>
 <div class="section level2">
@@ -496,8 +500,8 @@ damaged cells in plots.</li>
 <span><span class="co">#&gt; [1] stats     graphics  grDevices utils     datasets  methods   base     </span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; other attached packages:</span></span>
-<span><span class="co">#&gt; [1] patchwork_1.3.0        ggplot2_3.5.1          Seurat_5.2.1          </span></span>
-<span><span class="co">#&gt; [4] SeuratObject_5.0.2     sp_2.2-0               DamageDetective_0.99.0</span></span>
+<span><span class="co">#&gt; [1] patchwork_1.3.0       ggplot2_3.5.1         Seurat_5.2.1         </span></span>
+<span><span class="co">#&gt; [4] SeuratObject_5.0.2    sp_2.2-0              DamageDetective_1.0.0</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; loaded via a namespace (and not attached):</span></span>
 <span><span class="co">#&gt;   [1] RColorBrewer_1.1-3     jsonlite_2.0.0         magrittr_2.0.3        </span></span>
@@ -531,7 +535,7 @@ damaged cells in plots.</li>
 <span><span class="co">#&gt;  [85] splines_4.4.3          dplyr_1.1.4            lattice_0.22-6        </span></span>
 <span><span class="co">#&gt;  [88] survival_3.8-3         deldir_2.0-4           tidyselect_1.2.1      </span></span>
 <span><span class="co">#&gt;  [91] miniUI_0.1.1.1         pbapply_1.7-2          knitr_1.50            </span></span>
-<span><span class="co">#&gt;  [94] gridExtra_2.3          scattermore_1.2        xfun_0.51             </span></span>
+<span><span class="co">#&gt;  [94] gridExtra_2.3          scattermore_1.2        xfun_0.52             </span></span>
 <span><span class="co">#&gt;  [97] matrixStats_1.5.0      stringi_1.8.7          lazyeval_0.2.2        </span></span>
 <span><span class="co">#&gt; [100] yaml_2.3.10            evaluate_1.0.3         codetools_0.2-20      </span></span>
 <span><span class="co">#&gt; [103] tibble_3.2.1           cli_3.6.4              uwot_0.2.3            </span></span>
