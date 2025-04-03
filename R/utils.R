@@ -54,7 +54,8 @@ get_organism_indices <- function(
   mito_idx <- grep(mito_pattern, rownames(count_matrix), ignore.case = FALSE)
   nucl_idx <- which(rownames(count_matrix) %in% nuclear)
   mito_idx <- c(mito_idx, nucl_idx)
-  non_mito_idx <- setdiff(seq_len(nrow(count_matrix)), mito_idx)
+  all_indices <- seq.int(1, nrow(count_matrix))
+  non_mito_idx <- setdiff(all_indices, mito_idx)
   ribo_idx <- grep(ribo_pattern, rownames(count_matrix), ignore.case = FALSE)
 
   return(list(

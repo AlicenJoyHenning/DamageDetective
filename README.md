@@ -162,7 +162,7 @@ dim(filtered_matrix)
 
 ## License
 
-`DamageDetective` is made available for public use through the [GNU AGPL-3.0](https://opensource.org/licenses/AGPL-3.0) license.
+`DamageDetective` is made available for public use through the [GNU AGPL-3.0](https://opensource.org/license/agpl-v3)
 
 ## Authors
 

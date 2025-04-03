@@ -64,7 +64,7 @@ pbmc3k_counts <- pbmc3k[["RNA"]]$counts
 
 ### Using Alignment Output
 
-Alignment output comes in the form of three files containing the row names (genes), column names (cell identifiers), and input values (gene expression values) of the count matrix. These can be compiled using ReadMtx, a function offered by Seurat which simplifies the count matrix compilation into one function. This involves uncompressing zipped files, mapping feature names to HGNC gene symbols, and converting the matrix to sparse format. ReadMtx output can be used directly for DamageDetective.
+Alignment output comes in the form of three files containing the row names (genes), column names (cell identifiers), and input values (gene expression values) of the count matrix. These can be compiled using ReadMtx, a function offered by Seurat which simplifies the count matrix compilation into one function. This involves decompressing zipped files, mapping feature names to HGNC gene symbols, and converting the matrix to sparse format. ReadMtx output can be used directly for DamageDetective.
 
 We will use publicly available alignment data from the 10X Genomics website for demonstration, specifically the '1k PBMCs from a healthy donor (v3)' data available here following the link named "Feature / cell matrix (filtered)".
 
@@ -146,19 +146,8 @@ You will see that as you increase the penalty, i.e. go from values closer to 1 t
 > $^*$ ribosome_penalty is a multiplicative reduction factor meaning a value of 1 is the same as introducing no penalty while values increasingly closer to zero introduce increasingly greater reductions.
 
 ![A scatter plot showing the effect of ribosomal penalty on alignment output.](../man/figures/ribosome_penalty_alignment.svg)
--   `sce` output
 
-The same can be seen using the counts extracted from the `sce` object.
-
-![A scatter plot showing the effect of ribosomal penalty on counts from a SingleCellExperiment object.](../man/figures/ribosome_penalty.svg)
--   `Seurat` output
-
-In the case of the `Seurat` object, we see little overlap between coloured and grey dots. This is because, unlike the data from alignment and the `sce` object, the `Seurat` object contains filtered counts where damaged cells have already been removed. Since we do not expect to see any damaged cells, we do not expect to see simulated damage cells matching any of the true cells. In this case, the choice of `ribosome_penalty` is not as important.
-
-![A scatter plot showing the effect of ribosomal penalty on a Seurat object.](../man/figures/ribosome_penalty_seurat.svg)
-<br>
-
-Plots like those shown above can be generated as follows where,
+Plots like that shown above can be generated as follows where,
 
 -   `count_matrix` requires your data in sparse matrix form
 
@@ -274,12 +263,6 @@ It should be noted that increasing the size of the set too greatly increases the
 
 -   **`filter_counts`**: Determines the output format (filtered matrix or dataframe).
 -   **`palette`**: Sets the color palette for damaged cells in plots.
-    -   Purple, blue: c("grey", "#6AB6AB", "#7023FD")\
-        ![A plot showing palette adjustments with purple and blue colors.](../man/figures/purple_blue.svg)
-
-    -   Orange, red: c("grey", "#FFB67F", "#E56E6E")
-
-        ![A plot showing palette adjustments with orange and red colors.](../man/figures/orange_red.svg)
 
 # Damaged Cell Detection
 

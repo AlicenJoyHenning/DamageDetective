@@ -6,20 +6,20 @@ Authors@R:
     person("Alicen", "Henning", email = "alicen.jhb@gmail.com",
     role = c("aut", "cre", "cph"),
     comment = c(ORCID = "0009-0004-0535-1624"))
-Description: DamageDetective detects and filters damaged cells in single-cell 
-    RNA sequencing (scRNA-seq) datasets using a novel approach inspired by 
-    DoubletFinder. It compares each cell’s gene expression profile to simulated 
-    “damaged” versions of itself, quantifying damage severity based on the 
-    probabilistic escape of cytoplasmic RNA. This results in a damage score 
-    ranging from 0 to 1 for each cell. By aligning with biological definitions 
-    of damage, the method offers a more reliable and standardised approach for 
-    cleaning scRNA-seq data across diverse cell types, samples, and experiments.
+Description: Detects and filters damaged cells in single-cell RNA sequencing
+    (scRNA-seq) data using a novel approach inspired by 'DoubletFinder'. Damage
+    is detected by measuring the extent to which cells deviate from
+    artificially damaged profiles of themselves, simulated through the
+    probabilistic escape of cytoplasmic RNA. As output, a damage score
+    ranging from 0 to 1 is given for each cell providing an intuitive scale for 
+    filtering that is standardised across cell types, samples, and experiments.
 License: AGPL (>= 3)
 Encoding: UTF-8
+Language: en-US
 LazyData: false
 RoxygenNote: 7.3.2
 Depends: 
-    R (>= 4.3.0)
+    R (>= 4.4.0)
 Roxygen: list(markdown = TRUE)
 Imports: 
     cowplot,
@@ -36,7 +36,8 @@ Imports:
 Suggests:
     Seurat,
     knitr,
-    rmarkdown
+    rmarkdown,
+    spelling
 VignetteBuilder: knitr
-URL: https://alicenjoyhenning.github.io/DamageDetective, https://github.com/alicenjoyhenning/DamageDetective
+URL: https://alicenjoyhenning.github.io/DamageDetective/, https://github.com/alicenjoyhenning/DamageDetective
 BugReports: https://github.com/alicenjoyhenning/DamageDetective/issues
