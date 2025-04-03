@@ -1,8 +1,3 @@
----
-editor_options: 
-  markdown: 
-    wrap: 72
----
 
 # DamageDetective <img src="man/figures/logo.svg" align="right" height="139"/>
 
