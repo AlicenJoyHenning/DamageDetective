@@ -8,8 +8,6 @@ status](https://www.r-pkg.org/badges/version/DamageDetective)](https://CRAN.R-pr
 [![R-CMD-check](https://github.com/AlicenJoyHenning/DamageDetective/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/cosimameyer/overviewR/actions)
 ![Build
 Status](https://github.com/AlicenJoyHenning/DamageDetective/actions/workflows/build.yml/badge.svg)
-[![CRAN RStudio mirror
-downloads](https://cranlogs.r-pkg.org/badges/DamageDetective)](https://CRAN.R-project.org/package=DamageDetective)
 
 <!-- badges: end -->
 
@@ -184,10 +182,10 @@ dim(detection_results$output)
 > Note, the above assumes the data is of human origin, see `organism`
 > parameter.
 
-::: {style="text-align: center;"}
+
 ![Output of test_counts with cells coloured according to the estimated
 level of damage](man/figures/plot.svg)
-:::
+
 
 <br>
 
