@@ -32,11 +32,10 @@ cells is therefore an essential step in scRNA-seq quality control (QC).
 
 Current approaches detect damage according to deviations in cell-level
 QC metrics. This outlier-based detection assumes viable cells follow a
-unimodal distribution where being deviant is equivalent to being damage.
-However, this assumption does not hold in heterogeneous scRNA-seq data. Often, this introduces a
-damage filtering bias relative to cell type abundance. More recent approaches address this by detecting damage at a local
-scale, isolating cells with similar distributions before addressing
-deviations within them. However, this assumes all distinct distributions
+unimodal distribution where being deviant is equivalent to being damaged.
+This assumption does not hold in heterogeneous scRNA-seq data and often introduces a
+filtering bias relative to cell type abundance. More recent approaches address this by detecting damage at a finer
+scale, computing deviations in isolation for populations with distinct distributions. However, this assumes all distinct distributions
 are associated with viable cell populations, meaning abundant damage is
 at risk of misclassification. Ultimately, the filtering decisions of
 current approaches are controlled by statistical definitions of
@@ -44,20 +43,20 @@ deviation that do not always align with biological definitions of
 damage.
 
 `DamageDetective` takes a different approach, rather than detecting
-damage by measuring the extent to which cells deviate from one other, it
+damage by measuring the extent to which cells deviate from one another, it
 measures the extent to which cells deviate from artificially damaged
 profiles of themselves. This is inspired by the approach of
-`DoubletFinder`, a high performing QC tool for filtering doublets. Using
-principal component analysis, the proximity of true cells to sets of
-artificial cells with known levels of damage is computed. The damage
+`DoubletFinder`—a high-performing QC tool for filtering doublets. Using
+principal component analysis, it computes the proximity of true cells to sets of
+artificial cells with known levels of damage. The damage
 level of the set to which a true cell shows the highest proximity is
-assigned to the true cell, outputted as a score ranging from 0 to 1.
-This provides an intuitive scale for filtering that is standardised
+assigned to the cell as a score ranging from 0 to 1.
+This score provides an intuitive scale for filtering damage that is standardised
 across cell types, sample origin, and experimental design.
 
 
-> `DamageDetective` runs using platform-agnostic data types in order to integrate seamlessly into any single-cell analysis workflow. However, the popularised R data types for scRNA-seq, `Seurat` and `SingleCellExperiment` objects, as well as alignment output, can also be used ([package
-tutorials](https://alicenjoyhenning.github.io/DamageDetective/articles/detection-vignette.html)).
+> `DamageDetective` requires only a count matrix to run and accepts input from the popularised R data types, `Seurat` and `SingleCellExperiment` objects, as well as direclty from alignment output ([package
+tutorials](https://alicenjoyhenning.github.io/DamageDetective/articles/detection-vignette.html)). However, by accepting platform-agnostic input and providing output that is the same, it is designed to integrate seamlessly into any single-cell analysis workflow, including those outside of R. 
 
 <br>
 
@@ -96,7 +95,7 @@ available on our
 
 ### Prepare input
 
-Damage detection is carried out by the `detect_damage` function that
+Damage detection is carried out by the `detect_damage` function and
 requires a count matrix to run. We will use the dummy count matrix
 provided by `DamageDetective`, `test_counts`, a subset of the
 [(kotliarov-pbmc-2020)](10.1038/s41591-020-0769-8%5D) PBMC dataset
@@ -104,6 +103,7 @@ provided in the `scRNAseq`$^2$ package.
 
 ``` r
 library(DamageDetective)
+library(Matrix)
 data("test_counts", package = "DamageDetective")
 dim(test_counts)
 # [1] 32738   500
@@ -118,46 +118,43 @@ dim(test_counts)
 While `detect_damage` requires only a count matrix as input, there are
 optional parameters that control the implementation of the function. Of
 these, we recommend `ribosome_penalty` be adjusted for each dataset.
-This can be done automatically using `select_penalty`, a function that
-also requires only the count matrix as input and will output a numeric
-of the optimal penalty.
+This can be done automatically with `select_penalty` using the count matrix as input.
 
 ``` r
 penalty <- select_penalty(
   count_matrix = test_counts,
   seed = 7
 )
+# Testing penalty of 1e-05...
+# Testing penalty of 0.00501...
+# Testing penalty of 0.01001...
+# Testing penalty of 0.01501...
+# Stopping early: dTNN is no longer improving.
 
-# View penalty
 penalty
-# [1] 1e-05
+# [1] 0.01001
 ```
 
 #### `filter_threshold`
 
-`DamageDetective` does not provide binary classifications, "cell" or
-"damage", it provides a score from 0 to 1 indicating the estimated
-extent of damage in the cell. This is taken directly from the extent of
-cytoplasmic RNA loss, a proportion ranging from 0 to 1, of the set of
-artificial cells which a true cell has the greatest proximity to.
+`DamageDetective` performs filtering using the damage level scores it computes and a threshold specifying the score above which cells will be filtered.
+This score reflects the estimated extent of damage in the cell and is taken directly from the proportion of
+cytoplasmic RNA loss simulated in the set of artificial cells that a true cell shows the greatest proximity to. 
 
-In other words, the user must choose a value between 0 and 1 to
-determine the level of damage, or proportion of RNA loss, above which
-cells will be excluded. By default, `DamageDetective` offers the
-threshold of `0.7`. Values greater than `0.7` reflect more permissive
-filtering while those closer to `0` reflect more stringent filtering. We
-recommend the default for all cases but suggest that if adjustments are
-made, they are informed by inspecting the output `detect_damage` plots,
+By default, `DamageDetective` offers the
+threshold of `0.7` where values greater than `0.7` reflect more permissive
+filtering and values closer to `0` reflect more stringent filtering. We
+recommend the default but suggest that if adjustments are
+made, they are informed by the output `detect_damage` plots,
 `generate_plot = TRUE`.
 
 <br>
 
 ### Run damage detection
 
-Damage detection can be run using the count matrix and selected
-parameters as inputs. Below we have specified `filter_counts` parameter
-to `TRUE`. This will use the default `filter_threshold` to identify
-cells for removal and return the filtered count matrix as output.
+Damage detection is run using the count matrix and ribosomal penalty as inputs. 
+Below we have specified `filter_counts` parameter to be `TRUE`. This will use the default `filter_threshold`, 0.7, to detect
+cells for removal and returns the filtered count matrix.
 
 ``` r
 # Perform damage detection
@@ -167,24 +164,20 @@ detection_results <- detect_damage(
   filter_counts = TRUE,
   seed = 7
 )
-# Simulating cells between 1e-05 and 0.08 RNA loss...
-# Simulating cells between 0.1 and 0.3 RNA loss...
-# Simulating cells between 0.3 and 0.5 RNA loss...
-# Simulating cells between 0.5 and 0.7 RNA loss...
-# Simulating cells between 0.7 and 0.9 RNA loss...
+# Simulating 1e-05 and 0.08 RNA loss...
+# Simulating 0.1 and 0.3 RNA loss...
+# Simulating 0.3 and 0.5 RNA loss...
+# Simulating 0.5 and 0.7 RNA loss...
+# Simulating 0.7 and 0.9 RNA loss...
 # Computing pANN...
 
 # View the resulting count matrix
 dim(detection_results$output)
-# [1] 32738   470
+# [1] 32738   458
 ```
 
-> Note, the above assumes the data is of human origin, see `organism`
-> parameter.
+<img src="man/figures/plot.svg" width="600" alt="Output of test_counts with cells coloured according to the estimated level of damage">
 
-
-![Output of test_counts with cells coloured according to the estimated
-level of damage](man/figures/plot.svg)
 
 
 <br>
@@ -192,8 +185,8 @@ level of damage](man/figures/plot.svg)
 Alternatively, if `filter_counts` is set to `FALSE`, a data frame will
 be given as output containing the damage scores for each barcode. This
 is provided for the user if they wish to interact with the
-`DamageDetective` results more directly. From here, a user can filter
-their manually data as done by `filter_counts` automatically.
+`DamageDetective` results directly. From here, a user can filter
+their data manually, as is done by `filter_counts=TRUE` automatically.
 
 ``` r
 # Perform damage detection
@@ -212,19 +205,19 @@ detection_results <- detect_damage(
 
 # View output
 print(head(detection_results$output), row.names = FALSE)
-#                     Cells DamageDetective
-# TCTGGAAAGCCCAACC_H1B2ln6      0.03826609
-# CCGTTCATCGTGGGAA_H1B2ln2      0.48333333
-# CTTCTCTTCAGCCTAA_H1B2ln1      0.05217739
-# GGATTACAGGGATGGG_H1B2ln1      0.01044348
-# TCTATTGTCTGGTATG_H1B2ln2      0.02435478
-# ACGGGTCAGACAAGCC_H1B2ln6      0.28888889
+#                     Cells DamageDetective DamageDetective_filter
+#  TCTGGAAAGCCCAACC_H1B2ln6      0.03826609                   cell
+#  CCGTTCATCGTGGGAA_H1B2ln2      0.23600000                   cell
+#  CTTCTCTTCAGCCTAA_H1B2ln1      0.05565522                   cell
+#  GGATTACAGGGATGGG_H1B2ln1      0.01044348                   cell
+#  TCTATTGTCTGGTATG_H1B2ln2      0.02435478                   cell
+#  ACGGGTCAGACAAGCC_H1B2ln6      0.27600000                   cell
 
 # Filter matrix 
-undamaged_cells <- filter(detection_results$output, DamageDetective < 0.7)
-filtered_matrix <- test_counts[, undamaged_cells]
+undamaged_cells <- subset(detection_results$output, DamageDetective < 0.7)
+filtered_matrix <- test_counts[, undamaged_cells$Cells]
 dim(filtered_matrix)
-# [1] 32738   470
+# [1] 32738   458
 ```
 
 ## License
