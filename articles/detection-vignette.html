@@ -186,7 +186,7 @@ Genomics platform.</p>
 <span><span class="va">pbmc_counts</span> <span class="op">&lt;-</span> <span class="fu">SummarizedExperiment</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/SummarizedExperiment/man/SummarizedExperiment-class.html" class="external-link">assay</a></span><span class="op">(</span><span class="va">pbmc_sce</span>, <span class="st">"counts"</span><span class="op">)</span></span>
 <span><span class="va">sample_counts</span>  <span class="op">&lt;-</span> <span class="va">pbmc_counts</span><span class="op">[</span>, <span class="va">sample_sce</span><span class="op">]</span></span>
 <span><span class="va">sample_counts</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">as.matrix</a></span><span class="op">(</span><span class="va">sample_counts</span><span class="op">)</span></span>
-<span><span class="va">sample_counts</span> <span class="op">&lt;-</span> <span class="fu">as</span><span class="op">(</span><span class="va">sample_counts</span>, <span class="st">"dgCMatrix"</span><span class="op">)</span></span></code></pre></div>
+<span><span class="va">sample_counts</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/methods/as.html" class="external-link">as</a></span><span class="op">(</span><span class="va">sample_counts</span>, <span class="st">"dgCMatrix"</span><span class="op">)</span></span></code></pre></div>
 </div>
 </div>
 </div>
