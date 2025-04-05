@@ -42,7 +42,7 @@ This is inspired by the approach of
 `DoubletFinder`—a high-performing tool for filtering doublets, another prominent scRNA-seq artifact. 
 Like `DoubletFinder`,
 principal component analysis is used to compute the proximity of true cells to sets of
-artificial cells, each with a known level of damage, where proximity is given by the proportion of artificial cells that belong to the cell's set of nearest neighbours. The damage level of the set to which a true cell shows the highest proximity is
+artificial cells, each with a known level of damage. The damage level of the set to which a true cell shows the highest proximity is
 assigned to the cell as a score ranging from 0 to 1, forming the main output of `DamageDetective`. This provides an intuitive scale for filtering damage that is standardised
 across cell types, sample origin, and experimental design.
 
