@@ -25,7 +25,7 @@ website**](https://alicenjoyhenning.github.io/DamageDetective/)
 Damaged cells are an artifact of single-cell RNA sequencing (scRNA-seq)
 data formed when cells succumb to stress before, or in the process of,
 being sequenced. In consequence, the gene expression data captured does not reflect the cells in a biologically viable state. Continuing an
-analysis with damaged cells compromises its reliability as true variability in gene expression is indistinguishable from that contributed by the damaged artifacts. Filtering damaged cells is therefore an essential step in scRNA-seq quality control (QC).
+analysis with damaged cells compromises its reliability as  functionally relevant variability in gene expression is indistinguishable from that contributed by the damaged artifacts. Filtering damaged cells is therefore an essential step in scRNA-seq quality control (QC).
 
 
 Current approaches filter damage according to deviations in cell-level
