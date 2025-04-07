@@ -14,7 +14,7 @@ Status](https://github.com/AlicenJoyHenning/DamageDetective/actions/workflows/bu
 ## Content
 
 [Description](#description) \| [Installation](#installation) \| [Quick
-start](#quick-start) \| [Authors](#authors) \| [License](#license) \|
+start](#quick-start) \| [Contribute](#contribute) \| [Authors](#authors) \| [License](#license) \|
 [References](#references)
 
 ## Description
@@ -128,7 +128,7 @@ penalty
 
 #### `filter_threshold`
 
-`DamageDetective` performs filtering using the damage level scores it computes and a threshold specifying the score above which cells will be filtered.
+`DamageDetective` performs filtering using damage level scores and a threshold specifying the score above which cells will be filtered.
 This score reflects the estimated extent of damage in the cell and is taken directly from the proportion of
 cytoplasmic RNA loss simulated in the set of artificial cells that a true cell shows the greatest proximity to. 
 
@@ -210,6 +210,26 @@ filtered_matrix <- test_counts[, undamaged_cells$Cells]
 dim(filtered_matrix)
 # [1] 32738   458
 ```
+
+## Contribute
+
+DamageDetective is built on assumptions and heuristics for detecting damaged cells in scRNA-seq data. Contributions that refine or challenge these are welcome, especially in the areas below,
+
+### 💡 Conceptual Refinement
+- We base our approach on assumptions about the relationship between cell viability, cytoplasmic RNA loss, and cell-type invariance. If you have insights or alternate views on cell viability, feel free to start a discussion or submit a PR.
+
+### 🛠 Technical Enhancement
+We aim for efficiency and modularity but welcome help with,
+
+- **Sparse matrix ops**: Suggestions for improving speed or memory use—especially in R or C++—are appreciated.
+- **New input formats**: Want to add AnnData or other formats? Let’s collaborate!
+
+### 🧪 Bug Reports & Features
+- Found a bug or have an idea? Please let us know!
+
+You can reach out via the maintainer email listed below, but we strongly encourage public discussion through the GitHub Issues tab to facilitate transparency and collaboration.
+
+Active maintainer email: alicen.jhb@gmail.com
 
 ## License
 
