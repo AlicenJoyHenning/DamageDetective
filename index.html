@@ -70,7 +70,7 @@
 <div class="section level2">
 <h2 id="content">Content<a class="anchor" aria-label="anchor" href="#content"></a>
 </h2>
-<p><a href="#description">Description</a> | <a href="#installation">Installation</a> | <a href="#quick-start">Quick start</a> | <a href="#authors">Authors</a> | <a href="#license">License</a> | <a href="#references">References</a></p>
+<p><a href="#description">Description</a> | <a href="#installation">Installation</a> | <a href="#quick-start">Quick start</a> | <a href="#contribute">Contribute</a> | <a href="#authors">Authors</a> | <a href="#license">License</a> | <a href="#references">References</a></p>
 </div>
 <div class="section level2">
 <h2 id="description">Description<a class="anchor" aria-label="anchor" href="#description"></a>
@@ -141,7 +141,7 @@
 <h4 id="filter_threshold">
 <code>filter_threshold</code><a class="anchor" aria-label="anchor" href="#filter_threshold"></a>
 </h4>
-<p><code>DamageDetective</code> performs filtering using the damage level scores it computes and a threshold specifying the score above which cells will be filtered. This score reflects the estimated extent of damage in the cell and is taken directly from the proportion of cytoplasmic RNA loss simulated in the set of artificial cells that a true cell shows the greatest proximity to.</p>
+<p><code>DamageDetective</code> performs filtering using damage level scores and a threshold specifying the score above which cells will be filtered. This score reflects the estimated extent of damage in the cell and is taken directly from the proportion of cytoplasmic RNA loss simulated in the set of artificial cells that a true cell shows the greatest proximity to.</p>
 <p>By default, <code>DamageDetective</code> offers the threshold of <code>0.7</code> where values greater than <code>0.7</code> reflect more permissive filtering and values closer to <code>0</code> reflect more stringent filtering. We recommend the default but suggest that if adjustments are made, they are informed by the output <code>detect_damage</code> plots, <code>generate_plot = TRUE</code>.</p>
 <p><br></p>
 </div>
@@ -201,6 +201,38 @@
 <span><span class="va">filtered_matrix</span> <span class="op">&lt;-</span> <span class="va">test_counts</span><span class="op">[</span>, <span class="va">undamaged_cells</span><span class="op">$</span><span class="va">Cells</span><span class="op">]</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/dim.html" class="external-link">dim</a></span><span class="op">(</span><span class="va">filtered_matrix</span><span class="op">)</span></span>
 <span><span class="co"># [1] 32738   458</span></span></code></pre></div>
+</div>
+</div>
+<div class="section level2">
+<h2 id="contribute">Contribute<a class="anchor" aria-label="anchor" href="#contribute"></a>
+</h2>
+<p>DamageDetective is built on assumptions and heuristics for detecting damaged cells in scRNA-seq data. Contributions that refine or challenge these are welcome, especially in the areas below,</p>
+<div class="section level3">
+<h3 id="id_-conceptual-refinement">💡 Conceptual Refinement<a class="anchor" aria-label="anchor" href="#id_-conceptual-refinement"></a>
+</h3>
+<ul>
+<li>We base our approach on assumptions about the relationship between cell viability, cytoplasmic RNA loss, and cell-type invariance. If you have insights or alternate views on cell viability, feel free to start a discussion or submit a PR.</li>
+</ul>
+</div>
+<div class="section level3">
+<h3 id="id_-technical-enhancement">🛠 Technical Enhancement<a class="anchor" aria-label="anchor" href="#id_-technical-enhancement"></a>
+</h3>
+<p>We aim for efficiency and modularity but welcome help with,</p>
+<ul>
+<li>
+<strong>Sparse matrix ops</strong>: Suggestions for improving speed or memory use—especially in R or C++—are appreciated.</li>
+<li>
+<strong>New input formats</strong>: Want to add AnnData or other formats? Let’s collaborate!</li>
+</ul>
+</div>
+<div class="section level3">
+<h3 id="id_-bug-reports--features">🧪 Bug Reports &amp; Features<a class="anchor" aria-label="anchor" href="#id_-bug-reports--features"></a>
+</h3>
+<ul>
+<li>Found a bug or have an idea? Please let us know!</li>
+</ul>
+<p>You can reach out via the maintainer email listed below, but we strongly encourage public discussion through the GitHub Issues tab to facilitate transparency and collaboration.</p>
+<p>Active maintainer email: <a href="mailto:alicen.jhb@gmail.com" class="email">alicen.jhb@gmail.com</a></p>
 </div>
 </div>
 <div class="section level2">
