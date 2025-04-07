@@ -31,8 +31,8 @@ analysis with damaged cells compromises its reliability as true variability in g
 Current approaches filter damage according to deviations in cell-level
 QC metrics. This outlier-based detection assumes viable cells follow a
 unimodal distribution where deviation is synonymous with damage.
-However, this assumption fails to hold in the context of heterogeneous scRNA-seq data, where QC metrics such as mitochondrial proportion and library size are variable, and risks introducing a
-filtering bias relative to cell type abundance. More recent methods address this by detecting damage at a finer scale, assessing deviation within distinct distributions independently. This, however, assumes all distinct distributions are associated with viable cell populations and risks leaving abundant damage undetected.  Ultimately, the filtering decisions of current approaches are controlled by statistical definitions of deviation that do not directly align with biological definitions of damage.
+However, this assumption fails in the context of heterogeneous scRNA-seq data, where QC metrics such as mitochondrial proportion and library size exhibit cell type specific distributions, and risks introducing a
+filtering bias relative to cell type abundance. More recent methods address this by assessing deviations within distinct distributions independently. This, however, assumes all distinct distributions are associated with viable cell populations and risks leaving abundant damage undetected.  Ultimately, current filtering approaches are controlled by statistical definitions of deviation which do not always align with the biological manifestation of damage.
 
 `DamageDetective` takes a different approach, rather than detecting
 damage by measuring the extent to which cells deviate from one another, it
@@ -43,18 +43,17 @@ This is inspired by the approach of
 Like `DoubletFinder`,
 principal component analysis is used to compute the proximity of true cells to sets of
 artificial cells, each with a known level of damage. The damage level of the set to which a true cell shows the highest proximity is
-assigned to the cell as a score ranging from 0 to 1, forming the main output of `DamageDetective`. This provides an intuitive scale for filtering damage that is standardised
-across cell types, sample origin, and experimental design.
+assigned to the cell as a score ranging from 0 to 1, reflecting the proportion of cytoplasmic RNA loss in the artificial set. This score forms the main output of `DamageDetective` and provides an intuitive scale for filtering damage that is standardised across cell types, sample origin, and experimental design.
 
 
-> `DamageDetective` requires a gene expression count matrix to run but can accept the popularised scRNA-seq R data structures, `Seurat` and `SingleCellExperiment` objects, as well as the alignment output files, as input ([package
-tutorials](https://alicenjoyhenning.github.io/DamageDetective/articles/detection-vignette.html)). Though created for R, `DamageDetective` provides output that is platform-agnostic and can be integrated into any existing single-cell analysis workflow. 
+> `DamageDetective` runs using the gene expression count matrix and can accept `Seurat` objects, `SingleCellExperiment` objects, and alignment output files as input ([package
+tutorials](https://alicenjoyhenning.github.io/DamageDetective/articles/detection-vignette.html)). Though implemented in R, `DamageDetective` provides output that is platform-agnostic and can be integrated into any existing single-cell analysis workflow. 
 
 <br>
 
 ## Installation
 
-Install `DamageDetective` from CRAN,
+Install `DamageDetective` from CRAN (R >= 4.4.0), 
 
 ``` r
 install.packages('DamageDetective')
