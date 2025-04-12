@@ -175,15 +175,15 @@ peripheral blood mononuclear cells (PBMCs) sequenced using the 10X
 Genomics platform.</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Retrieve multisample dataset</span></span>
-<span><span class="va">pbmc_sce</span> <span class="op">&lt;-</span> <span class="fu">scRNAseq</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/scRNAseq/man/fetchDataset.html" class="external-link">fetchDataset</a></span><span class="op">(</span><span class="st">"kotliarov-pbmc-2020"</span>, <span class="st">"2024-04-18"</span><span class="op">)</span></span>
+<span><span class="va">pbmc_sce</span> <span class="op">&lt;-</span> <span class="fu">scRNAseq</span><span class="fu">::</span><span class="fu">fetchDataset</span><span class="op">(</span><span class="st">"kotliarov-pbmc-2020"</span>, <span class="st">"2024-04-18"</span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># Extract sample of interest</span></span>
-<span><span class="va">metadata</span> <span class="op">&lt;-</span> <span class="fu">SummarizedExperiment</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/SummarizedExperiment/man/SummarizedExperiment-class.html" class="external-link">colData</a></span><span class="op">(</span><span class="va">pbmc_sce</span><span class="op">)</span></span>
+<span><span class="va">metadata</span> <span class="op">&lt;-</span> <span class="fu">SummarizedExperiment</span><span class="fu">::</span><span class="fu">colData</span><span class="op">(</span><span class="va">pbmc_sce</span><span class="op">)</span></span>
 <span><span class="va">sample_sce</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/subset.html" class="external-link">subset</a></span><span class="op">(</span><span class="va">metadata</span>, <span class="va">sample</span> <span class="op">==</span> <span class="st">"234_d0"</span><span class="op">)</span></span>
 <span><span class="va">sample_sce</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">rownames</a></span><span class="op">(</span><span class="va">sample_sce</span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># Subset and convert to sparse format</span></span>
-<span><span class="va">pbmc_counts</span> <span class="op">&lt;-</span> <span class="fu">SummarizedExperiment</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/SummarizedExperiment/man/SummarizedExperiment-class.html" class="external-link">assay</a></span><span class="op">(</span><span class="va">pbmc_sce</span>, <span class="st">"counts"</span><span class="op">)</span></span>
+<span><span class="va">pbmc_counts</span> <span class="op">&lt;-</span> <span class="fu">SummarizedExperiment</span><span class="fu">::</span><span class="fu">assay</span><span class="op">(</span><span class="va">pbmc_sce</span>, <span class="st">"counts"</span><span class="op">)</span></span>
 <span><span class="va">sample_counts</span>  <span class="op">&lt;-</span> <span class="va">pbmc_counts</span><span class="op">[</span>, <span class="va">sample_sce</span><span class="op">]</span></span>
 <span><span class="va">sample_counts</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">as.matrix</a></span><span class="op">(</span><span class="va">sample_counts</span><span class="op">)</span></span>
 <span><span class="va">sample_counts</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/methods/as.html" class="external-link">as</a></span><span class="op">(</span><span class="va">sample_counts</span>, <span class="st">"dgCMatrix"</span><span class="op">)</span></span></code></pre></div>
@@ -479,7 +479,7 @@ damaged cells in plots.</li>
 <div class="section level2">
 <h2 id="session-information">Session Information<a class="anchor" aria-label="anchor" href="#session-information"></a>
 </h2>
-<pre><code><span><span class="co">#&gt; R version 4.4.3 (2025-02-28)</span></span>
+<pre><code><span><span class="co">#&gt; R version 4.5.0 (2025-04-11)</span></span>
 <span><span class="co">#&gt; Platform: x86_64-pc-linux-gnu</span></span>
 <span><span class="co">#&gt; Running under: Ubuntu 24.04.2 LTS</span></span>
 <span><span class="co">#&gt; </span></span>
@@ -500,40 +500,40 @@ damaged cells in plots.</li>
 <span><span class="co">#&gt; [1] stats     graphics  grDevices utils     datasets  methods   base     </span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; other attached packages:</span></span>
-<span><span class="co">#&gt; [1] patchwork_1.3.0            ggplot2_3.5.1             </span></span>
+<span><span class="co">#&gt; [1] patchwork_1.3.0            ggplot2_3.5.2             </span></span>
 <span><span class="co">#&gt; [3] Seurat_5.2.1               SeuratObject_5.0.2        </span></span>
 <span><span class="co">#&gt; [5] sp_2.2-0                   DamageDetective_1.0.0.9000</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; loaded via a namespace (and not attached):</span></span>
 <span><span class="co">#&gt;   [1] RColorBrewer_1.1-3     jsonlite_2.0.0         magrittr_2.0.3        </span></span>
 <span><span class="co">#&gt;   [4] spatstat.utils_3.1-3   farver_2.1.2           rmarkdown_2.29        </span></span>
-<span><span class="co">#&gt;   [7] fs_1.6.5               ragg_1.3.3             vctrs_0.6.5           </span></span>
+<span><span class="co">#&gt;   [7] fs_1.6.5               ragg_1.4.0             vctrs_0.6.5           </span></span>
 <span><span class="co">#&gt;  [10] ROCR_1.0-11            spatstat.explore_3.4-2 rstatix_0.7.2         </span></span>
 <span><span class="co">#&gt;  [13] htmltools_0.5.8.1      broom_1.0.8            Formula_1.2-5         </span></span>
 <span><span class="co">#&gt;  [16] sass_0.4.9             sctransform_0.4.1      parallelly_1.43.0     </span></span>
 <span><span class="co">#&gt;  [19] KernSmooth_2.23-26     bslib_0.9.0            htmlwidgets_1.6.4     </span></span>
 <span><span class="co">#&gt;  [22] desc_1.4.3             ica_1.0-3              plyr_1.8.9            </span></span>
-<span><span class="co">#&gt;  [25] plotly_4.10.4          zoo_1.8-13             cachem_1.1.0          </span></span>
+<span><span class="co">#&gt;  [25] plotly_4.10.4          zoo_1.8-14             cachem_1.1.0          </span></span>
 <span><span class="co">#&gt;  [28] igraph_2.1.4           mime_0.13              lifecycle_1.0.4       </span></span>
-<span><span class="co">#&gt;  [31] pkgconfig_2.0.3        Matrix_1.7-2           R6_2.6.1              </span></span>
-<span><span class="co">#&gt;  [34] fastmap_1.2.0          fitdistrplus_1.2-2     future_1.34.0         </span></span>
+<span><span class="co">#&gt;  [31] pkgconfig_2.0.3        Matrix_1.7-3           R6_2.6.1              </span></span>
+<span><span class="co">#&gt;  [34] fastmap_1.2.0          fitdistrplus_1.2-2     future_1.40.0         </span></span>
 <span><span class="co">#&gt;  [37] shiny_1.10.0           digest_0.6.37          colorspace_2.1-1      </span></span>
 <span><span class="co">#&gt;  [40] tensor_1.5             RSpectra_0.16-2        irlba_2.3.5.1         </span></span>
 <span><span class="co">#&gt;  [43] textshaping_1.0.0      ggpubr_0.6.0           labeling_0.4.3        </span></span>
 <span><span class="co">#&gt;  [46] progressr_0.15.1       spatstat.sparse_3.1-0  httr_1.4.7            </span></span>
-<span><span class="co">#&gt;  [49] polyclip_1.10-7        abind_1.4-8            compiler_4.4.3        </span></span>
+<span><span class="co">#&gt;  [49] polyclip_1.10-7        abind_1.4-8            compiler_4.5.0        </span></span>
 <span><span class="co">#&gt;  [52] withr_3.0.2            backports_1.5.0        carData_3.0-5         </span></span>
-<span><span class="co">#&gt;  [55] fastDummies_1.7.5      ggsignif_0.6.4         MASS_7.3-64           </span></span>
-<span><span class="co">#&gt;  [58] tools_4.4.3            lmtest_0.9-40          httpuv_1.6.15         </span></span>
+<span><span class="co">#&gt;  [55] fastDummies_1.7.5      ggsignif_0.6.4         MASS_7.3-65           </span></span>
+<span><span class="co">#&gt;  [58] tools_4.5.0            lmtest_0.9-40          httpuv_1.6.15         </span></span>
 <span><span class="co">#&gt;  [61] future.apply_1.11.3    goftest_1.2-3          glue_1.8.0            </span></span>
-<span><span class="co">#&gt;  [64] nlme_3.1-167           promises_1.3.2         grid_4.4.3            </span></span>
-<span><span class="co">#&gt;  [67] Rtsne_0.17             cluster_2.1.8          reshape2_1.4.4        </span></span>
+<span><span class="co">#&gt;  [64] nlme_3.1-168           promises_1.3.2         grid_4.5.0            </span></span>
+<span><span class="co">#&gt;  [67] Rtsne_0.17             cluster_2.1.8.1        reshape2_1.4.4        </span></span>
 <span><span class="co">#&gt;  [70] generics_0.1.3         gtable_0.3.6           spatstat.data_3.1-6   </span></span>
 <span><span class="co">#&gt;  [73] tidyr_1.3.1            data.table_1.17.0      car_3.1-3             </span></span>
 <span><span class="co">#&gt;  [76] spatstat.geom_3.3-6    RcppAnnoy_0.0.22       ggrepel_0.9.6         </span></span>
 <span><span class="co">#&gt;  [79] RANN_2.6.2             pillar_1.10.2          stringr_1.5.1         </span></span>
 <span><span class="co">#&gt;  [82] spam_2.11-1            RcppHNSW_0.6.0         later_1.4.2           </span></span>
-<span><span class="co">#&gt;  [85] splines_4.4.3          dplyr_1.1.4            lattice_0.22-6        </span></span>
+<span><span class="co">#&gt;  [85] splines_4.5.0          dplyr_1.1.4            lattice_0.22-6        </span></span>
 <span><span class="co">#&gt;  [88] survival_3.8-3         deldir_2.0-4           tidyselect_1.2.1      </span></span>
 <span><span class="co">#&gt;  [91] miniUI_0.1.1.1         pbapply_1.7-2          knitr_1.50            </span></span>
 <span><span class="co">#&gt;  [94] gridExtra_2.3          scattermore_1.2        xfun_0.52             </span></span>
@@ -543,7 +543,7 @@ damaged cells in plots.</li>
 <span><span class="co">#&gt; [106] xtable_1.8-4           reticulate_1.42.0      systemfonts_1.2.2     </span></span>
 <span><span class="co">#&gt; [109] munsell_0.5.1          jquerylib_0.1.4        Rcpp_1.0.14           </span></span>
 <span><span class="co">#&gt; [112] globals_0.16.3         spatstat.random_3.3-3  png_0.1-8             </span></span>
-<span><span class="co">#&gt; [115] spatstat.univar_3.1-2  parallel_4.4.3         pkgdown_2.1.1         </span></span>
+<span><span class="co">#&gt; [115] spatstat.univar_3.1-2  parallel_4.5.0         pkgdown_2.1.1         </span></span>
 <span><span class="co">#&gt; [118] dotCall64_1.2          listenv_0.9.1          viridisLite_0.4.2     </span></span>
 <span><span class="co">#&gt; [121] scales_1.3.0           ggridges_0.5.6         purrr_1.0.4           </span></span>
 <span><span class="co">#&gt; [124] rlang_1.1.5            cowplot_1.1.3</span></span></code></pre>
