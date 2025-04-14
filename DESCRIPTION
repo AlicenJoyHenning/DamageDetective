@@ -19,7 +19,7 @@ Language: en-US
 LazyData: false
 RoxygenNote: 7.3.2
 Depends: 
-    R (>= 4.4.0)
+    R (>= 3.5.0)
 Roxygen: list(markdown = TRUE)
 Imports: 
     cowplot,
@@ -37,7 +37,9 @@ Suggests:
     Seurat,
     knitr,
     rmarkdown,
-    spelling
+    spelling,
+    testthat (>= 3.0.0)
 VignetteBuilder: knitr
 URL: https://alicenjoyhenning.github.io/DamageDetective/, https://github.com/alicenjoyhenning/DamageDetective
 BugReports: https://github.com/alicenjoyhenning/DamageDetective/issues
+Config/testthat/edition: 3

@@ -21,8 +21,7 @@ coloring the damage levels.}
 color scaling.}
 }
 \value{
-A list containing the plot object and the reference row used for
-comparison.
+A list containing the plot object
 }
 \description{
 Function to generate a scatter plot of quality control metrics for altered

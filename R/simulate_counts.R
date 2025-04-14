@@ -106,9 +106,9 @@
 #'  retained in the nucleus, such as in nuclear speckles, must also
 #'  be specified. An example for humans is below,
 #'
-#'  * organism = c(mito_pattern = "^MT-",
-#'                 ribo_pattern = "^(RPS|RPL)",
-#'                 nuclear <- c("NEAT1","XIST", "MALAT1")
+#'  * organism = list(mito_pattern = "^MT-",
+#'                    ribo_pattern = "^(RPS|RPL)",
+#'                    nuclear = c("NEAT1","XIST", "MALAT1"))
 #'
 #' * Default is "Hsap"
 #' @param seed Numeric specifying the random seed to ensure reproducibility of
@@ -146,7 +146,7 @@ simulate_counts <- function(
     damage_distribution = "right_skewed",
     distribution_steepness = "moderate",
     beta_shape_parameters = NULL,
-    ribosome_penalty = 0.001,
+    ribosome_penalty = 0.5,
     generate_plot = TRUE,
     palette = c("grey", "#7023FD", "#E60006"),
     plot_ribosomal_penalty = FALSE,
@@ -156,14 +156,14 @@ simulate_counts <- function(
 ) {
   # Data preparations ----
   .check_simulate_inputs(
-    count_matrix,
-    damage_proportion,
-    beta_shape_parameters,
-    target_damage,
-    distribution_steepness,
-    damage_distribution,
-    ribosome_penalty,
-    organism
+    count_matrix = count_matrix,
+    damage_proportion = damage_proportion,
+    beta_shape_parameters = beta_shape_parameters,
+    target_damage = target_damage,
+    distribution_steepness = distribution_steepness,
+    damage_distribution = damage_distribution,
+    ribosome_penalty = ribosome_penalty,
+    organism = organism
   )
 
   # Calculate the number of damaged cells to simulate
@@ -195,20 +195,29 @@ simulate_counts <- function(
     count_matrix, damaged_cell_selections, damage_levels
   )
 
+  # Initial QC metrics ----
+  qc_summary <- .generate_qc_summary(count_matrix, damage_label, gene_idx)
+
+
   # Perturb selected cells ----
   count_matrix <- .perturb_cells(
     count_matrix, damaged_cell_selections, damage_label,
     gene_idx, ribosome_penalty, seed
   )
 
-  # Consolidate & plot simulation output ----
-  qc_summary <- .generate_qc_summary(count_matrix, damage_label, gene_idx)
+  # Update QC metrics & plot simulation output ----
+  qc_summary <- .update_qc_summary(qc_summary, count_matrix, damage_label, gene_idx)
 
   if (generate_plot) {
     final_plot <- if (plot_ribosomal_penalty) {
-      plot_ribosomal_penalty(qc_summary, palette)
+      plot_ribosomal_penalty(qc_summary = qc_summary,
+                             palette = palette,
+                             target_damage = target_damage)
     } else {
-      plot_simulation_outcome(qc_summary, palette)
+      plot_simulation_outcome(qc_summary = qc_summary,
+                              palette = palette,
+                              target_damage = target_damage
+                              )
     }
 
     if (display_plot) {
@@ -235,52 +244,60 @@ simulate_counts <- function(
 ) {
   # Check that count matrix is given
   if (is.null(count_matrix)) stop("Please provide 'count_matrix' input.")
-  if (!inherits(count_matrix, "matrix") &
-      !inherits(count_matrix, "CsparseMatrix")) {
-    stop("Please ensure 'count_matrix' is a sparse matrix (dgCMatrix).")
+  if (!inherits(count_matrix, c("matrix", "dgCMatrix"))) {
+    stop("Please provide a matrix as input.")
+  }
+  if (!inherits(count_matrix, "dgCMatrix")) {
+    warning("Efficiency is greatly improved when matrix is of sparse form.")
   }
 
   # Ensure user adjustments to default parameters are executable
   if (is.null(damage_proportion)) stop("Please provide 'damage_proportion'.")
+
   if (!is.numeric(damage_proportion) ||
       damage_proportion < 0 ||
       damage_proportion > 1
   ) {
     stop("Please ensure 'damage_proportion' is a numeric between 0 and 1.")
   }
-  if (!is.null(beta_shape_parameters) &
-      length(beta_shape_parameters) != 2) {
-    stop("Please ensure 'beta_shape_parameters' is of length 2.")
+
+  if (!is.null(beta_shape_parameters)) {
+    if (!is.numeric(beta_shape_parameters) ||
+        length(beta_shape_parameters) != 2 ||
+        any(beta_shape_parameters <= 0)) {
+    stop("beta_shape_parameters must be a numeric vector of length 2 with
+         strictly positive values.")}
   }
+
   if (!is.numeric(target_damage) || length(target_damage) != 2 ||
       target_damage[1] < 0 || target_damage[2] > 1 ||
       target_damage[1] >= target_damage[2]) {
     stop("Please ensure 'target_damage' is a numeric vector of length 2,
     with values between 0 and 1, and the first value is less than the second.")
   }
+
   if (!distribution_steepness %in% c("shallow", "moderate", "steep")) {
     stop("Please ensure 'distribution_steepness' is one
          of 'shallow', 'moderate', or 'steep'.")
   }
+
   if (!damage_distribution %in% c("right_skewed", "left_skewed", "symmetric")) {
     stop("Please ensure 'damage_distribution' is one of 'right_skewed',
          'left_skewed', or 'symmetric'.")
   }
+
   if (!is.numeric(ribosome_penalty) || ribosome_penalty < 0 ||
       ribosome_penalty > 1) {
     stop("Please ensure 'ribosome_penalty' is a numeric between 0 and 1.")
   }
-  if (!organism %in% c("Hsap", "Mmus") & length(organism) != 3) {
-    stop("Please ensure 'organism' is one of 'Hsap' or 'Mmus',
-         see documentation for non-standard organisms.")
-  }
+
 }
 
 .get_steepness_value <- function(distribution_steepness) {
   steepness_levels <- list(
-    shallow = 4,
+    shallow = 2,
     moderate = 7,
-    steep = 14
+    steep = 20
   )
   return(steepness_levels[[distribution_steepness]])
 }
@@ -293,9 +310,9 @@ simulate_counts <- function(
   }
 
   if (damage_distribution == "right_skewed") {
-    return(c(steepness_value * 0.3, steepness_value * 0.7))
+    return(c(steepness_value * 0.2, steepness_value * 0.8))
   } else if (damage_distribution == "left_skewed") {
-    return(c(steepness_value * 0.7, steepness_value * 0.3))
+    return(c(steepness_value * 0.8, steepness_value * 0.2))
   } else if (damage_distribution == "symmetric") {
     return(c(steepness_value * 0.5, steepness_value * 0.5))
   }
@@ -375,6 +392,26 @@ simulate_counts <- function(
   return(damage_label)
 }
 
+.generate_qc_summary <- function(count_matrix, damage_label, gene_idx) {
+  matched_indices <- match(colnames(count_matrix), damage_label$barcode)
+  total_counts <- colSums(count_matrix)
+
+  qc_summary <- data.frame(
+    Cell = colnames(count_matrix),
+    Damaged_Level = as.numeric(damage_label$damage_level[matched_indices]),
+    Original_Features = colSums(count_matrix != 0),
+    Original_MitoProp = colSums(
+      count_matrix[gene_idx$mito_idx, , drop = FALSE]
+    ) / total_counts,
+    Original_RiboProp = colSums(
+      count_matrix[gene_idx$ribo_idx, , drop = FALSE]
+    ) / total_counts
+  )
+
+  return(qc_summary)
+}
+
+
 .perturb_cells <- function(
     count_matrix, damaged_cell_selections, damage_label,
     gene_idx, ribosome_penalty, seed
@@ -422,28 +459,22 @@ simulate_counts <- function(
   return(count_matrix)
 }
 
-.generate_qc_summary <- function(count_matrix, damage_label, gene_idx) {
-  matched_indices <- match(colnames(count_matrix), damage_label$barcode)
+.update_qc_summary <- function(
+    qc_summary, count_matrix, damage_label, gene_idx) {
+
   total_counts <- colSums(count_matrix)
 
-  qc_summary <- data.frame(
-    Cell = colnames(count_matrix),
-    Damaged_Level = as.numeric(damage_label$damage_level[matched_indices]),
-    Original_Features = colSums(count_matrix != 0),
+  updated_qc_summary <- data.frame(
     New_Features = colSums(count_matrix != 0),
-    Original_MitoProp = colSums(
-      count_matrix[gene_idx$mito_idx, , drop = FALSE]
-    ) / total_counts,
     New_MitoProp = colSums(
       count_matrix[gene_idx$mito_idx, , drop = FALSE]
-    ) / total_counts,
-    Original_RiboProp = colSums(
-      count_matrix[gene_idx$ribo_idx, , drop = FALSE]
     ) / total_counts,
     New_RiboProp = colSums(
       count_matrix[gene_idx$ribo_idx, , drop = FALSE]
     ) / total_counts
   )
+
+  qc_summary <- cbind(qc_summary, updated_qc_summary)
 
   return(qc_summary)
 }

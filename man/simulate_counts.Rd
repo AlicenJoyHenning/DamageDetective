@@ -12,7 +12,7 @@ simulate_counts(
   damage_distribution = "right_skewed",
   distribution_steepness = "moderate",
   beta_shape_parameters = NULL,
-  ribosome_penalty = 0.001,
+  ribosome_penalty = 0.5,
   generate_plot = TRUE,
   palette = c("grey", "#7023FD", "#E60006"),
   plot_ribosomal_penalty = FALSE,
@@ -135,9 +135,9 @@ genes of the organism. If available, nuclear-encoded genes that are likely
 retained in the nucleus, such as in nuclear speckles, must also
 be specified. An example for humans is below,
 \itemize{
-\item organism = c(mito_pattern = "^MT-",
+\item organism = list(mito_pattern = "^MT-",
 ribo_pattern = "^(RPS|RPL)",
-nuclear <- c("NEAT1","XIST", "MALAT1")
+nuclear = c("NEAT1","XIST", "MALAT1"))
 \item Default is "Hsap"
 }}
 }

@@ -14,9 +14,9 @@
 #'  retained in the nucleus, such as in nuclear speckles, must also
 #'  be specified. An example for humans is below,
 #'
-#'  * organism = c(mito_pattern = "^MT-",
-#'                 ribo_pattern = "^(RPS|RPL)",
-#'                 nuclear <- c("NEAT1","XIST", "MALAT1")
+#'  * organism = list(mito_pattern = "^MT-",
+#'                    ribo_pattern = "^(RPS|RPL)",
+#'                    nuclear = c("NEAT1","XIST", "MALAT1"))
 #'
 #' * Default is "Hsap"
 #' @return List containing the indices of the count matrix corresponding to
@@ -26,28 +26,32 @@ get_organism_indices <- function(
     count_matrix,
     organism
 ){
-  if (organism == "Hsap") {
+  # Check if input is one of the defaults or correctly constructed non-default
+  if (is.character(organism) && length(organism) == 1 && organism == "Hsap") {
     mito_pattern <- "^MT-"
     ribo_pattern <- "^(RPS|RPL)"
-    nuclear <- c("FIRRE", "NEAT1","XIST", "MALAT1", "MIAT",
+    nuclear <- c("FIRRE", "NEAT1", "XIST", "MALAT1", "MIAT",
                  "MEG3", "KCNQ1OT1", "HOXA11-AS", "FTX")
     MALAT1 <- "MALAT1"
-  }
-
-  if (organism == "Mmus") {
+  } else if (is.character(organism) && length(organism) == 1 && organism == "Mmus") {
     mito_pattern <- "^mt-"
     ribo_pattern <- "^(rps|rpl)"
-    nuclear <- c("Firre", "Neat1","Xist", "Malat1", "Miat",
+    nuclear <- c("Firre", "Neat1", "Xist", "Malat1", "Miat",
                  "Meg3", "Kcnq1ot1", "Hoxa11-as", "Ftx")
     MALAT1 <- "Malat1"
-  }
-
-  # Allow for user specification for non-standard organism
-  if (!organism %in% c("Hsap", "Mmus")) {
-    mito_pattern <- organism$mito_pattern
-    ribo_pattern <- organism$ribo_pattern
-    nuclear <- organism$nuclear
-    MALAT1 <- organism$MALAT1
+  } else if (is.list(organism) || (is.vector(organism) && is.character(organism))) {
+    # Handle user-specified organism as a named vector or list
+    if (!all(c("mito_pattern", "ribo_pattern", "nuclear") %in% names(organism))) {
+      stop("Please ensure the custom organism input contains 'mito_pattern',
+                 'ribo_pattern', and 'nuclear'.")
+    }
+    mito_pattern <- organism[["mito_pattern"]]
+    ribo_pattern <- organism[["ribo_pattern"]]
+    nuclear <- organism[["nuclear"]]
+    MALAT1 <- if ("MALAT1" %in% names(organism)) organism[["MALAT1"]] else "MALAT1"
+  } else {
+    stop("Invalid input for 'organism'. Please provide 'Hsap', 'Mmus',
+             or a named vector/list.")
   }
 
   # Isolate gene set indices (consistent across cells, not subsetting)
@@ -57,6 +61,15 @@ get_organism_indices <- function(
   all_indices <- seq.int(1, nrow(count_matrix))
   non_mito_idx <- setdiff(all_indices, mito_idx)
   ribo_idx <- grep(ribo_pattern, rownames(count_matrix), ignore.case = FALSE)
+
+  # Check for organism correctness
+  if ((length(mito_idx) == 0) & (length(ribo_idx) == 0)) {
+    stop("Please ensure specified organism is correct.")
+  }
+
+  if (length(mito_idx) == 0){
+    warning("No mitochondrial genes found matching the specified organism.")
+  }
 
   return(list(
     mito_idx = mito_idx,

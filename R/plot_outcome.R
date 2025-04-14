@@ -33,12 +33,11 @@ plot_simulation_outcome <- function(
   )
 
   unaltered_counts_plot <- plot_unaltered_counts(
-    qc_summary = qc_summary,
-    reference = altered_counts_plot$new_row
+    qc_summary = qc_summary
   )
 
   # Combine & return
-  final_plot <- unaltered_counts_plot / altered_counts_plot$plot
+  final_plot <- unaltered_counts_plot / altered_counts_plot
 
   return(final_plot)
 
@@ -146,8 +145,7 @@ plot_detection_outcome <- function(
 #' @param target_damage Numeric vector specifying the target damage levels for
 #' color scaling.
 #'
-#' @return A list containing the plot object and the reference row used for
-#' comparison.
+#' @return A list containing the plot object
 #' @importFrom ggplot2 ggplot aes geom_point facet_wrap
 #' @importFrom ggplot2 scale_y_continuous labs theme_minimal
 #' @importFrom dplyr select rename mutate filter bind_rows
@@ -183,17 +181,6 @@ plot_altered_counts <- function(
       names_to = "X_Variable",
       values_to = "X_Value"
     )
-
-  # Randomly select a row to create a ribo. reference point
-  template_row <- qc_summary_long_filtered %>%
-    dplyr::filter(.data$X_Variable == "Ribo. prop",
-                  .data$Damaged_Level == 0) %>%
-    dplyr::slice_sample(n = 1)
-
-  new_row <- template_row %>%
-    dplyr::mutate(X_Value = (max(qc_summary$Original_RiboProp) + 0.1))
-
-  qc_summary_long_filtered <- bind_rows(qc_summary_long_filtered, new_row)
 
   # Create scatter plot showing QC metric distribution
   plot <- ggplot2::ggplot(qc_summary_long_filtered,
@@ -231,10 +218,7 @@ plot_altered_counts <- function(
       legend.key.height = unit(0.5, "cm")
     )
 
-  return(list(
-    plot = plot,
-    new_row = new_row
-  ))
+  return(plot)
 
 }
 
@@ -249,8 +233,6 @@ plot_altered_counts <- function(
 #'
 #' @param qc_summary A data frame containing the quality control summary for
 #' cells.
-#' @param reference A reference data point used for comparison in the plot.
-#'
 #' @return A `ggplot2` object representing the scatter plot of quality control
 #'  metrics for unaltered cells.
 #' @importFrom ggplot2 ggplot aes geom_point facet_wrap scale_y_continuous
@@ -259,9 +241,9 @@ plot_altered_counts <- function(
 #' @importFrom scales rescale
 #' @keywords internal
 plot_unaltered_counts <- function(
-    qc_summary,
-    reference
+    qc_summary
 ){
+
   # Isolate unaltered counts for visualizing QC metrics
   qc_summary_long_filtered <- qc_summary %>%
     tidyr::pivot_longer(
@@ -280,7 +262,7 @@ plot_unaltered_counts <- function(
       )
     ) %>%
     dplyr::rename(
-      `Ribo. prop` = .data$RiboProp
+      `Ribo. prop` = RiboProp
     ) %>%
     dplyr::filter(.data$State == "Original") %>%
     tidyr::pivot_longer(
@@ -288,9 +270,6 @@ plot_unaltered_counts <- function(
       names_to = "X_Variable",
       values_to = "X_Value"
     )
-
-  # Append a reference row to the dataset
-  qc_summary_long_filtered <- bind_rows(qc_summary_long_filtered, reference)
 
   # Create scatter plot showing QC metric distribution
   plot <- ggplot2::ggplot(qc_summary_long_filtered,

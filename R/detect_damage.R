@@ -173,7 +173,8 @@ detect_damage <- function(
     stop("filter_threshold must be a numeric value between 0 and 1.")
   }
   if (!is.numeric(mito_quantile) || mito_quantile <= 0 || mito_quantile > 1) {
-    stop("mito_quantile must be a numeric value between 0 and 1.")
+    stop("mito_quantile must be a numeric value
+         0 and 1.")
   }
   if (!is.numeric(damage_levels) && !is.list(damage_levels)) {
     stop("damage_levels must be a numeric value or a list of ranges.")
@@ -181,8 +182,10 @@ detect_damage <- function(
   if (!is.matrix(count_matrix) && !inherits(count_matrix, "Matrix")) {
     stop("count_matrix must be a matrix or a sparse matrix.")
   }
-  if (!is.null(kN) && (!is.numeric(kN) || kN <= 0)) {
-    stop("kN must be a positive numeric value.")
+  if (!is.null(kN) && (!is.numeric(kN) || kN >= 0 ||
+                       kN <= dim(count_matrix)[2])) {
+    stop("kN must be a positive numeric value less than the number of
+         cells present.")
   }
 }
 
@@ -495,7 +498,7 @@ detect_damage <- function(
   metadata_plot$DamageDetective_filter <- ifelse(
     metadata_plot$DamageDetective >= filter_threshold, "damaged", "cell"
   )
-  output_columns <- c("Cells", "DamageDetective", "DamageDetective_filter")
+  output_columns <- c("Cells", "DamageDetective")
   metadata_output <- metadata_plot[, output_columns]
 
   # Filter the count matrix if requested

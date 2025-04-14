@@ -4,13 +4,11 @@
 \alias{plot_unaltered_counts}
 \title{plot_unaltered_counts}
 \usage{
-plot_unaltered_counts(qc_summary, reference)
+plot_unaltered_counts(qc_summary)
 }
 \arguments{
 \item{qc_summary}{A data frame containing the quality control summary for
 cells.}
-
-\item{reference}{A reference data point used for comparison in the plot.}
 }
 \value{
 A \code{ggplot2} object representing the scatter plot of quality control

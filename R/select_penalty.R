@@ -203,8 +203,10 @@ select_penalty <- function(
 
   for (penalty in penalties) {
     if (penalty_count >= max_penalty_trials) {
-      message("Maximum penalty trials reached (",
-              max_penalty_trials, "). Stopping.")
+      if (verbose) {
+        message("Maximum penalty trials reached (",
+                max_penalty_trials, "). Stopping.")
+      }
       break
     }
 
@@ -242,7 +244,9 @@ select_penalty <- function(
     if (mean(dTNN_means, na.rm = TRUE) >= best_dTNN_mean) {
       stability_counter <- stability_counter + 1
       if (stability_counter > stability_limit) {
-        message("Stopping early: dTNN is no longer improving.")
+        if (verbose) {
+          message("Stopping early: dTNN is no longer improving.")
+        }
         break
       }
     } else {
@@ -338,3 +342,4 @@ select_penalty <- function(
     ))
   }
 }
+
