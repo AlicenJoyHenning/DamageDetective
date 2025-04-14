@@ -83,9 +83,9 @@ data where there are two standard options,</p><ul><li><p>"Hsap"</p></li>
 containing strings for the patterns to match mitochondrial and ribosomal
 genes of the organism. If available, nuclear-encoded genes that are likely
 retained in the nucleus, such as in nuclear speckles, must also
-be specified. An example for humans is below,</p><ul><li><p>organism = c(mito_pattern = "^MT-",
+be specified. An example for humans is below,</p><ul><li><p>organism = list(mito_pattern = "^MT-",
 ribo_pattern = "^(RPS|RPL)",
-nuclear &lt;- c("NEAT1","XIST", "MALAT1")</p></li>
+nuclear = c("NEAT1","XIST", "MALAT1"))</p></li>
 <li><p>Default is "Hsap"</p></li>
 </ul></dd>
 

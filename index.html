@@ -79,9 +79,7 @@
 <p>Damaged cells are an artifact of single-cell RNA sequencing (scRNA-seq) data formed when cells succumb to stress before, or in the process of, being sequenced. In consequence, the gene expression data captured does not reflect the cells in a biologically viable state. Continuing an analysis with damaged cells compromises its reliability as functionally relevant variability in gene expression is indistinguishable from that contributed by the damaged artifacts. Filtering damaged cells is therefore an essential step in scRNA-seq quality control (QC).</p>
 <p>Current approaches filter damage according to deviations in cell-level QC metrics. This outlier-based detection assumes viable cells follow a unimodal distribution where deviation is synonymous with damage. However, this assumption fails in the context of heterogeneous scRNA-seq data, where QC metrics such as mitochondrial proportion and library size exhibit cell type specific distributions, and risks introducing a filtering bias relative to cell type abundance. More recent methods address this by assessing deviations within distinct distributions independently. This, however, assumes all distinct distributions are associated with viable cell populations and risks leaving abundant damage undetected. Ultimately, current filtering approaches are controlled by statistical definitions of deviation which do not always align with the biological manifestation of damage.</p>
 <p><code>DamageDetective</code> takes a different approach, rather than detecting damage by measuring the extent to which cells deviate from one another, it measures the extent to which cells deviate from artificially damaged profiles of themselves, simulated through the probabilistic escape of cytoplasmic RNA. This is inspired by the approach of <code>DoubletFinder</code>—a high-performing tool for filtering doublets, another prominent scRNA-seq artifact. Like <code>DoubletFinder</code>, principal component analysis is used to compute the proximity of true cells to sets of artificial cells, each with a known level of damage. The damage level of the set to which a true cell shows the highest proximity is assigned to the cell as a score ranging from 0 to 1, reflecting the proportion of cytoplasmic RNA loss in the artificial set. This score forms the main output of <code>DamageDetective</code> and provides an intuitive scale for filtering damage that is standardised across cell types, sample origin, and experimental design.</p>
-<blockquote>
-<p><code>DamageDetective</code> runs using the gene expression count matrix and can accept <code>Seurat</code> objects, <code>SingleCellExperiment</code> objects, and alignment output files as input (<a href="https://alicenjoyhenning.github.io/DamageDetective/articles/detection-vignette.html">package tutorials</a>). Though implemented in R, <code>DamageDetective</code> provides output that is platform-agnostic and can be integrated into any existing single-cell analysis workflow.</p>
-</blockquote>
+<p><code>DamageDetective</code> accepts count matrices, <code>Seurat</code> or <code>SingleCellExperiment</code> objects, and alignment files (<a href="https://alicenjoyhenning.github.io/DamageDetective/articles/detection-vignette.html">package tutorials</a>). Though implemented in R, <code>DamageDetective</code> provides output that is platform-agnostic and can be integrated into any existing single-cell analysis workflow.</p>
 <p><br></p>
 </div>
 <div class="section level2">
@@ -92,7 +90,7 @@
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html" class="external-link">install.packages</a></span><span class="op">(</span><span class="st">'DamageDetective'</span><span class="op">)</span></span></code></pre></div>
 <p>Or through GitHub,</p>
 <pre><code><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://devtools.r-lib.org/" class="external-link">devtools</a></span><span class="op">)</span></span>
-<span><span class="fu">devtools</span><span class="fu">::</span><span class="fu">install_github</span><span class="op">(</span><span class="st">"AlicenJoyHenning/DamageDetective"</span>, build_vignettes <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre>
+<span><span class="fu">devtools</span><span class="fu">::</span><span class="fu"><a href="https://remotes.r-lib.org/reference/install_github.html" class="external-link">install_github</a></span><span class="op">(</span><span class="st">"AlicenJoyHenning/DamageDetective"</span>, build_vignettes <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre>
 <p>To verify installation, run the following to see if you can view the package vignette and the function help pages,</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://alicenjoyhenning.github.io/DamageDetective/">DamageDetective</a></span><span class="op">)</span></span>
@@ -168,7 +166,7 @@
 <span><span class="co"># View the resulting count matrix</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/dim.html" class="external-link">dim</a></span><span class="op">(</span><span class="va">detection_results</span><span class="op">$</span><span class="va">output</span><span class="op">)</span></span>
 <span><span class="co"># [1] 32738   458</span></span></code></pre></div>
-<p><img src="reference/figures/plot.svg" width="600" alt="Output of test_counts with cells coloured according to the estimated level of damage"></p>
+<p><img src="reference/figures/plot.svg" alt="Output of test_counts with cells coloured according to the estimated level of damage" width="600"></p>
 <p><br></p>
 <p>Alternatively, if <code>filter_counts</code> is set to <code>FALSE</code>, a data frame will be given as output containing the damage scores for each barcode. This is provided for the user if they wish to interact with the <code>DamageDetective</code> results directly. From here, a user can filter their data manually, as is done by <code>filter_counts=TRUE</code> automatically.</p>
 <div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
@@ -206,24 +204,18 @@
 <div class="section level2">
 <h2 id="contribute">Contribute<a class="anchor" aria-label="anchor" href="#contribute"></a>
 </h2>
-<p>DamageDetective is built on assumptions and heuristics for detecting damaged cells in scRNA-seq data. Contributions that refine or challenge these are welcome, especially in the areas below,</p>
+<p>Contributions aimed to refine or challenge the assumptions and heuristics for detecting damaged cells with <code>DamageDetective</code> are welcome, especially in the areas below,</p>
 <div class="section level3">
 <h3 id="id_-conceptual-refinement">💡 Conceptual Refinement<a class="anchor" aria-label="anchor" href="#id_-conceptual-refinement"></a>
 </h3>
 <ul>
-<li>We base our approach on assumptions about the relationship between cell viability, cytoplasmic RNA loss, and cell-type invariance. If you have insights or alternate views on cell viability, feel free to start a discussion or submit a PR.</li>
+<li>We base our approach on assumptions about the relationship between cell viability and cytoplasmic RNA loss in single cell RNA sequencing data. If you have insights or alternate views on cell viability, feel free to start a discussion.</li>
 </ul>
 </div>
 <div class="section level3">
 <h3 id="id_-technical-enhancement">🛠 Technical Enhancement<a class="anchor" aria-label="anchor" href="#id_-technical-enhancement"></a>
 </h3>
-<p>We aim for efficiency and modularity but welcome help with,</p>
-<ul>
-<li>
-<strong>Sparse matrix ops</strong>: Suggestions for improving speed or memory use—especially in R or C++—are appreciated.</li>
-<li>
-<strong>New input formats</strong>: Want to add AnnData or other formats? Let’s collaborate!</li>
-</ul>
+<p>We aim for efficiency and modularity and welcome help with, - <strong>Sparse matrix operations</strong>: Suggestions for improving speed or memory use—especially in R or C++—are appreciated. - <strong>New input formats</strong>: Want to add AnnData or other formats? Let’s collaborate!</p>
 </div>
 <div class="section level3">
 <h3 id="id_-bug-reports--features">🧪 Bug Reports &amp; Features<a class="anchor" aria-label="anchor" href="#id_-bug-reports--features"></a>
@@ -231,8 +223,7 @@
 <ul>
 <li>Found a bug or have an idea? Please let us know!</li>
 </ul>
-<p>You can reach out via the maintainer email listed below, but we strongly encourage public discussion through the GitHub Issues tab to facilitate transparency and collaboration.</p>
-<p>Active maintainer email: <a href="mailto:alicen.jhb@gmail.com" class="email">alicen.jhb@gmail.com</a></p>
+<p>You can reach out via the maintainer email listed below or via public discussion through the GitHub Issues tab. Active maintainer email: <a href="mailto:alicen.jhb@gmail.com" class="email">alicen.jhb@gmail.com</a></p>
 </div>
 </div>
 <div class="section level2">
