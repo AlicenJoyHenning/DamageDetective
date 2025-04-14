@@ -10,7 +10,7 @@
 
 [Description](#description) \| [Installation](#installation) \| [Quick start](#quick-start) \| [Contribute](#contribute) \| [Authors](#authors) \| [License](#license) \| [References](#references)
 
-## Description {#description}
+## Description
 
 [**Jump to the DamageDetective website**](https://alicenjoyhenning.github.io/DamageDetective/)
 
@@ -24,7 +24,7 @@ Current approaches filter damage according to deviations in cell-level QC metric
 
 <br>
 
-## Installation {#installation}
+## Installation
 
 Install `DamageDetective` from CRAN (R \>= 4.4.0),
 
@@ -48,7 +48,7 @@ help(package = "DamageDetective")
 
 <br> <br>
 
-## Quick start {#quick-start}
+## Quick start
 
 The demonstrations below can be followed immediately after loading the package and serve as a test to ensure all is running smoothly. For more detailed examples and explanations, please refer to the package articles available on our [website](https://alicenjoyhenning.github.io/DamageDetective/).
 
@@ -157,7 +157,7 @@ dim(filtered_matrix)
 # [1] 32738   458
 ```
 
-## Contribute {#contribute}
+## Contribute
 
 Contributions aimed to refine or challenge the assumptions and heuristics for detecting damaged cells with `DamageDetective` are welcome, especially in the areas below,
 
@@ -175,11 +175,11 @@ We aim for efficiency and modularity and welcome help with, - **Sparse matrix op
 
 You can reach out via the maintainer email listed below or via public discussion through the GitHub Issues tab. Active maintainer email: [alicen.jhb\@gmail.com](mailto:alicen.jhb@gmail.com){.email}
 
-## License {#license}
+## License 
 
 `DamageDetective` is made available for public use through the [GNU AGPL-3.0](https://opensource.org/license/agpl-v3)
 
-## Authors {#authors}
+## Authors 
 
 **Alicen Henning**\
 Stellenbosch University, Cape Town, South Africa\
@@ -187,7 +187,7 @@ Bioinformatics and Computational Biology
 
 This work was done under the supervision of Prof Marlo Möller, Prof Gian van der Spuy, and Prof André Loxton.
 
-## References {#references}
+## References 
 
 1.  McGinnis, C. S., Murrow, L. M., & Gartner, Z. J. (2019). DoubletFinder: Doublet Detection in Single-Cell RNA Sequencing Data Using Artificial Nearest Neighbors. *Cell Systems, 8*(4), 329-337.e4. <https://doi.org/10.1016/j.cels.2019.03.003>
 
