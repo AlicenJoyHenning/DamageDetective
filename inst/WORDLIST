@@ -1,6 +1,7 @@
 AGPL
 Amezquita
 André
+AnnData
 Bioinformatics
 CMD
 DOI
@@ -33,7 +34,6 @@ Verlag
 Wickham
 XIST
 al
-analysing
 barcode
 barcodes
 colour
@@ -52,13 +52,16 @@ grey
 iteratively
 kN
 kotliarov
+malat
 mito
+modularity
 mononuclear
 neighbours
 pANN
 pbmc
 pre
 ptions
+rb
 reproducibility
 ribo
 ribosomal

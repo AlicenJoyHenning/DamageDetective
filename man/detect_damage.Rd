@@ -12,6 +12,7 @@ detect_damage(
   target_damage = c(0.1, 0.8),
   damage_distribution = "right_skewed",
   distribution_steepness = "moderate",
+  pca_columns = c("log.features", "log.counts", "mt.prop", "rb.prop"),
   beta_shape_parameters = NULL,
   damage_levels = 5,
   damage_proportion = 0.15,
@@ -93,6 +94,23 @@ apparent skewness.There are three valid options:
 \item "steep"
 \item Default is "moderate"
 }}
+
+\item{pca_columns}{String vector containing the names of the metrics used
+for principal component analysis.
+
+There are 8 options:
+\itemize{
+\item features
+\item log.features
+\item total_counts
+\item log.counts
+\item mt.prop
+\item rb.prop
+\item malat1.prop
+\item malat1
+}
+
+Default is c("log.features", "log.counts", "mt.prop", "rb.prop").}
 
 \item{beta_shape_parameters}{Numeric vector that allows for the shape
 parameters of the beta distribution to defined explicitly. This offers

@@ -66,6 +66,20 @@
 #'  from cells that are likely damaged.
 #'
 #'  * Default is 0.75.
+#' @param pca_columns String vector containing the names of the metrics used
+#'  for principal component analysis.
+#'
+#'  There are 8 options:
+#'   - features
+#'   - log.features
+#'   - total_counts
+#'   - log.counts
+#'   - mt.prop
+#'   - rb.prop
+#'   - malat1.prop
+#'   - malat1
+#'
+#' Default is c("log.features", "log.counts", "mt.prop", "rb.prop").
 #' @param kN Numeric describing how many nearest neighbours are considered
 #'  for pANN calculations. kN cannot exceed the total cell number.
 #'
@@ -113,6 +127,7 @@ detect_damage <- function(
     target_damage = c(0.1, 0.8),
     damage_distribution = "right_skewed",
     distribution_steepness = "moderate",
+    pca_columns = c("log.features", "log.counts", "mt.prop", "rb.prop"),
     beta_shape_parameters = NULL,
     damage_levels = 5,
     damage_proportion = 0.15,
@@ -147,7 +162,7 @@ detect_damage <- function(
 
   # Perform PCA and nearest neighbour search
   kN <- .find_knn(count_matrix, kN)
-  neighbour_indices <- .perform_pca(metadata_stored, kN)
+  neighbour_indices <- .perform_pca(metadata_stored, pca_columns, kN)
 
   # Compute pANN and scale damage levels
   metadata_plot <- .compile_pANN(
@@ -335,6 +350,10 @@ detect_damage <- function(
   ) / total_counts
   malat1_expr <- matrix_combined[gene_idx$MALAT1, , drop = FALSE]
   malat1 <- as.vector(malat1_expr)
+  malat1.prop <- Matrix::colSums(
+    matrix_combined[
+      gene_idx$MALAT1, , drop = FALSE]
+  ) / total_counts
 
   # Compile QC dataframe
   metadata_stored <- data.frame(
@@ -344,6 +363,7 @@ detect_damage <- function(
     log.counts = log.counts,
     mt.prop = mt.prop,
     rb.prop = rb.prop,
+    malat1.prop = malat1.prop,
     malat1 = malat1,
     Damage_level = Damage_level,
     row.names = colnames(matrix_combined)
@@ -358,11 +378,13 @@ detect_damage <- function(
   return(kN)
 }
 
-.perform_pca <- function(metadata_stored, kN) {
-  pca_columns <- c("log.features", "log.counts", "mt.prop", "rb.prop", "malat1")
+.perform_pca <- function(metadata_stored, pca_columns, kN) {
+  # pca_columns <- c("log.features", "log.counts", "mt.prop",
+  # "rb.prop", "malat1")
+  qc_pcs <- length(pca_columns)
   metadata_pca <- metadata_stored[, pca_columns]
   pca_result <- prcomp(metadata_pca, center = TRUE, scale. = TRUE)
-  RcppHNSW::hnsw_knn(pca_result$x[, 1:5], k = kN)$idx
+  RcppHNSW::hnsw_knn(pca_result$x[, 1:qc_pcs], k = kN)$idx
 }
 
 .compute_pANN <- function(barcode_set, metadata_stored, neighbour_indices, kN) {
@@ -384,6 +406,7 @@ detect_damage <- function(
   # Isolate columns & ensure cell names are present
   metadata_columns <- c("features", "counts", "mt.prop", "rb.prop",
                         "malat1", "Damage_level")
+
   metadata_plot <- metadata_stored[, metadata_columns]
   metadata_plot$Cells <- rownames(metadata_stored)
   damage_numbers <- as.numeric(unique(metadata_plot$Damage_level))
