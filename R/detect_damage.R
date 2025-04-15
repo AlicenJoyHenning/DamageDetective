@@ -72,7 +72,7 @@
 #'  There are 8 options:
 #'   - features
 #'   - log.features
-#'   - total_counts
+#'   - counts
 #'   - log.counts
 #'   - mt.prop
 #'   - rb.prop
