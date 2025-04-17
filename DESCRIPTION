@@ -32,7 +32,8 @@ Imports:
     RcppHNSW,
     rlang,
     tidyr,
-    withr
+    withr,
+    Rcpp
 Suggests:
     Seurat,
     knitr,
@@ -43,3 +44,6 @@ VignetteBuilder: knitr
 URL: https://alicenjoyhenning.github.io/DamageDetective/, https://github.com/alicenjoyhenning/DamageDetective
 BugReports: https://github.com/alicenjoyhenning/DamageDetective/issues
 Config/testthat/edition: 3
+LinkingTo: 
+    Rcpp,
+    RcppArmadillo

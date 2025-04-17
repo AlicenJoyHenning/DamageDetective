@@ -102,7 +102,7 @@ There are 8 options:
 \itemize{
 \item features
 \item log.features
-\item total_counts
+\item counts
 \item log.counts
 \item mt.prop
 \item rb.prop
