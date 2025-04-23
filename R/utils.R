@@ -84,6 +84,8 @@ get_organism_indices <- function(
 
 utils::globalVariables(c(
   "Features", "New_Features", "New_MitoProp", "New_RiboProp", "RiboProp",
-  "Original_Features", "Original_MitoProp", "Original_RiboProp", "Ribo. prop"
+  "Original_Features", "Original_MitoProp", "Original_RiboProp", "Ribo. prop",
+  "seurat_clusters", "ranges", "features", "mt.prop", "rb.prop",
+  "DamageDetective"
 ))
 

@@ -29,13 +29,14 @@ Imports:
     Matrix,
     patchwork,
     scales,
+    Seurat,
+    stringr,
     RcppHNSW,
     rlang,
     tidyr,
     withr,
     Rcpp
 Suggests:
-    Seurat,
     knitr,
     rmarkdown,
     spelling,

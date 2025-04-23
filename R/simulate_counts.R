@@ -126,6 +126,7 @@
 #' @import patchwork
 #' @importFrom ggpubr get_legend
 #' @importFrom cowplot ggdraw draw_label plot_grid
+#' @importFrom Matrix colSums
 #' @export
 #' @examples
 #' data("test_counts", package = "DamageDetective")
@@ -135,8 +136,7 @@
 #'   damage_proportion = 0.1,
 #'   ribosome_penalty = 0.01,
 #'   target_damage = c(0.5, 0.9),
-#'   generate_plot = FALSE,
-#'   seed = 7
+#'   generate_plot = FALSE
 #' )
 simulate_counts <- function(
     count_matrix,
@@ -151,7 +151,7 @@ simulate_counts <- function(
     palette = c("grey", "#7023FD", "#E60006"),
     plot_ribosomal_penalty = FALSE,
     display_plot = TRUE,
-    seed = NULL,
+    seed = 7,
     organism = "Hsap"
 ) {
   # Data preparations ----
@@ -198,15 +198,13 @@ simulate_counts <- function(
   # Initial QC metrics ----
   qc_summary <- .generate_qc_summary(count_matrix, damage_label, gene_idx)
 
-
   # Perturb selected cells ----
   count_matrix <- perturb_cells_cpp(
     count_matrix = as.matrix(count_matrix),
     damaged_cell_selections = damaged_cell_selections - 1,
     damage_levels = damage_label$damage_level,
     non_mito_idx = gene_idx$non_mito_idx - 1,
-    gene_names = rownames(count_matrix),
-    ribo_pattern = "RPL|RPS",
+    ribo_idx = gene_idx$ribo_idx - 1,
     ribosome_penalty = ribosome_penalty,
     seed = seed
   )

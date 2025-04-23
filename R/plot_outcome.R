@@ -74,14 +74,14 @@ plot_detection_outcome <- function(
 ) {
   # Isolate columns of interest
   qc_summary_long <- qc_summary %>%
-    dplyr::select(.data$features,
-                  .data$mt.prop,
-                  .data$rb.prop,
-                  .data$DamageDetective) %>%
+    dplyr::select(features,
+                  mt.prop,
+                  rb.prop,
+                  DamageDetective) %>%
     dplyr::rename(
-      Features = .data$features,
-      `Mito. prop` = .data$mt.prop,
-      `Ribo. prop` = .data$rb.prop
+      Features = features,
+      `Mito. prop` = mt.prop,
+      `Ribo. prop` = rb.prop
     ) %>%
     tidyr::pivot_longer(
       cols = c(Features, `Ribo. prop`),

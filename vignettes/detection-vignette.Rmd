@@ -14,7 +14,7 @@ knitr::opts_chunk$set(
 )
 ```
 
-# Tutorial Overview
+# Tutorial overview
 
 The goal of `DamageDetective` is to simplify the process of making informed and reproducible damaged cell filtering decisions. This tutorial provides an outline of the steps needed to achieve this:
 
@@ -29,44 +29,66 @@ Ensure the following packages are installed and made available in your R environ
 ```{r library_prep, include=FALSE, message=FALSE, warning=FALSE}
 library(DamageDetective)
 library(Seurat)
+library(stringr)
 library(ggplot2)
 library(patchwork)
 ```
 
-# Data Preparation
+<br>
 
-This tutorial takes place in `R`, home to three popular scRNA-seq data storage types:
+# Workflow overview
 
-1.  The `Seurat` object
-2.  The `SingleCellExperiment` (`sce`) object
-3.  The matrix retrieved directly from alignment output (`matrix.mtx`, `barcodes.tsv`, and `features.tsv`).
+Before discussing how `DamageDetective`'s core function, `detect_damage`, operates, it may be helpful for a user to understand how the detection process works.
 
-`DamageDetective` operates with data in a compressed, column-oriented sparse matrix (`dgCMatrix`). This format efficiently handles the sparse nature of single-cell data by indexing only non-zero elements within each column. Each of the above data storage types can act as the starting point for damage detection through conversion to a sparse matrix.
+The damage detection process is made up of two core components, first, creating artificial profiles of damage using the cells, and second, comparing the cells to the artificial profiles to estimate the extent of damage. Ultimately, `detect_damage` outputs a score from 0 to 1 indicating the estimated damage level of each true cell that can be used to filter cells.
 
-> **Note:** Due to vignette size constraints, this tutorial will only  demonstrate live using data from the alignment output.
+## Damage simulation
 
-## Conversion to Sparse Matrix
+Damage is simulated by the loss of cytoplasmic RNA, a consequence of loss in plasma membrane integrity-a defining principle of damage used in many cell viability assays. Here, RNA that is not in the cytoplasm, such as that enclosed by the mitochondria or inside nuclear speckles, is more protected from loss. When looking at the total RNA of cells, true, unbroken cells are more likely to have a high proportion of cytoplasmic RNA compared to damaged, broken where due to escape out the impaired plasma membrane, the proportion of protected RNA, mitochondrial and nuclear RNA, appear elevated.
 
-### Using a `Seurat` Object
+`DamageDetective` assumes that the proportion of RNA lost is directly related to the extent of cellular damage. This allows for artificial damaged cell profiles to be created by imitating the loss of cytoplasmic RNA. The artificial cells will lose a proportion of cytoplasmic RNA equivalent to a target damage level, given as a number from 0 to 1.
 
-The count matrix can be extracted from the assay slot of a Seurat object. By default, this matrix is already in compressed column-oriented sparse form and can be used as input for DamageDetective.
+This loss is achieved through probabilistic sampling of transcripts from the counts of the cell. Operating at the level of individual cells, a score is assigned to genes according to the abundance of transcripts present for that gene in that cell. This is expanded to transcript level representations such that transcripts from the same gene have an equal probability of being lost. Transcripts are then sampled without replacement according to the probability scores until the target transcript loss is met.
 
-We will use the SeuratData package to retrieve a publicly available Seurat object to demonstrate. This object stores the data from peripheral blood mononuclear cells (PBMCs) sequenced using the 10X Genomics platform.
+> E.g. Assume a cell has 2500 transcripts and a target of damage level of 0.8. The cell is made up of 2380 cytoplasmic transcripts, and 120 transcripts from protected origins such as the mitochondria and nuclear speckles.
+>
+> To imitate the intended damage, the cell must lose 80 % of its cytoplasmic RNA, 1904 transcripts. Probability scores are assigned to each cytoplasmic gene according to their abundance in the cell. Transcripts are then sampled from this probability without replacement until 1904 transcripts have been sampled.
+>
+> Initial mitochondrial proportion: 120 / 2500 = 0.048
+>
+> Mitochondrial proportion in damaged cell: 120 / 716 = 0.168
 
-```{r seurat_data, eval=FALSE}
-# Retrieve the dataset of interest
-SeuratData::InstallData("pbmc3k")
-data("pbmc3k")
+## Damage estimation
 
-# Extract the count matrix
-pbmc3k_counts <- pbmc3k[["RNA"]]$counts
-```
+`detect_damage` estimates the damage level of each true cell by measuring its similarity to artificially damaged cells.
 
-### Using Alignment Output
+Using the PC embeddings, a set of cells with the highest similarity to each true cell, the nearest neighbours (NN), is collected. The proportions of nearest neighbours that originate from damage level are found. The damage level of the artificial set to which the true cell shows the highest proportion of nearest neighbours is selected as the cell's estimated damage level. This is scaled to score the cells in each set in a way that reflects the relative differences in proportion.
 
-Alignment output comes in the form of three files containing the row names (genes), column names (cell identifiers), and input values (gene expression values) of the count matrix. These can be compiled using ReadMtx, a function offered by Seurat which simplifies the count matrix compilation into one function. This involves decompressing zipped files, mapping feature names to HGNC gene symbols, and converting the matrix to sparse format. ReadMtx output can be used directly for DamageDetective.
+<br> <br>
 
-We will use publicly available alignment data from the 10X Genomics website for demonstration, specifically the '1k PBMCs from a healthy donor (v3)' data available here following the link named "Feature / cell matrix (filtered)".
+# Data preparation
+
+`DamageDetective` operates with single cell data in the form of a compressed, column-oriented sparse matrix (`dgCMatrix`) in `R`. This format efficiently handles the sparse nature of single cell data by indexing only non-zero elements within each column, i.e., only the rows containing actual expression values. We will begin by showing how three common single cell data storage types can be converted to this form to act as the starting point for damage detection.
+
+These include,
+
+1.  Alignment output files
+2.  `Seurat` object
+3.  `SingleCellExperiment` (`sce`) object
+
+## Convert data to sparse matrix format
+
+### 1. Alignment output
+
+Alignment output comes in the form of three files,
+
+-   `features.tsv`, containing the gene names\
+-   `barcodes.tsv`, containing the cell identifiers\
+-   `matrix.mtx`, containing the input values (gene expression values).
+
+These can be compiled using `ReadMtx` offered by `Seurat` which simplifies the count matrix compilation process into one function. This includes the processes of decompressing zipped files, mapping feature names to HGNC gene symbols, and converting the matrix to sparse format. The `ReadMtx()` output can be used directly as input for `DamageDetective`.
+
+We will use publicly available alignment data from the 10X Genomics website for demonstration, specifically the '1k PBMCs from a healthy donor (v3)' dataset, which can be downloaded [here](https://www.10xgenomics.com/datasets/1-k-pbm-cs-from-a-healthy-donor-v-3-chemistry-3-standard-3-0-0) following the link named "Feature / cell matrix (filtered)". This should begin the download of a 9.6 MB directory containing 'filtered_feature_bc_matrix' sub-directory housing the alignment files.
 
 ```{r retrieve_alignment, echo=FALSE}
 url <- "https://cf.10xgenomics.com/samples/cell-exp/3.0.0/pbmc_1k_v3/pbmc_1k_v3_filtered_feature_bc_matrix.tar.gz"
@@ -84,9 +106,9 @@ alignment_counts <- Seurat::Read10X(extracted_dir)
 
 ```{r demonstrate_alignment_conversion, eval=FALSE}
 # Set the file paths relative to location on your device
-matrix_file <- "~/Projects/demonstrations/matrix.mtx.gz"     
-barcodes_file <- "~/Projects/demonstrations/barcodes.tsv.gz" 
-features_file <- "~/Projects/demonstrations/features.tsv.gz" 
+matrix_file <- "~/Projects/filtered_feature_bc_matrix/matrix.mtx.gz"     
+barcodes_file <- "~/Projects/filtered_feature_bc_matrix/barcodes.tsv.gz" 
+features_file <- "~/Projects/filtered_feature_bc_matrix/features.tsv.gz" 
 
 # Construct the sparse matrix
 alignment_counts <- Seurat::ReadMtx(
@@ -96,13 +118,38 @@ alignment_counts <- Seurat::ReadMtx(
 )
 ```
 
-### Using an `sce` Object
+> Note: Please adjust the location, `~/Projects`, according to where the files are saved on your device.
 
-The count matrix can be extracted from the assay slot of a Seurat object. By default, this matrix is already in compressed column-oriented sparse form and can be used as input for DamageDetective.
+### 2. `Seurat` object
 
-We will use the SeuratData package to retrieve a publicly available Seurat object to demonstrate. This object stores the data from peripheral blood mononuclear cells (PBMCs) sequenced using the 10X Genomics platform.
+`Seurat` is one of the most popular packages for single cell analysis in `R`. Along with an extensive suite of functions, it offers its own S4 class of data storage for housing the count matrix, aptly named the `Seurat` object. By default, the count matrix is already in compressed column-oriented sparse form in the `Seurat` object and can be used as input for `DamageDetective` after it is extracted from the assay slot.
+
+You can use the `SeuratData` package to retrieve a publicly available `Seurat` object to test this. This object stores the data from peripheral blood mononuclear cells (PBMCs) sequenced using the 10X Genomics platform.
+
+```{r seurat_data, eval=FALSE}
+devtools::install_github('satijalab/seurat-data')
+library(SeuratData)
+
+# Retrieve the dataset of interest
+SeuratData::InstallData("pbmc3k")
+data("pbmc3k")
+
+# Extract the count matrix
+pbmc3k_counts <- pbmc3k[["RNA"]]$counts
+```
+
+### 3. `sce` object
+
+`Bioconductor` offers its own suite of packages for single cell analysis in R with their own single cell data storage type known as the `SingleCellExperiment` (`sce`) object. Here, the count matrix is stored as a delayed matrix. This format enables memory-efficient operations by *delaying* computations until explicitly requested, rather than storing all values in memory upfront. However, `DamageDetective` computations require repeated access to the matrix and delays at each request greatly accumulate to slow down this process. We therefore convert the delayed matrix to a sparse matrix via a dense matrix intermediate.
+
+You can use the `scRNAseq` package to retrieve a publicly available `sce` object to test this. This object stores PBMC data of multiple samples from a study investigating influenza and yellow fever vaccine responsiveness. We will focus on the "234_d0" sample coming from an individual with a high vaccine responsiveness.
 
 ```{r sce_data, eval=FALSE}
+if (!require("BiocManager", quietly = TRUE))
+    install.packages("BiocManager")
+BiocManager::install("scRNAseq")
+library(scRNAseq)
+
 # Retrieve multisample dataset
 pbmc_sce <- scRNAseq::fetchDataset("kotliarov-pbmc-2020", "2024-04-18")
 
@@ -118,161 +165,183 @@ sample_counts <- as.matrix(sample_counts)
 sample_counts <- as(sample_counts, "dgCMatrix")
 ```
 
-# Parameter Selection
+> Note: Like many single cell analysis packages, DamageDetective can only operate with one single cell dataset at a time. Hence why we work with only the "234_d0" sample above.
 
-The `detect_damage` function requires only the count matrix to run but accepts additional parameters. These parameters can be divided into two categories:
+# Parameter selection
 
-1.  **Computational Parameters**: Alter the computation and result in different outputs.
-2.  **Aesthetic Parameters**: Adjust how the user receives the output but do not change the computation.
+Once the count matrix is in the correct format, the `detect_damage` function of `DamageDetective` can be run immediately. However, `detect_damage` accepts additional parameters. These parameters can be divided into two categories, those that alter the computation and result in a different output, **computational parameters**, and those that adjust how the user receives the output but cannot change the output itself, **aesthetic parameters**. Both will be explored briefly.
 
-## Computational Parameters
+## Computational parameters
 
-### Dataset-Defined Parameters
+### Dataset-defined computational parameters
 
--   **`organism`**: Specifies the organism of the data (default: `"Hsap"`).
--   **`annotated_celltypes`**: Indicates whether cell types are known (default: `FALSE`).
--   **`ribosome_penalty`**: Accounts for the unexpectedly low probability of ribosomal RNA loss in real single-cell data.
+Of the parameters that affect the output of the detection algorithm, some have only one possible input based on the data being investigated. In many cases, these require no alteration from the defaults. These include,
 
-#### Exploring the `ribosome_penalty` parameter
+-   **`organism`**
 
-This parameter accounts for the unexpectedly low probability of ribosomal RNA loss observed in real single cell data that must be accounted for during the simulation of artificial cells.
+What organism was the data derived from? Default of human, (`"Hsap"`) and accepts `"Mmus"`. To use a non-default organism, specify the strings that can be used to identify the mitochondrial genes (`mito_pattern`), ribosomal genes (`ribo_pattern`), and, if known, a set of genes that are securely located within the nucleus, such as within nuclear speckles. The format for this non-default input is demonstrated below using the information known for humans,
 
-The impact of changing `ribosome_penalty` can be explored in the plots below. The idea is to see whether the artificial cells describe the true cells, in other words, whether the coloured dots superimpose the grey dots.
+``` r
+organism <- list(mito_pattern = "^MT-",
+                 ribo_pattern = "^(RPS|RPL)",
+                 nuclear = c("NEAT1","XIST", "MALAT1"))
+```
 
--   Alignment output
+-   **`annotated_celltypes`**
 
-You will see that as you increase the penalty, i.e. go from values closer to 1 to values closer to 0$^*$, the coloured dots shift from an extreme position on the left-hand side of the plot to a more central position. At what point along this range true cells exist is dataset-dependent but generally lies closer to 0.
+Are cell types known? This has a default of `FALSE`, seeing that the typical single cell pre-processing workflow works to uncover cell type annotations, where this knowledge is not known from the start. This parameter allows a user to specify whether the input data is already annotated and ensures the simulations are distributed evenly across the cell types present. While this is already accounted for naturally by the clustering processes of the damage detection algorithm, this provides additional security.
 
-> $^*$ ribosome_penalty is a multiplicative reduction factor meaning a value of 1 is the same as introducing no penalty while values increasingly closer to zero introduce increasingly greater reductions.
+### User-defined computational parameters
 
-![A scatter plot showing the effect of ribosomal penalty on alignment output.](../man/figures/ribosome_penalty_alignment.svg)
+The remaining computational parameters have a wider range of input possibilities. While the user is free to adjust these as they see fit, we recommend using the defaults provided as they resulted in consistent and intended performance during package development. This being said, the `ribosome_penalty` parameter must be adjusted according to the input data and is explored in more detail below.
+
+-   **`seed`**
+
+Ensures the output of the damage detection algorithm can be reproduced exactly. This can be any number and has very little impact over the output, i.e., a seed of 7 and a seed of 7777 will provide very similar outputs. If present, differences between seed outputs are due to the stochastic nature of the damage simulation where cytoplasmic RNA transcripts are lost based on random sampling guided by abundance-derived probability scores. These probability scores are fixed and, unless enacted in cells with low sparsity and abundant expression values-atypical characteristics for single cell data, will not be greatly impacted by variation in seed values.
+
+-   **`kN`**
+
+The number of nearest neighbours that are considered in the analysis during damage detection. This analysis entails finding the proportion of the `kN` nearest neighbours of each true cell that are of artificial, or 'damaged', origin. Since only cells that are present can be considered as possible neighbours, `kN` is limited to the size of the dataset. As the value of `kN` increases, it expands the analysis to cells that are less closely related, increasing the probability that artificial cells will be present by random chance. By default, `DamageDetective` selects `kN` that is a third the size of the input dataset.
+
+-   **`target_damage`**
+
+This parameter is related to the damage simulation step that relies on the proportion of cytoplasmic RNA loss to estimate of the extent of cellular damage. In other words, cells where more cytoplasmic RNA is lost are assumed to be more likely to be damaged than cells where very little to no cytoplasmic RNA is lost. The simulation process works within specific target ranges of cytoplasmic RNA loss that are controlled by this parameter. For damage detection, we are interested in simulating cells that are damaged and require removal, meaning we set the target damage extent to a higher range. The default provided is between 65 and 100 % of cytoplasmic RNA loss.
+
+-   **`pca_columns`**
+
+After simulating damage, the true cells are compared to the artificially damaged cells to determine whether they are similar enough to be inferred as damage themselves. The means of this comparison is principal component (PC) analysis where the variables to be considered are specified using this parameter. The variables available include traditional metrics for single cell quality control including mitochondrial percentage and library size, as well as newer metrics such as ribosomal and MALAT1 percentages. The complete set of variables available are,
+
+-   features
+-   counts
+-   mitochondrial proportion (mt.prop)
+-   ribosomal proportion (rb.prop)
+-   MALAT1 proportion (malat1.prop)
+
+Additionally, options providing data transformations that reduce the skew of the data,
+
+-   log(features)
+-   log(counts)
+-   mt.logit
+-   malat1.arcsin
+
+The default for this parameter is c("log.features", "log.counts", "mt.prop", "rb.prop").
 
 <br>
 
-Plots like that shown above can be generated as follows where,
+-   **`filter_threshold`**
 
--   `count_matrix` requires your data in sparse matrix form
+A value between 0 and 1 to determine the level of damage, or proportion of RNA loss, above which cells will be excluded. By default, `DamageDetective` offers the threshold of `0.5`. Values greater than `0.5` reflect more permissive filtering while those closer to `0` reflect more stringent filtering. We recommend the default but suggest that if adjustments are made, they are informed by inspecting the output `detect_damage` plots, `generate_plot = TRUE`.
 
--   `ribosome_penalty` is a numeric between 0 and 1 specifying the ribosomal penalty
+-   **`ribosome_penalty`**
 
--   `damage_proportion` is a number between 0 and 1 specifying the amount of artificial cells to create relative to the input data (*setting this to a lower value makes the computation faster*)
+Damage simulation for `DamageDetectvie` is carried out by the probabilistic loss of cytoplasmic RNA according to transcript abundance, i.e., the chance of a transcript from a gene escaping and being lost from a cell is related to how many of those transcripts were present in the cell. However, it was observed that a subset of cytoplasmic RNA, ribosomal RNA, exhibits losses that are less frequent than what is estimated by abundance alone. The parameter `ribosome_penalty` accounts for this discrepancy.
 
--   `target_damage` is a vector specifying the lower and upper levels of damage between which the artificial cells are generated. Shifting this to higher values shifts the damaged cell profiles to more intense levels that can be seen by a shift in colour, more red, as well as a shift in position, higher up on the y axis.
+`ribosome_penalty` is a value between 0 and 1 that is multiplied by the probability scores of ribosomal RNA loss, reducing the scores and making it less likely for the ribosomal transcripts to be sampled for loss.
 
--   `plot_ribosomal_penalty` allows the plot to focus on the ribosomal proportion rather than give a general overview of the QC distributions.
+The impact of changing `ribosome_penalty` can be explored using the plots generated from `simulate_counts` below. The idea here is to see how well the artificial cells generated with a selected penalty describe the true cells. In other words, how well the coloured dots superimpose the grey dots. You will see that as you increase the penalty, i.e. go from values closer to 1 to values closer to 0$^*$, the coloured dots shift from an extreme position on the left-hand side of the plot to a more central position. At what point along this range true cells exist is dataset-dependent but generally lies closer to 0. Where,
 
--   `seed` ensures the output can be reproduced.
+-   `count_matrix` is the data in a sparse matrix format as prepared above,
+-   `ribosome_penalty` is a numeric between 0 and 1, and
+-   `damage_proportion` is a number between 0 and 1 specifying the amount of artificial cells to create relative to the input data (*setting this to a lower value makes the computation faster*).
+
+<br>
 
 ```{r view_penalty}
 #| fig.alt: >
 #|   Scatter plot showing the distribution of quality control 
 #|   metrics in altered and unaltered counts. 
-penalty_plot <- DamageDetective::simulate_counts(
+no_penalty <- DamageDetective::simulate_counts(
   count_matrix = alignment_counts,
-  ribosome_penalty = 0.01,  
-  damage_proportion = 0.05,  
-  target_damage = c(0.5, 1), 
+  ribosome_penalty = 1,  
+  damage_proportion = 0.1,  
+  target_damage = c(0.8, 1), 
   plot_ribosomal_penalty = TRUE,
   seed = 7
 )
+
+medium_penalty <- DamageDetective::simulate_counts(
+  count_matrix = alignment_counts,
+  ribosome_penalty = 0.5,  
+  damage_proportion = 0.1,  
+  target_damage = c(0.8, 1), 
+  plot_ribosomal_penalty = TRUE,
+  seed = 7
+)
+
+high_penalty <- DamageDetective::simulate_counts(
+  count_matrix = alignment_counts,
+  ribosome_penalty = 0.01,  
+  damage_proportion = 0.1,  
+  target_damage = c(0.8, 1), 
+  plot_ribosomal_penalty = TRUE,
+  seed = 7
+)
+
+
 ```
 
+> $^*$ ribosome_penalty is a multiplicative reduction factor meaning a value of 1 is the same as introducing no penalty while values increasingly closer to zero introduce increasingly greater reductions.
 
-<br>
+### Computing the ideal `ribosome_penalty`
 
-### Computing the Ideal `ribosome_penalty`
+From the above plots you can see how selecting an unideal `ribosome_penalty` can generate damaged profiles that do not describe the data well and, as a result, generate estimations of damage that do not describe the data well.
 
-From the above plots you can see how selecting an unideal \`ribosome_penalty\` can generate damaged profiles that do not describe the data well and, as a result, generate estimations of damage that do not describe the data well.
-
-Selecting a \`ribosome_penalty\` that simulates RNA loss in a way that is relevant to the input data can be done as shown above, through trial and error, or in an automated fashion using the \`select_penalty\` function,
-
--   `penalty_range` setting a specific range of `ribosome_penalty` estimates
-
--   `max_penalty_trials` set a maximum number of attempts allowed
-
--   `penalty_step` setting the difference between each estimate
-
--   `return_output` returns a table showing the mean distances for each estimate giving a better idea of how the estimates differ.
-
-It also inherits parameters of the `simulate_counts` function above including `damage_proportion`.
+Selecting a `ribosome_penalty` that simulates RNA loss in a way that is relevant to the input data can be done through trial and error, similar to the plotting exercise above, or in an automated fashion using the `select_penalty` function,
 
 ```{r select_penalty}
 selected_penalty <- DamageDetective::select_penalty(
   count_matrix = alignment_counts,
-  max_penalty_trials = 3, # shortened for vignette, default is 10
+  max_penalty_trials = 3, 
   seed = 7, 
   verbose = TRUE
 )
 selected_penalty
 ```
 
-The output above reveals that the `select_penalty` function runs through trial and error. This involves generating artificial cells using different `ribosome_penalty` estimates and evaluating the similarity of the resulting artificial cells to true cells.
+As seen above, the `select_penalty` function generates artificial cells using different `ribosome_penalty` estimates and evaluates the similarity of the resulting artificial cells to true cells.
 
-Here, 'similarity' refers to the shortest distance from each artificial cell to a true cell in principal component (PC) space. The mean shortest distances are taken for each level of damage simulated. The penalty that generates the smallest mean shortest distance across damage levels is selected as the ideal `ribosome_penalty`. In other words, a penalty that generates artificial cells that are the most similar to true cells over a wide range of damage levels is ideal.
+Here, 'similarity' refers to the shortest distance from each artificial cell to a true cell in PC space. The mean shortest distances are taken for each level of damage simulated. The penalty that generates the smallest mean distance across damage levels is selected as the ideal `ribosome_penalty`. In other words, a penalty that generates artificial cells that are the most similar to true cells over a wide range of damage levels is ideal.
 
 Though not strictly necessary, the `select_penalty` function can be adjusted to give a user more control over the testing process. This includes,
 
 -   `penalty_range` setting a specific range of `ribosome_penalty` estimates
-
 -   `max_penalty_trials` set a maximum number of attempts allowed
-
 -   `penalty_step` setting the difference between each estimate
-
 -   `return_output` returns a table showing the mean distances for each estimate giving a better idea of how the estimates differ.
 
-It also inherits parameters of the `simulate_counts` function above including `damage_proportion`.
+`select_penalty` inherits additional parameters from the `simulate_counts` function that control other aspects of the damage simulation.
 
 <br>
 
-### Undefined Computational Parameters
+## Aesthetic parameters
 
-The remainder of the computational parameters involve selections that cannot be determined directly from the dataset and are up to user discretion. To support this, it may be helpful for a user to understand how the `detect_damage` function works.
+The remaining parameters control how the user receives the final output.
 
-Ultimately, `detect_damage` outputs a score from 0 to 1 indicating the estimated damage level in each cell. This is found by comparing the cells to simulated cells where the extent of damage is known.
+-   **`filter_counts`** If `TRUE`, the user will receive only the filtered count matrix as output, where filtering is done according to damaged cell classifications decided by the `filter_threshold`.
 
-Damage is simulated by the loss of cytoplasmic RNA, a consequence that follows from a loss in plasma membrane integrity-a defining principle of damage used in many cell viability assays. `DamageDetective` assumes that the proportion of RNA lost is directly related to the extent of cellular damage.
+Alternatively, if `filter_counts` is set to `FALSE`, a data frame will be given as output containing the damage scores for each barcode. This is provided for the user if they wish to interact with the `DamageDetective` results directly. From here, a user can filter their data manually, as is done by `filter_counts=TRUE` automatically.
 
-In a complementary workflow to that of `select_penalty`, `detect_damage` estimates the damage level of each true cell by measuring its similarity to artificially damaged cells. Using the PC embeddings, a set of cells with the highest similarity to each true cell, the nearest neighbours (NN), is collected. The proportions of nearest neighbours that originate from damage level are found. The damage level of the artificial set to which the true cell shows the highest proportion of nearest neighbours is selected as the cell's estimated damage level. This is scaled to score the cells in each set in a way that reflects the relative differences in proportion.
+-   **`palette`** This parameters allows the adjustment of the color palette used for the `DamageDetective` damage scores in plots. This is made up of three colours that define the cells with minimal to no estimated damage up to extreme damage.
 
-Now, looking at the parameters:
+```{r palette}
 
--   **`filter_threshold`**
-
-A value between 0 and 1 to determine the level of damage, or proportion of RNA loss, above which cells will be excluded. By default, `DamageDetective` offers the threshold of `0.7`. Values greater than `0.7` reflect more permissive filtering while those closer to `0` reflect more stringent filtering. We recommend the default for all cases but suggest that if adjustments are made, they are informed by inspecting the output `detect_damage` plots, `generate_plot = TRUE`.
-
--   **`damage_levels`**
-
-This describes the number of distinct sets of artificial cells simulated, each with a defined level of damage. This parameter requires a balance between generating enough damage sets to give informative estimates of damage i.e. not 0 to 1, and not putting the computation under strain by creating redundant sets.
-
-Of the default options, we find 5 sets strikes an ideal balance. Going above 5 becomes computationally challenging but could be done for small datasets. Going below 5, while not ideal, may be necessary for large datasets (over 10 000 cells).
-
-While shifting from the default options is not recommended, it is possible should a user feel it necessary through specification in a list,
-
-```{r eval = FALSE}
-damage_levels <- list(
-  pANN_50 = c(0.1, 0.5),
-  pANN_100 = c(0.5, 1)
+penalty_plot <- DamageDetective::simulate_counts(
+  count_matrix = alignment_counts,
+  ribosome_penalty = 0.1,  
+  damage_proportion = 0.5,  
+  target_damage = c(0.4, 1),
+  plot_ribosomal_penalty = TRUE,
+  palette = c("grey", "#BCEEFB", "#325EF7"),
+  seed = 7
 )
+
 ```
 
--   **`kN`**
-
-This describes the size of the set of nearest neighbours that is found for each true cell. This value defaults to a fifth of the size of the input dataset. This parameter is not as essential as others since changes made here introduce change to all artificial cells in a relative way.
-
-It should be noted that increasing the size of the set too greatly increases the computational requirements of the function and have not been found to dircetly improve output. For this reason, anything greater than a third of the size of the input data is discouraged.
-
 <br>
 
-## Aesthetic Parameters
+# Damaged cell detection
 
--   **`filter_counts`**: Determines the output format (filtered matrix or dataframe).
--   **`palette`**: Sets the color palette for damaged cells in plots.
-
-<br>
-
-# Damaged Cell Detection
-
-Once the data is in sparse matrix form and an appropriate `ribosome_penalty` is selected, the `detect_damage` function can be run.
+Once the data is in sparse matrix form and an appropriate `ribosome_penalty` is selected, the `detect_damage` function can be run. Below, we have selected the default 'filter_counts=FALSE\` option to view the output directly.
 
 ```{r run_detection}
 #| fig.alt: >
@@ -288,10 +357,21 @@ detection_output <- DamageDetective::detect_damage(
 )
 
 # View output
-head(detection_output$output[, -1])
-table(detection_output$output$DamageDetective_filter)
+head(detection_output$output)
 
 ```
+
+From here, the matrix can be filtered according to a threshold damage value before continuing with the remainder of pre-processing steps required for a single cell analysis.
+
+```{r filter_output}
+undamaged_cells <- subset(detection_output$output, DamageDetective < 0.5)
+filtered_matrix <- alignment_counts[, undamaged_cells$Cells]
+dim(alignment_counts)
+dim(filtered_matrix)
+
+```
+
+<br>
 
 # Session Information
 

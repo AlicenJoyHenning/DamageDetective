@@ -12,8 +12,8 @@ Rcpp::Rostream<false>& Rcpp::Rcerr = Rcpp::Rcpp_cerr_get();
 #endif
 
 // perturb_cells_cpp
-IntegerMatrix perturb_cells_cpp(IntegerMatrix count_matrix, IntegerVector damaged_cell_selections, NumericVector damage_levels, IntegerVector non_mito_idx, CharacterVector gene_names, std::string ribo_pattern, double ribosome_penalty, int seed);
-RcppExport SEXP _DamageDetective_perturb_cells_cpp(SEXP count_matrixSEXP, SEXP damaged_cell_selectionsSEXP, SEXP damage_levelsSEXP, SEXP non_mito_idxSEXP, SEXP gene_namesSEXP, SEXP ribo_patternSEXP, SEXP ribosome_penaltySEXP, SEXP seedSEXP) {
+IntegerMatrix perturb_cells_cpp(IntegerMatrix count_matrix, IntegerVector damaged_cell_selections, NumericVector damage_levels, IntegerVector non_mito_idx, IntegerVector ribo_idx, double ribosome_penalty, int seed);
+RcppExport SEXP _DamageDetective_perturb_cells_cpp(SEXP count_matrixSEXP, SEXP damaged_cell_selectionsSEXP, SEXP damage_levelsSEXP, SEXP non_mito_idxSEXP, SEXP ribo_idxSEXP, SEXP ribosome_penaltySEXP, SEXP seedSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -21,17 +21,16 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< IntegerVector >::type damaged_cell_selections(damaged_cell_selectionsSEXP);
     Rcpp::traits::input_parameter< NumericVector >::type damage_levels(damage_levelsSEXP);
     Rcpp::traits::input_parameter< IntegerVector >::type non_mito_idx(non_mito_idxSEXP);
-    Rcpp::traits::input_parameter< CharacterVector >::type gene_names(gene_namesSEXP);
-    Rcpp::traits::input_parameter< std::string >::type ribo_pattern(ribo_patternSEXP);
+    Rcpp::traits::input_parameter< IntegerVector >::type ribo_idx(ribo_idxSEXP);
     Rcpp::traits::input_parameter< double >::type ribosome_penalty(ribosome_penaltySEXP);
     Rcpp::traits::input_parameter< int >::type seed(seedSEXP);
-    rcpp_result_gen = Rcpp::wrap(perturb_cells_cpp(count_matrix, damaged_cell_selections, damage_levels, non_mito_idx, gene_names, ribo_pattern, ribosome_penalty, seed));
+    rcpp_result_gen = Rcpp::wrap(perturb_cells_cpp(count_matrix, damaged_cell_selections, damage_levels, non_mito_idx, ribo_idx, ribosome_penalty, seed));
     return rcpp_result_gen;
 END_RCPP
 }
 
 static const R_CallMethodDef CallEntries[] = {
-    {"_DamageDetective_perturb_cells_cpp", (DL_FUNC) &_DamageDetective_perturb_cells_cpp, 8},
+    {"_DamageDetective_perturb_cells_cpp", (DL_FUNC) &_DamageDetective_perturb_cells_cpp, 7},
     {NULL, NULL, 0}
 };
 

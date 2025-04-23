@@ -2,6 +2,7 @@
 #include <Rcpp.h>
 #include <random>
 #include <unordered_set>
+#include <unordered_map>
 
 using namespace Rcpp;
 
@@ -11,12 +12,12 @@ IntegerMatrix perturb_cells_cpp(
     IntegerVector damaged_cell_selections,
     NumericVector damage_levels,
     IntegerVector non_mito_idx,
-    CharacterVector gene_names,
-    std::string ribo_pattern,
+    IntegerVector ribo_idx,
     double ribosome_penalty,
     int seed
 ) {
   std::mt19937 rng(seed);
+  std::unordered_set<int> ribo_set(ribo_idx.begin(), ribo_idx.end());
 
   for (int i = 0; i < damaged_cell_selections.size(); ++i) {
     int cell = damaged_cell_selections[i];
@@ -51,8 +52,7 @@ IntegerMatrix perturb_cells_cpp(
 
     // Penalize ribosomal genes
     for (int j = 0; j < gene_indices.size(); ++j) {
-      std::string gene_name = Rcpp::as<std::string>(gene_names[gene_indices[j]]);
-      if (gene_name.find(ribo_pattern) != std::string::npos) {
+      if (ribo_set.find(gene_indices[j]) != ribo_set.end()) {
         probabilities[j] *= ribosome_penalty;
       }
     }

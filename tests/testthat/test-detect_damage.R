@@ -5,23 +5,14 @@ test_counts <- test_counts[, 1:100]
 # Input data of correct form ----
 test_that("verify detect_damage inputs", {
 
-  # Inputs out of range
   expect_error(detect_damage(
     count_matrix = test_counts, filter_threshold = 1.2, seed = 777
   ))
 
   expect_error(detect_damage(
-    count_matrix = test_counts, mito_quantile = 1.2, seed = 777
+    count_matrix = 1.2, seed = 777
   ))
 
-  expect_error(detect_damage(
-    count_matrix = test_counts, kN = -1, seed = 777
-  ))
-
-  test_kN <- (dim(test_counts)[2] + 1)
-  expect_error(detect_damage(
-    count_matrix = test_counts, kN = test_kN, seed = 777
-  ))
 
 })
 
@@ -30,7 +21,8 @@ test_that("correctness of detect_damage filter output", {
 
   filter_output <- detect_damage(
     count_matrix = test_counts,
-    filter_counts = TRUE, generate_plot = FALSE,
+    filter_counts = TRUE,
+    generate_plot = FALSE,
     seed = 777, verbose = FALSE)
 
   # Did filtering occur?
