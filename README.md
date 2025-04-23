@@ -32,7 +32,7 @@ Install `DamageDetective` from CRAN (R \>= 4.4.0),
 install.packages('DamageDetective')
 ```
 
-Or through GitHub,
+Or through GitHub (R \>= 4.4.0),
 
 ```         
 library(devtools)
@@ -163,7 +163,7 @@ Contributions aimed to refine or challenge the assumptions and heuristics for de
 
 ### 💡 Conceptual Refinement
 
--   We base our approach on assumptions about the relationship between cell viability and cytoplasmic RNA loss in single cell RNA sequencing data. If you have insights or alternate views on cell viability, feel free to start a discussion.
+-   We base our approach on assumptions about the relationship between cell viability and cytoplasmic RNA loss apparent in single cell RNA sequencing data. If you have insights or alternate views on cell viability, feel free to start a discussion.
 
 ### 🛠 Technical Enhancement
 
