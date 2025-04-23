@@ -50,20 +50,18 @@ input count matrix, where 'damage' is defined by the loss of cytoplasmic RNA.</p
 <span>  ribosome_penalty <span class="op">=</span> <span class="fl">0.01</span>,</span>
 <span>  organism <span class="op">=</span> <span class="st">"Hsap"</span>,</span>
 <span>  annotated_celltypes <span class="op">=</span> <span class="cn">FALSE</span>,</span>
-<span>  target_damage <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.1</span>, <span class="fl">0.8</span><span class="op">)</span>,</span>
+<span>  target_damage <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.65</span>, <span class="fl">1</span><span class="op">)</span>,</span>
 <span>  damage_distribution <span class="op">=</span> <span class="st">"right_skewed"</span>,</span>
 <span>  distribution_steepness <span class="op">=</span> <span class="st">"moderate"</span>,</span>
 <span>  pca_columns <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"log.features"</span>, <span class="st">"log.counts"</span>, <span class="st">"mt.prop"</span>, <span class="st">"rb.prop"</span><span class="op">)</span>,</span>
 <span>  beta_shape_parameters <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  damage_levels <span class="op">=</span> <span class="fl">5</span>,</span>
 <span>  damage_proportion <span class="op">=</span> <span class="fl">0.15</span>,</span>
 <span>  seed <span class="op">=</span> <span class="fl">7</span>,</span>
-<span>  mito_quantile <span class="op">=</span> <span class="fl">0.75</span>,</span>
 <span>  kN <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  generate_plot <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  display_plot <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  palette <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"grey"</span>, <span class="st">"#7023FD"</span>, <span class="st">"#E60006"</span><span class="op">)</span>,</span>
-<span>  filter_threshold <span class="op">=</span> <span class="fl">0.7</span>,</span>
+<span>  filter_threshold <span class="op">=</span> <span class="fl">0.5</span>,</span>
 <span>  filter_counts <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  verbose <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span><span class="op">)</span></span></code></pre></div>
@@ -142,7 +140,7 @@ apparent skewness.There are three valid options:</p><ul><li><p>"shallow"</p></li
 for principal component analysis.</p>
 <p>There are 8 options:</p><ul><li><p>features</p></li>
 <li><p>log.features</p></li>
-<li><p>total_counts</p></li>
+<li><p>counts</p></li>
 <li><p>log.counts</p></li>
 <li><p>mt.prop</p></li>
 <li><p>rb.prop</p></li>
@@ -160,26 +158,6 @@ offer.</p><ul><li><p>Default is 'NULL'</p></li>
 </ul></dd>
 
 
-<dt id="arg-damage-levels">damage_levels<a class="anchor" aria-label="anchor" href="#arg-damage-levels"></a></dt>
-<dd><p>Numeric specifying the number of distinct sets of
-artificial damaged cells simulated, each with a defined range of loss.
-Default ptions include,</p><ul><li><p>3 : c(0.00001, 0.08), c(0.1, 0.4), c(0.5, 0.9)</p></li>
-<li><p>5 : c(0.00001, 0.08), c(0.1, 0.3), c(0.3, 0.5), c(0.5, 0.7), c(0.7, 0.9)</p></li>
-<li><p>7 : c(0.00001, 0.08), c(0.1, 0.3), c(0.3, 0.4), c(0.4, 0.5), c(0.5, 0.7),
-c(0.7, 0.9), c(0.9, 0.99999).</p></li>
-</ul><p>A user can also provide a list specifying sets with their own ranges of
-loss,</p><ul><li><p>damage_levels = list(
-pANN_50 = c(0.1, 0.5),
-pANN_100 = c(0.5, 1)
-)</p></li>
-</ul><p>By introducing more sets of damage a user can improve the accuracy of
-loss estimations (scaled_pANN) as they are found through scaling the pANN
-within each set according to the lower and upper boundary of the set's
-damage level. However, introducing more sets increases the computational
-time for the function.</p><ul><li><p>Default is 5.</p></li>
-</ul></dd>
-
-
 <dt id="arg-damage-proportion">damage_proportion<a class="anchor" aria-label="anchor" href="#arg-damage-proportion"></a></dt>
 <dd><p>Numeric describing what proportion
 of the input data should be altered to resemble damaged data.</p><ul><li><p>Must range between 0 and 1.</p></li>
@@ -191,14 +169,6 @@ of the input data should be altered to resemble damaged data.</p><ul><li><p>Must
 the function's output. Setting a seed ensures that the random sampling
 and perturbation processes produce the same results when the function
 is run multiple times with the same input data and parameters.</p><ul><li><p>Default is 7.</p></li>
-</ul></dd>
-
-
-<dt id="arg-mito-quantile">mito_quantile<a class="anchor" aria-label="anchor" href="#arg-mito-quantile"></a></dt>
-<dd><p>Numeric between 0 and 1 specifying below what
-level of mitochondrial proportion cells are sampled for simulations.
-This step is done to protect against simulating damaged cell profiles
-from cells that are likely damaged.</p><ul><li><p>Default is 0.75.</p></li>
 </ul></dd>
 
 
@@ -286,18 +256,14 @@ Nearest neighbours. <em>Cell Systems, 8</em>(4), 329-337.e4.
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/utils/data.html" class="external-link">data</a></span><span class="op">(</span><span class="st">"test_counts"</span>, package <span class="op">=</span> <span class="st">"DamageDetective"</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">test_counts</span> <span class="op">&lt;-</span> <span class="va">test_counts</span><span class="op">[</span>, <span class="fl">1</span><span class="op">:</span><span class="fl">100</span><span class="op">]</span></span></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="va">test</span> <span class="op">&lt;-</span> <span class="fu">detect_damage</span><span class="op">(</span></span></span>
 <span class="r-in"><span>  count_matrix <span class="op">=</span> <span class="va">test_counts</span>,</span></span>
-<span class="r-in"><span>  ribosome_penalty <span class="op">=</span> <span class="fl">0.001</span>,</span></span>
-<span class="r-in"><span>  damage_levels <span class="op">=</span> <span class="fl">3</span>,</span></span>
-<span class="r-in"><span>  damage_proportion <span class="op">=</span> <span class="fl">0.1</span>,</span></span>
 <span class="r-in"><span>  generate_plot <span class="op">=</span> <span class="cn">FALSE</span>,</span></span>
 <span class="r-in"><span>  seed <span class="op">=</span> <span class="fl">7</span></span></span>
 <span class="r-in"><span><span class="op">)</span></span></span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Simulating 1e-05 and 0.08 RNA loss...</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Simulating 0.1 and 0.4 RNA loss...</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Simulating 0.5 and 0.9 RNA loss...</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Simulating damage...</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> Computing pANN...</span>
 </code></pre></div>
     </div>

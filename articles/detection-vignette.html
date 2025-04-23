@@ -71,7 +71,7 @@
     
     
 <div class="section level2">
-<h2 id="tutorial-overview">Tutorial Overview<a class="anchor" aria-label="anchor" href="#tutorial-overview"></a>
+<h2 id="tutorial-overview">Tutorial overview<a class="anchor" aria-label="anchor" href="#tutorial-overview"></a>
 </h2>
 <p>The goal of <code>DamageDetective</code> is to simplify the process
 of making informed and reproducible damaged cell filtering decisions.
@@ -90,71 +90,130 @@ your R environment to follow along:</p>
 <code>Seurat</code>, <code>SeuratData</code>, <code>scRNAseq</code>,
 <code>SingleCellExperiment</code>, and <code>patchwork</code>.</li>
 </ul>
+<p><br></p>
 </div>
 <div class="section level2">
-<h2 id="data-preparation">Data Preparation<a class="anchor" aria-label="anchor" href="#data-preparation"></a>
+<h2 id="workflow-overview">Workflow overview<a class="anchor" aria-label="anchor" href="#workflow-overview"></a>
 </h2>
-<p>This tutorial takes place in <code>R</code>, home to three popular
-scRNA-seq data storage types:</p>
-<ol style="list-style-type: decimal">
-<li>The <code>Seurat</code> object</li>
-<li>The <code>SingleCellExperiment</code> (<code>sce</code>) object</li>
-<li>The matrix retrieved directly from alignment output
-(<code>matrix.mtx</code>, <code>barcodes.tsv</code>, and
-<code>features.tsv</code>).</li>
-</ol>
-<p><code>DamageDetective</code> operates with data in a compressed,
-column-oriented sparse matrix (<code>dgCMatrix</code>). This format
-efficiently handles the sparse nature of single-cell data by indexing
-only non-zero elements within each column. Each of the above data
-storage types can act as the starting point for damage detection through
-conversion to a sparse matrix.</p>
-<blockquote>
-<p><strong>Note:</strong> Due to vignette size constraints, this
-tutorial will only demonstrate live using data from the alignment
-output.</p>
-</blockquote>
+<p>Before discussing how <code>DamageDetective</code>’s core function,
+<code>detect_damage</code>, operates, it may be helpful for a user to
+understand how the detection process works.</p>
+<p>The damage detection process is made up of two core components,
+first, creating artificial profiles of damage using the cells, and
+second, comparing the cells to the artificial profiles to estimate the
+extent of damage. Ultimately, <code>detect_damage</code> outputs a score
+from 0 to 1 indicating the estimated damage level of each true cell that
+can be used to filter cells.</p>
 <div class="section level3">
-<h3 id="conversion-to-sparse-matrix">Conversion to Sparse Matrix<a class="anchor" aria-label="anchor" href="#conversion-to-sparse-matrix"></a>
+<h3 id="damage-simulation">Damage simulation<a class="anchor" aria-label="anchor" href="#damage-simulation"></a>
+</h3>
+<p>Damage is simulated by the loss of cytoplasmic RNA, a consequence of
+loss in plasma membrane integrity-a defining principle of damage used in
+many cell viability assays. Here, RNA that is not in the cytoplasm, such
+as that enclosed by the mitochondria or inside nuclear speckles, is more
+protected from loss. When looking at the total RNA of cells, true,
+unbroken cells are more likely to have a high proportion of cytoplasmic
+RNA compared to damaged, broken where due to escape out the impaired
+plasma membrane, the proportion of protected RNA, mitochondrial and
+nuclear RNA, appear elevated.</p>
+<p><code>DamageDetective</code> assumes that the proportion of RNA lost
+is directly related to the extent of cellular damage. This allows for
+artificial damaged cell profiles to be created by imitating the loss of
+cytoplasmic RNA. The artificial cells will lose a proportion of
+cytoplasmic RNA equivalent to a target damage level, given as a number
+from 0 to 1.</p>
+<p>This loss is achieved through probabilistic sampling of transcripts
+from the counts of the cell. Operating at the level of individual cells,
+a score is assigned to genes according to the abundance of transcripts
+present for that gene in that cell. This is expanded to transcript level
+representations such that transcripts from the same gene have an equal
+probability of being lost. Transcripts are then sampled without
+replacement according to the probability scores until the target
+transcript loss is met.</p>
+<blockquote>
+<p>E.g. Assume a cell has 2500 transcripts and a target of damage level
+of 0.8. The cell is made up of 2380 cytoplasmic transcripts, and 120
+transcripts from protected origins such as the mitochondria and nuclear
+speckles.</p>
+<p>To imitate the intended damage, the cell must lose 80 % of its
+cytoplasmic RNA, 1904 transcripts. Probability scores are assigned to
+each cytoplasmic gene according to their abundance in the cell.
+Transcripts are then sampled from this probability without replacement
+until 1904 transcripts have been sampled.</p>
+<p>Initial mitochondrial proportion: 120 / 2500 = 0.048</p>
+<p>Mitochondrial proportion in damaged cell: 120 / 716 = 0.168</p>
+</blockquote>
+</div>
+<div class="section level3">
+<h3 id="damage-estimation">Damage estimation<a class="anchor" aria-label="anchor" href="#damage-estimation"></a>
+</h3>
+<p><code>detect_damage</code> estimates the damage level of each true
+cell by measuring its similarity to artificially damaged cells.</p>
+<p>Using the PC embeddings, a set of cells with the highest similarity
+to each true cell, the nearest neighbours (NN), is collected. The
+proportions of nearest neighbours that originate from damage level are
+found. The damage level of the artificial set to which the true cell
+shows the highest proportion of nearest neighbours is selected as the
+cell’s estimated damage level. This is scaled to score the cells in each
+set in a way that reflects the relative differences in proportion.</p>
+<p><br><br></p>
+</div>
+</div>
+<div class="section level2">
+<h2 id="data-preparation">Data preparation<a class="anchor" aria-label="anchor" href="#data-preparation"></a>
+</h2>
+<p><code>DamageDetective</code> operates with single cell data in the
+form of a compressed, column-oriented sparse matrix
+(<code>dgCMatrix</code>) in <code>R</code>. This format efficiently
+handles the sparse nature of single cell data by indexing only non-zero
+elements within each column, i.e., only the rows containing actual
+expression values. We will begin by showing how three common single cell
+data storage types can be converted to this form to act as the starting
+point for damage detection.</p>
+<p>These include,</p>
+<ol style="list-style-type: decimal">
+<li>Alignment output files</li>
+<li>
+<code>Seurat</code> object</li>
+<li>
+<code>SingleCellExperiment</code> (<code>sce</code>) object</li>
+</ol>
+<div class="section level3">
+<h3 id="convert-data-to-sparse-matrix-format">Convert data to sparse matrix format<a class="anchor" aria-label="anchor" href="#convert-data-to-sparse-matrix-format"></a>
 </h3>
 <div class="section level4">
-<h4 id="using-a-seurat-object">Using a <code>Seurat</code> Object<a class="anchor" aria-label="anchor" href="#using-a-seurat-object"></a>
+<h4 id="alignment-output">1. Alignment output<a class="anchor" aria-label="anchor" href="#alignment-output"></a>
 </h4>
-<p>The count matrix can be extracted from the assay slot of a Seurat
-object. By default, this matrix is already in compressed column-oriented
-sparse form and can be used as input for DamageDetective.</p>
-<p>We will use the SeuratData package to retrieve a publicly available
-Seurat object to demonstrate. This object stores the data from
-peripheral blood mononuclear cells (PBMCs) sequenced using the 10X
-Genomics platform.</p>
-<div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># Retrieve the dataset of interest</span></span>
-<span><span class="fu">SeuratData</span><span class="fu">::</span><span class="fu">InstallData</span><span class="op">(</span><span class="st">"pbmc3k"</span><span class="op">)</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/utils/data.html" class="external-link">data</a></span><span class="op">(</span><span class="st">"pbmc3k"</span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># Extract the count matrix</span></span>
-<span><span class="va">pbmc3k_counts</span> <span class="op">&lt;-</span> <span class="va">pbmc3k</span><span class="op">[[</span><span class="st">"RNA"</span><span class="op">]</span><span class="op">]</span><span class="op">$</span><span class="va">counts</span></span></code></pre></div>
-</div>
-<div class="section level4">
-<h4 id="using-alignment-output">Using Alignment Output<a class="anchor" aria-label="anchor" href="#using-alignment-output"></a>
-</h4>
-<p>Alignment output comes in the form of three files containing the row
-names (genes), column names (cell identifiers), and input values (gene
-expression values) of the count matrix. These can be compiled using
-ReadMtx, a function offered by Seurat which simplifies the count matrix
-compilation into one function. This involves decompressing zipped files,
-mapping feature names to HGNC gene symbols, and converting the matrix to
-sparse format. ReadMtx output can be used directly for
-DamageDetective.</p>
+<p>Alignment output comes in the form of three files,</p>
+<ul>
+<li>
+<code>features.tsv</code>, containing the gene names<br>
+</li>
+<li>
+<code>barcodes.tsv</code>, containing the cell identifiers<br>
+</li>
+<li>
+<code>matrix.mtx</code>, containing the input values (gene
+expression values).</li>
+</ul>
+<p>These can be compiled using <code>ReadMtx</code> offered by
+<code>Seurat</code> which simplifies the count matrix compilation
+process into one function. This includes the processes of decompressing
+zipped files, mapping feature names to HGNC gene symbols, and converting
+the matrix to sparse format. The <code>ReadMtx()</code> output can be
+used directly as input for <code>DamageDetective</code>.</p>
 <p>We will use publicly available alignment data from the 10X Genomics
 website for demonstration, specifically the ‘1k PBMCs from a healthy
-donor (v3)’ data available here following the link named “Feature / cell
-matrix (filtered)”.</p>
-<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
+donor (v3)’ dataset, which can be downloaded <a href="https://www.10xgenomics.com/datasets/1-k-pbm-cs-from-a-healthy-donor-v-3-chemistry-3-standard-3-0-0" class="external-link">here</a>
+following the link named “Feature / cell matrix (filtered)”. This should
+begin the download of a 9.6 MB directory containing
+‘filtered_feature_bc_matrix’ sub-directory housing the alignment
+files.</p>
+<div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Set the file paths relative to location on your device</span></span>
-<span><span class="va">matrix_file</span> <span class="op">&lt;-</span> <span class="st">"~/Projects/demonstrations/matrix.mtx.gz"</span>     </span>
-<span><span class="va">barcodes_file</span> <span class="op">&lt;-</span> <span class="st">"~/Projects/demonstrations/barcodes.tsv.gz"</span> </span>
-<span><span class="va">features_file</span> <span class="op">&lt;-</span> <span class="st">"~/Projects/demonstrations/features.tsv.gz"</span> </span>
+<span><span class="va">matrix_file</span> <span class="op">&lt;-</span> <span class="st">"~/Projects/filtered_feature_bc_matrix/matrix.mtx.gz"</span>     </span>
+<span><span class="va">barcodes_file</span> <span class="op">&lt;-</span> <span class="st">"~/Projects/filtered_feature_bc_matrix/barcodes.tsv.gz"</span> </span>
+<span><span class="va">features_file</span> <span class="op">&lt;-</span> <span class="st">"~/Projects/filtered_feature_bc_matrix/features.tsv.gz"</span> </span>
 <span></span>
 <span><span class="co"># Construct the sparse matrix</span></span>
 <span><span class="va">alignment_counts</span> <span class="op">&lt;-</span> <span class="fu">Seurat</span><span class="fu">::</span><span class="fu"><a href="https://satijalab.org/seurat/reference/ReadMtx.html" class="external-link">ReadMtx</a></span><span class="op">(</span></span>
@@ -162,19 +221,62 @@ matrix (filtered)”.</p>
 <span>  cells <span class="op">=</span> <span class="va">barcodes_file</span>,</span>
 <span>  features <span class="op">=</span> <span class="va">features_file</span></span>
 <span><span class="op">)</span></span></code></pre></div>
+<blockquote>
+<p>Note: Please adjust the location, <code>~/Projects</code>, according
+to where the files are saved on your device.</p>
+</blockquote>
 </div>
 <div class="section level4">
-<h4 id="using-an-sce-object">Using an <code>sce</code> Object<a class="anchor" aria-label="anchor" href="#using-an-sce-object"></a>
+<h4 id="seurat-object">2. <code>Seurat</code> object<a class="anchor" aria-label="anchor" href="#seurat-object"></a>
 </h4>
-<p>The count matrix can be extracted from the assay slot of a Seurat
-object. By default, this matrix is already in compressed column-oriented
-sparse form and can be used as input for DamageDetective.</p>
-<p>We will use the SeuratData package to retrieve a publicly available
-Seurat object to demonstrate. This object stores the data from
-peripheral blood mononuclear cells (PBMCs) sequenced using the 10X
-Genomics platform.</p>
+<p><code>Seurat</code> is one of the most popular packages for single
+cell analysis in <code>R</code>. Along with an extensive suite of
+functions, it offers its own S4 class of data storage for housing the
+count matrix, aptly named the <code>Seurat</code> object. By default,
+the count matrix is already in compressed column-oriented sparse form in
+the <code>Seurat</code> object and can be used as input for
+<code>DamageDetective</code> after it is extracted from the assay
+slot.</p>
+<p>You can use the <code>SeuratData</code> package to retrieve a
+publicly available <code>Seurat</code> object to test this. This object
+stores the data from peripheral blood mononuclear cells (PBMCs)
+sequenced using the 10X Genomics platform.</p>
+<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu">devtools</span><span class="fu">::</span><span class="fu"><a href="https://remotes.r-lib.org/reference/install_github.html" class="external-link">install_github</a></span><span class="op">(</span><span class="st">'satijalab/seurat-data'</span><span class="op">)</span></span>
+<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va">SeuratData</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># Retrieve the dataset of interest</span></span>
+<span><span class="fu">SeuratData</span><span class="fu">::</span><span class="fu">InstallData</span><span class="op">(</span><span class="st">"pbmc3k"</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/utils/data.html" class="external-link">data</a></span><span class="op">(</span><span class="st">"pbmc3k"</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># Extract the count matrix</span></span>
+<span><span class="va">pbmc3k_counts</span> <span class="op">&lt;-</span> <span class="va">pbmc3k</span><span class="op">[[</span><span class="st">"RNA"</span><span class="op">]</span><span class="op">]</span><span class="op">$</span><span class="va">counts</span></span></code></pre></div>
+</div>
+<div class="section level4">
+<h4 id="sce-object">3. <code>sce</code> object<a class="anchor" aria-label="anchor" href="#sce-object"></a>
+</h4>
+<p><code>Bioconductor</code> offers its own suite of packages for single
+cell analysis in R with their own single cell data storage type known as
+the <code>SingleCellExperiment</code> (<code>sce</code>) object. Here,
+the count matrix is stored as a delayed matrix. This format enables
+memory-efficient operations by <em>delaying</em> computations until
+explicitly requested, rather than storing all values in memory upfront.
+However, <code>DamageDetective</code> computations require repeated
+access to the matrix and delays at each request greatly accumulate to
+slow down this process. We therefore convert the delayed matrix to a
+sparse matrix via a dense matrix intermediate.</p>
+<p>You can use the <code>scRNAseq</code> package to retrieve a publicly
+available <code>sce</code> object to test this. This object stores PBMC
+data of multiple samples from a study investigating influenza and yellow
+fever vaccine responsiveness. We will focus on the “234_d0” sample
+coming from an individual with a high vaccine responsiveness.</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># Retrieve multisample dataset</span></span>
+<code class="sourceCode R"><span><span class="kw">if</span> <span class="op">(</span><span class="op">!</span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">require</a></span><span class="op">(</span><span class="st"><a href="https://bioconductor.github.io/BiocManager/" class="external-link">"BiocManager"</a></span>, quietly <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">)</span></span>
+<span>    <span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html" class="external-link">install.packages</a></span><span class="op">(</span><span class="st">"BiocManager"</span><span class="op">)</span></span>
+<span><span class="fu">BiocManager</span><span class="fu">::</span><span class="fu">install</span><span class="op">(</span><span class="st">"scRNAseq"</span><span class="op">)</span></span>
+<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va">scRNAseq</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># Retrieve multisample dataset</span></span>
 <span><span class="va">pbmc_sce</span> <span class="op">&lt;-</span> <span class="fu">scRNAseq</span><span class="fu">::</span><span class="fu">fetchDataset</span><span class="op">(</span><span class="st">"kotliarov-pbmc-2020"</span>, <span class="st">"2024-04-18"</span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># Extract sample of interest</span></span>
@@ -187,133 +289,246 @@ Genomics platform.</p>
 <span><span class="va">sample_counts</span>  <span class="op">&lt;-</span> <span class="va">pbmc_counts</span><span class="op">[</span>, <span class="va">sample_sce</span><span class="op">]</span></span>
 <span><span class="va">sample_counts</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">as.matrix</a></span><span class="op">(</span><span class="va">sample_counts</span><span class="op">)</span></span>
 <span><span class="va">sample_counts</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/methods/as.html" class="external-link">as</a></span><span class="op">(</span><span class="va">sample_counts</span>, <span class="st">"dgCMatrix"</span><span class="op">)</span></span></code></pre></div>
+<blockquote>
+<p>Note: Like many single cell analysis packages, DamageDetective can
+only operate with one single cell dataset at a time. Hence why we work
+with only the “234_d0” sample above.</p>
+</blockquote>
 </div>
 </div>
 </div>
 <div class="section level2">
-<h2 id="parameter-selection">Parameter Selection<a class="anchor" aria-label="anchor" href="#parameter-selection"></a>
+<h2 id="parameter-selection">Parameter selection<a class="anchor" aria-label="anchor" href="#parameter-selection"></a>
 </h2>
-<p>The <code>detect_damage</code> function requires only the count
-matrix to run but accepts additional parameters. These parameters can be
-divided into two categories:</p>
-<ol style="list-style-type: decimal">
-<li>
-<strong>Computational Parameters</strong>: Alter the computation and
-result in different outputs.</li>
-<li>
-<strong>Aesthetic Parameters</strong>: Adjust how the user receives
-the output but do not change the computation.</li>
-</ol>
+<p>Once the count matrix is in the correct format, the
+<code>detect_damage</code> function of <code>DamageDetective</code> can
+be run immediately. However, <code>detect_damage</code> accepts
+additional parameters. These parameters can be divided into two
+categories, those that alter the computation and result in a different
+output, <strong>computational parameters</strong>, and those that adjust
+how the user receives the output but cannot change the output itself,
+<strong>aesthetic parameters</strong>. Both will be explored
+briefly.</p>
 <div class="section level3">
-<h3 id="computational-parameters">Computational Parameters<a class="anchor" aria-label="anchor" href="#computational-parameters"></a>
+<h3 id="computational-parameters">Computational parameters<a class="anchor" aria-label="anchor" href="#computational-parameters"></a>
 </h3>
 <div class="section level4">
-<h4 id="dataset-defined-parameters">Dataset-Defined Parameters<a class="anchor" aria-label="anchor" href="#dataset-defined-parameters"></a>
+<h4 id="dataset-defined-computational-parameters">Dataset-defined computational parameters<a class="anchor" aria-label="anchor" href="#dataset-defined-computational-parameters"></a>
 </h4>
+<p>Of the parameters that affect the output of the detection algorithm,
+some have only one possible input based on the data being investigated.
+In many cases, these require no alteration from the defaults. These
+include,</p>
 <ul>
-<li>
-<strong><code>organism</code></strong>: Specifies the organism of
-the data (default: <code>"Hsap"</code>).</li>
-<li>
-<strong><code>annotated_celltypes</code></strong>: Indicates whether
-cell types are known (default: <code>FALSE</code>).</li>
-<li>
-<strong><code>ribosome_penalty</code></strong>: Accounts for the
-unexpectedly low probability of ribosomal RNA loss in real single-cell
-data.</li>
+<li><strong><code>organism</code></strong></li>
 </ul>
-<div class="section level5">
-<h5 id="exploring-the-ribosome_penalty-parameter">Exploring the <code>ribosome_penalty</code> parameter<a class="anchor" aria-label="anchor" href="#exploring-the-ribosome_penalty-parameter"></a>
-</h5>
-<p>This parameter accounts for the unexpectedly low probability of
-ribosomal RNA loss observed in real single cell data that must be
-accounted for during the simulation of artificial cells.</p>
+<p>What organism was the data derived from? Default of human,
+(<code>"Hsap"</code>) and accepts <code>"Mmus"</code>. To use a
+non-default organism, specify the strings that can be used to identify
+the mitochondrial genes (<code>mito_pattern</code>), ribosomal genes
+(<code>ribo_pattern</code>), and, if known, a set of genes that are
+securely located within the nucleus, such as within nuclear speckles.
+The format for this non-default input is demonstrated below using the
+information known for humans,</p>
+<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">organism</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>mito_pattern <span class="op">=</span> <span class="st">"^MT-"</span>,</span>
+<span>                 ribo_pattern <span class="op">=</span> <span class="st">"^(RPS|RPL)"</span>,</span>
+<span>                 nuclear <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"NEAT1"</span>,<span class="st">"XIST"</span>, <span class="st">"MALAT1"</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
+<ul>
+<li><strong><code>annotated_celltypes</code></strong></li>
+</ul>
+<p>Are cell types known? This has a default of <code>FALSE</code>,
+seeing that the typical single cell pre-processing workflow works to
+uncover cell type annotations, where this knowledge is not known from
+the start. This parameter allows a user to specify whether the input
+data is already annotated and ensures the simulations are distributed
+evenly across the cell types present. While this is already accounted
+for naturally by the clustering processes of the damage detection
+algorithm, this provides additional security.</p>
+</div>
+<div class="section level4">
+<h4 id="user-defined-computational-parameters">User-defined computational parameters<a class="anchor" aria-label="anchor" href="#user-defined-computational-parameters"></a>
+</h4>
+<p>The remaining computational parameters have a wider range of input
+possibilities. While the user is free to adjust these as they see fit,
+we recommend using the defaults provided as they resulted in consistent
+and intended performance during package development. This being said,
+the <code>ribosome_penalty</code> parameter must be adjusted according
+to the input data and is explored in more detail below.</p>
+<ul>
+<li><strong><code>seed</code></strong></li>
+</ul>
+<p>Ensures the output of the damage detection algorithm can be
+reproduced exactly. This can be any number and has very little impact
+over the output, i.e., a seed of 7 and a seed of 7777 will provide very
+similar outputs. If present, differences between seed outputs are due to
+the stochastic nature of the damage simulation where cytoplasmic RNA
+transcripts are lost based on random sampling guided by
+abundance-derived probability scores. These probability scores are fixed
+and, unless enacted in cells with low sparsity and abundant expression
+values-atypical characteristics for single cell data, will not be
+greatly impacted by variation in seed values.</p>
+<ul>
+<li><strong><code>kN</code></strong></li>
+</ul>
+<p>The number of nearest neighbours that are considered in the analysis
+during damage detection. This analysis entails finding the proportion of
+the <code>kN</code> nearest neighbours of each true cell that are of
+artificial, or ‘damaged’, origin. Since only cells that are present can
+be considered as possible neighbours, <code>kN</code> is limited to the
+size of the dataset. As the value of <code>kN</code> increases, it
+expands the analysis to cells that are less closely related, increasing
+the probability that artificial cells will be present by random chance.
+By default, <code>DamageDetective</code> selects <code>kN</code> that is
+a third the size of the input dataset.</p>
+<ul>
+<li><strong><code>target_damage</code></strong></li>
+</ul>
+<p>This parameter is related to the damage simulation step that relies
+on the proportion of cytoplasmic RNA loss to estimate of the extent of
+cellular damage. In other words, cells where more cytoplasmic RNA is
+lost are assumed to be more likely to be damaged than cells where very
+little to no cytoplasmic RNA is lost. The simulation process works
+within specific target ranges of cytoplasmic RNA loss that are
+controlled by this parameter. For damage detection, we are interested in
+simulating cells that are damaged and require removal, meaning we set
+the target damage extent to a higher range. The default provided is
+between 65 and 100 % of cytoplasmic RNA loss.</p>
+<ul>
+<li><strong><code>pca_columns</code></strong></li>
+</ul>
+<p>After simulating damage, the true cells are compared to the
+artificially damaged cells to determine whether they are similar enough
+to be inferred as damage themselves. The means of this comparison is
+principal component (PC) analysis where the variables to be considered
+are specified using this parameter. The variables available include
+traditional metrics for single cell quality control including
+mitochondrial percentage and library size, as well as newer metrics such
+as ribosomal and MALAT1 percentages. The complete set of variables
+available are,</p>
+<ul>
+<li>features</li>
+<li>counts</li>
+<li>mitochondrial proportion (mt.prop)</li>
+<li>ribosomal proportion (rb.prop)</li>
+<li>MALAT1 proportion (malat1.prop)</li>
+</ul>
+<p>Additionally, options providing data transformations that reduce the
+skew of the data,</p>
+<ul>
+<li>log(features)</li>
+<li>log(counts)</li>
+<li>mt.logit</li>
+<li>malat1.arcsin</li>
+</ul>
+<p>The default for this parameter is c(“log.features”, “log.counts”,
+“mt.prop”, “rb.prop”).</p>
+<p><br></p>
+<ul>
+<li><strong><code>filter_threshold</code></strong></li>
+</ul>
+<p>A value between 0 and 1 to determine the level of damage, or
+proportion of RNA loss, above which cells will be excluded. By default,
+<code>DamageDetective</code> offers the threshold of <code>0.5</code>.
+Values greater than <code>0.5</code> reflect more permissive filtering
+while those closer to <code>0</code> reflect more stringent filtering.
+We recommend the default but suggest that if adjustments are made, they
+are informed by inspecting the output <code>detect_damage</code> plots,
+<code>generate_plot = TRUE</code>.</p>
+<ul>
+<li><strong><code>ribosome_penalty</code></strong></li>
+</ul>
+<p>Damage simulation for <code>DamageDetectvie</code> is carried out by
+the probabilistic loss of cytoplasmic RNA according to transcript
+abundance, i.e., the chance of a transcript from a gene escaping and
+being lost from a cell is related to how many of those transcripts were
+present in the cell. However, it was observed that a subset of
+cytoplasmic RNA, ribosomal RNA, exhibits losses that are less frequent
+than what is estimated by abundance alone. The parameter
+<code>ribosome_penalty</code> accounts for this discrepancy.</p>
+<p><code>ribosome_penalty</code> is a value between 0 and 1 that is
+multiplied by the probability scores of ribosomal RNA loss, reducing the
+scores and making it less likely for the ribosomal transcripts to be
+sampled for loss.</p>
 <p>The impact of changing <code>ribosome_penalty</code> can be explored
-in the plots below. The idea is to see whether the artificial cells
-describe the true cells, in other words, whether the coloured dots
-superimpose the grey dots.</p>
-<ul>
-<li>Alignment output</li>
-</ul>
-<p>You will see that as you increase the penalty, i.e. go from values
-closer to 1 to values closer to
+using the plots generated from <code>simulate_counts</code> below. The
+idea here is to see how well the artificial cells generated with a
+selected penalty describe the true cells. In other words, how well the
+coloured dots superimpose the grey dots. You will see that as you
+increase the penalty, i.e. go from values closer to 1 to values closer
+to
 0<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msup><mi></mi><mo>*</mo></msup><annotation encoding="application/x-tex">^*</annotation></semantics></math>,
 the coloured dots shift from an extreme position on the left-hand side
 of the plot to a more central position. At what point along this range
-true cells exist is dataset-dependent but generally lies closer to
-0.</p>
+true cells exist is dataset-dependent but generally lies closer to 0.
+Where,</p>
+<ul>
+<li>
+<code>count_matrix</code> is the data in a sparse matrix format as
+prepared above,</li>
+<li>
+<code>ribosome_penalty</code> is a numeric between 0 and 1, and</li>
+<li>
+<code>damage_proportion</code> is a number between 0 and 1
+specifying the amount of artificial cells to create relative to the
+input data (<em>setting this to a lower value makes the computation
+faster</em>).</li>
+</ul>
+<p><br></p>
+<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">no_penalty</span> <span class="op">&lt;-</span> <span class="fu">DamageDetective</span><span class="fu">::</span><span class="fu"><a href="../reference/simulate_counts.html">simulate_counts</a></span><span class="op">(</span></span>
+<span>  count_matrix <span class="op">=</span> <span class="va">alignment_counts</span>,</span>
+<span>  ribosome_penalty <span class="op">=</span> <span class="fl">1</span>,  </span>
+<span>  damage_proportion <span class="op">=</span> <span class="fl">0.1</span>,  </span>
+<span>  target_damage <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.8</span>, <span class="fl">1</span><span class="op">)</span>, </span>
+<span>  plot_ribosomal_penalty <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  seed <span class="op">=</span> <span class="fl">7</span></span>
+<span><span class="op">)</span></span></code></pre></div>
+<p><img src="detection-vignette_files/figure-html/view_penalty-1.png" alt="Scatter plot showing the distribution of quality control  metrics in altered and unaltered counts. " width="700"></p>
+<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span></span>
+<span><span class="va">medium_penalty</span> <span class="op">&lt;-</span> <span class="fu">DamageDetective</span><span class="fu">::</span><span class="fu"><a href="../reference/simulate_counts.html">simulate_counts</a></span><span class="op">(</span></span>
+<span>  count_matrix <span class="op">=</span> <span class="va">alignment_counts</span>,</span>
+<span>  ribosome_penalty <span class="op">=</span> <span class="fl">0.5</span>,  </span>
+<span>  damage_proportion <span class="op">=</span> <span class="fl">0.1</span>,  </span>
+<span>  target_damage <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.8</span>, <span class="fl">1</span><span class="op">)</span>, </span>
+<span>  plot_ribosomal_penalty <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  seed <span class="op">=</span> <span class="fl">7</span></span>
+<span><span class="op">)</span></span></code></pre></div>
+<p><img src="detection-vignette_files/figure-html/view_penalty-2.png" alt="Scatter plot showing the distribution of quality control  metrics in altered and unaltered counts. " width="700"></p>
+<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span></span>
+<span><span class="va">high_penalty</span> <span class="op">&lt;-</span> <span class="fu">DamageDetective</span><span class="fu">::</span><span class="fu"><a href="../reference/simulate_counts.html">simulate_counts</a></span><span class="op">(</span></span>
+<span>  count_matrix <span class="op">=</span> <span class="va">alignment_counts</span>,</span>
+<span>  ribosome_penalty <span class="op">=</span> <span class="fl">0.01</span>,  </span>
+<span>  damage_proportion <span class="op">=</span> <span class="fl">0.1</span>,  </span>
+<span>  target_damage <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.8</span>, <span class="fl">1</span><span class="op">)</span>, </span>
+<span>  plot_ribosomal_penalty <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  seed <span class="op">=</span> <span class="fl">7</span></span>
+<span><span class="op">)</span></span></code></pre></div>
+<p><img src="detection-vignette_files/figure-html/view_penalty-3.png" alt="Scatter plot showing the distribution of quality control  metrics in altered and unaltered counts. " width="700"></p>
 <blockquote>
 <p><math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msup><mi></mi><mo>*</mo></msup><annotation encoding="application/x-tex">^*</annotation></semantics></math>
 ribosome_penalty is a multiplicative reduction factor meaning a value of
 1 is the same as introducing no penalty while values increasingly closer
 to zero introduce increasingly greater reductions.</p>
 </blockquote>
-<div class="float">
-<img src="../reference/figures/ribosome_penalty_alignment.svg" alt="A scatter plot showing the effect of ribosomal penalty on alignment output."><div class="figcaption">A scatter plot showing the effect of ribosomal
-penalty on alignment output.</div>
-</div>
-<p><br></p>
-<p>Plots like that shown above can be generated as follows where,</p>
-<ul>
-<li><p><code>count_matrix</code> requires your data in sparse matrix
-form</p></li>
-<li><p><code>ribosome_penalty</code> is a numeric between 0 and 1
-specifying the ribosomal penalty</p></li>
-<li><p><code>damage_proportion</code> is a number between 0 and 1
-specifying the amount of artificial cells to create relative to the
-input data (<em>setting this to a lower value makes the computation
-faster</em>)</p></li>
-<li><p><code>target_damage</code> is a vector specifying the lower and
-upper levels of damage between which the artificial cells are generated.
-Shifting this to higher values shifts the damaged cell profiles to more
-intense levels that can be seen by a shift in colour, more red, as well
-as a shift in position, higher up on the y axis.</p></li>
-<li><p><code>plot_ribosomal_penalty</code> allows the plot to focus on
-the ribosomal proportion rather than give a general overview of the QC
-distributions.</p></li>
-<li><p><code>seed</code> ensures the output can be reproduced.</p></li>
-</ul>
-<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">penalty_plot</span> <span class="op">&lt;-</span> <span class="fu">DamageDetective</span><span class="fu">::</span><span class="fu"><a href="../reference/simulate_counts.html">simulate_counts</a></span><span class="op">(</span></span>
-<span>  count_matrix <span class="op">=</span> <span class="va">alignment_counts</span>,</span>
-<span>  ribosome_penalty <span class="op">=</span> <span class="fl">0.01</span>,  </span>
-<span>  damage_proportion <span class="op">=</span> <span class="fl">0.05</span>,  </span>
-<span>  target_damage <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.5</span>, <span class="fl">1</span><span class="op">)</span>, </span>
-<span>  plot_ribosomal_penalty <span class="op">=</span> <span class="cn">TRUE</span>,</span>
-<span>  seed <span class="op">=</span> <span class="fl">7</span></span>
-<span><span class="op">)</span></span></code></pre></div>
-<p><img src="detection-vignette_files/figure-html/view_penalty-1.png" alt="Scatter plot showing the distribution of quality control  metrics in altered and unaltered counts. " width="700"></p>
-<p><br></p>
-</div>
 </div>
 <div class="section level4">
-<h4 id="computing-the-ideal-ribosome_penalty">Computing the Ideal <code>ribosome_penalty</code><a class="anchor" aria-label="anchor" href="#computing-the-ideal-ribosome_penalty"></a>
+<h4 id="computing-the-ideal-ribosome_penalty">Computing the ideal <code>ribosome_penalty</code><a class="anchor" aria-label="anchor" href="#computing-the-ideal-ribosome_penalty"></a>
 </h4>
 <p>From the above plots you can see how selecting an unideal
-`ribosome_penalty` can generate damaged profiles that do not describe
-the data well and, as a result, generate estimations of damage that do
-not describe the data well.</p>
-<p>Selecting a `ribosome_penalty` that simulates RNA loss in a way that
-is relevant to the input data can be done as shown above, through trial
-and error, or in an automated fashion using the `select_penalty`
-function,</p>
-<ul>
-<li><p><code>penalty_range</code> setting a specific range of
-<code>ribosome_penalty</code> estimates</p></li>
-<li><p><code>max_penalty_trials</code> set a maximum number of attempts
-allowed</p></li>
-<li><p><code>penalty_step</code> setting the difference between each
-estimate</p></li>
-<li><p><code>return_output</code> returns a table showing the mean
-distances for each estimate giving a better idea of how the estimates
-differ.</p></li>
-</ul>
-<p>It also inherits parameters of the <code>simulate_counts</code>
-function above including <code>damage_proportion</code>.</p>
-<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
+<code>ribosome_penalty</code> can generate damaged profiles that do not
+describe the data well and, as a result, generate estimations of damage
+that do not describe the data well.</p>
+<p>Selecting a <code>ribosome_penalty</code> that simulates RNA loss in
+a way that is relevant to the input data can be done through trial and
+error, similar to the plotting exercise above, or in an automated
+fashion using the <code>select_penalty</code> function,</p>
+<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">selected_penalty</span> <span class="op">&lt;-</span> <span class="fu">DamageDetective</span><span class="fu">::</span><span class="fu"><a href="../reference/select_penalty.html">select_penalty</a></span><span class="op">(</span></span>
 <span>  count_matrix <span class="op">=</span> <span class="va">alignment_counts</span>,</span>
-<span>  max_penalty_trials <span class="op">=</span> <span class="fl">3</span>, <span class="co"># shortened for vignette, default is 10</span></span>
+<span>  max_penalty_trials <span class="op">=</span> <span class="fl">3</span>, </span>
 <span>  seed <span class="op">=</span> <span class="fl">7</span>, </span>
 <span>  verbose <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span><span class="op">)</span></span>
@@ -322,151 +537,123 @@ function above including <code>damage_proportion</code>.</p>
 <span><span class="co">#&gt; Testing penalty of 0.01001...</span></span>
 <span><span class="co">#&gt; Maximum penalty trials reached (3). Stopping.</span></span>
 <span><span class="va">selected_penalty</span></span>
-<span><span class="co">#&gt; [1] 1e-05</span></span></code></pre></div>
-<p>The output above reveals that the <code>select_penalty</code>
-function runs through trial and error. This involves generating
+<span><span class="co">#&gt; [1] 0.01001</span></span></code></pre></div>
+<p>As seen above, the <code>select_penalty</code> function generates
 artificial cells using different <code>ribosome_penalty</code> estimates
-and evaluating the similarity of the resulting artificial cells to true
+and evaluates the similarity of the resulting artificial cells to true
 cells.</p>
 <p>Here, ‘similarity’ refers to the shortest distance from each
-artificial cell to a true cell in principal component (PC) space. The
-mean shortest distances are taken for each level of damage simulated.
-The penalty that generates the smallest mean shortest distance across
-damage levels is selected as the ideal <code>ribosome_penalty</code>. In
-other words, a penalty that generates artificial cells that are the most
-similar to true cells over a wide range of damage levels is ideal.</p>
+artificial cell to a true cell in PC space. The mean shortest distances
+are taken for each level of damage simulated. The penalty that generates
+the smallest mean distance across damage levels is selected as the ideal
+<code>ribosome_penalty</code>. In other words, a penalty that generates
+artificial cells that are the most similar to true cells over a wide
+range of damage levels is ideal.</p>
 <p>Though not strictly necessary, the <code>select_penalty</code>
 function can be adjusted to give a user more control over the testing
 process. This includes,</p>
 <ul>
-<li><p><code>penalty_range</code> setting a specific range of
-<code>ribosome_penalty</code> estimates</p></li>
-<li><p><code>max_penalty_trials</code> set a maximum number of attempts
-allowed</p></li>
-<li><p><code>penalty_step</code> setting the difference between each
-estimate</p></li>
-<li><p><code>return_output</code> returns a table showing the mean
+<li>
+<code>penalty_range</code> setting a specific range of
+<code>ribosome_penalty</code> estimates</li>
+<li>
+<code>max_penalty_trials</code> set a maximum number of attempts
+allowed</li>
+<li>
+<code>penalty_step</code> setting the difference between each
+estimate</li>
+<li>
+<code>return_output</code> returns a table showing the mean
 distances for each estimate giving a better idea of how the estimates
-differ.</p></li>
+differ.</li>
 </ul>
-<p>It also inherits parameters of the <code>simulate_counts</code>
-function above including <code>damage_proportion</code>.</p>
-<p><br></p>
-</div>
-<div class="section level4">
-<h4 id="undefined-computational-parameters">Undefined Computational Parameters<a class="anchor" aria-label="anchor" href="#undefined-computational-parameters"></a>
-</h4>
-<p>The remainder of the computational parameters involve selections that
-cannot be determined directly from the dataset and are up to user
-discretion. To support this, it may be helpful for a user to understand
-how the <code>detect_damage</code> function works.</p>
-<p>Ultimately, <code>detect_damage</code> outputs a score from 0 to 1
-indicating the estimated damage level in each cell. This is found by
-comparing the cells to simulated cells where the extent of damage is
-known.</p>
-<p>Damage is simulated by the loss of cytoplasmic RNA, a consequence
-that follows from a loss in plasma membrane integrity-a defining
-principle of damage used in many cell viability assays.
-<code>DamageDetective</code> assumes that the proportion of RNA lost is
-directly related to the extent of cellular damage.</p>
-<p>In a complementary workflow to that of <code>select_penalty</code>,
-<code>detect_damage</code> estimates the damage level of each true cell
-by measuring its similarity to artificially damaged cells. Using the PC
-embeddings, a set of cells with the highest similarity to each true
-cell, the nearest neighbours (NN), is collected. The proportions of
-nearest neighbours that originate from damage level are found. The
-damage level of the artificial set to which the true cell shows the
-highest proportion of nearest neighbours is selected as the cell’s
-estimated damage level. This is scaled to score the cells in each set in
-a way that reflects the relative differences in proportion.</p>
-<p>Now, looking at the parameters:</p>
-<ul>
-<li><strong><code>filter_threshold</code></strong></li>
-</ul>
-<p>A value between 0 and 1 to determine the level of damage, or
-proportion of RNA loss, above which cells will be excluded. By default,
-<code>DamageDetective</code> offers the threshold of <code>0.7</code>.
-Values greater than <code>0.7</code> reflect more permissive filtering
-while those closer to <code>0</code> reflect more stringent filtering.
-We recommend the default for all cases but suggest that if adjustments
-are made, they are informed by inspecting the output
-<code>detect_damage</code> plots, <code>generate_plot = TRUE</code>.</p>
-<ul>
-<li><strong><code>damage_levels</code></strong></li>
-</ul>
-<p>This describes the number of distinct sets of artificial cells
-simulated, each with a defined level of damage. This parameter requires
-a balance between generating enough damage sets to give informative
-estimates of damage i.e. not 0 to 1, and not putting the computation
-under strain by creating redundant sets.</p>
-<p>Of the default options, we find 5 sets strikes an ideal balance.
-Going above 5 becomes computationally challenging but could be done for
-small datasets. Going below 5, while not ideal, may be necessary for
-large datasets (over 10 000 cells).</p>
-<p>While shifting from the default options is not recommended, it is
-possible should a user feel it necessary through specification in a
-list,</p>
-<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">damage_levels</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
-<span>  pANN_50 <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.1</span>, <span class="fl">0.5</span><span class="op">)</span>,</span>
-<span>  pANN_100 <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.5</span>, <span class="fl">1</span><span class="op">)</span></span>
-<span><span class="op">)</span></span></code></pre></div>
-<ul>
-<li><strong><code>kN</code></strong></li>
-</ul>
-<p>This describes the size of the set of nearest neighbours that is
-found for each true cell. This value defaults to a fifth of the size of
-the input dataset. This parameter is not as essential as others since
-changes made here introduce change to all artificial cells in a relative
-way.</p>
-<p>It should be noted that increasing the size of the set too greatly
-increases the computational requirements of the function and have not
-been found to dircetly improve output. For this reason, anything greater
-than a third of the size of the input data is discouraged.</p>
+<p><code>select_penalty</code> inherits additional parameters from the
+<code>simulate_counts</code> function that control other aspects of the
+damage simulation.</p>
 <p><br></p>
 </div>
 </div>
 <div class="section level3">
-<h3 id="aesthetic-parameters">Aesthetic Parameters<a class="anchor" aria-label="anchor" href="#aesthetic-parameters"></a>
+<h3 id="aesthetic-parameters">Aesthetic parameters<a class="anchor" aria-label="anchor" href="#aesthetic-parameters"></a>
 </h3>
+<p>The remaining parameters control how the user receives the final
+output.</p>
 <ul>
 <li>
-<strong><code>filter_counts</code></strong>: Determines the output
-format (filtered matrix or dataframe).</li>
-<li>
-<strong><code>palette</code></strong>: Sets the color palette for
-damaged cells in plots.</li>
+<strong><code>filter_counts</code></strong> If <code>TRUE</code>,
+the user will receive only the filtered count matrix as output, where
+filtering is done according to damaged cell classifications decided by
+the <code>filter_threshold</code>.</li>
 </ul>
+<p>Alternatively, if <code>filter_counts</code> is set to
+<code>FALSE</code>, a data frame will be given as output containing the
+damage scores for each barcode. This is provided for the user if they
+wish to interact with the <code>DamageDetective</code> results directly.
+From here, a user can filter their data manually, as is done by
+<code>filter_counts=TRUE</code> automatically.</p>
+<ul>
+<li>
+<strong><code>palette</code></strong> This parameters allows the
+adjustment of the color palette used for the
+<code>DamageDetective</code> damage scores in plots. This is made up of
+three colours that define the cells with minimal to no estimated damage
+up to extreme damage.</li>
+</ul>
+<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span></span>
+<span><span class="va">penalty_plot</span> <span class="op">&lt;-</span> <span class="fu">DamageDetective</span><span class="fu">::</span><span class="fu"><a href="../reference/simulate_counts.html">simulate_counts</a></span><span class="op">(</span></span>
+<span>  count_matrix <span class="op">=</span> <span class="va">alignment_counts</span>,</span>
+<span>  ribosome_penalty <span class="op">=</span> <span class="fl">0.1</span>,  </span>
+<span>  damage_proportion <span class="op">=</span> <span class="fl">0.5</span>,  </span>
+<span>  target_damage <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.4</span>, <span class="fl">1</span><span class="op">)</span>,</span>
+<span>  plot_ribosomal_penalty <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  palette <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"grey"</span>, <span class="st">"#BCEEFB"</span>, <span class="st">"#325EF7"</span><span class="op">)</span>,</span>
+<span>  seed <span class="op">=</span> <span class="fl">7</span></span>
+<span><span class="op">)</span></span></code></pre></div>
+<p><img src="detection-vignette_files/figure-html/palette-1.png" width="700"></p>
 <p><br></p>
 </div>
 </div>
 <div class="section level2">
-<h2 id="damaged-cell-detection">Damaged Cell Detection<a class="anchor" aria-label="anchor" href="#damaged-cell-detection"></a>
+<h2 id="damaged-cell-detection">Damaged cell detection<a class="anchor" aria-label="anchor" href="#damaged-cell-detection"></a>
 </h2>
 <p>Once the data is in sparse matrix form and an appropriate
 <code>ribosome_penalty</code> is selected, the
-<code>detect_damage</code> function can be run.</p>
-<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
+<code>detect_damage</code> function can be run. Below, we have selected
+the default ’filter_counts=FALSE` option to view the output
+directly.</p>
+<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Run detection</span></span>
 <span><span class="va">detection_output</span> <span class="op">&lt;-</span> <span class="fu">DamageDetective</span><span class="fu">::</span><span class="fu"><a href="../reference/detect_damage.html">detect_damage</a></span><span class="op">(</span></span>
 <span>  count_matrix <span class="op">=</span> <span class="va">alignment_counts</span>, </span>
 <span>  ribosome_penalty <span class="op">=</span> <span class="va">selected_penalty</span>,</span>
 <span>  seed <span class="op">=</span> <span class="fl">7</span></span>
 <span><span class="op">)</span></span>
-<span><span class="co">#&gt; Simulating 1e-05 and 0.08 RNA loss...</span></span>
-<span><span class="co">#&gt; Simulating 0.1 and 0.3 RNA loss...</span></span>
-<span><span class="co">#&gt; Simulating 0.3 and 0.5 RNA loss...</span></span>
-<span><span class="co">#&gt; Simulating 0.5 and 0.7 RNA loss...</span></span>
-<span><span class="co">#&gt; Simulating 0.7 and 0.9 RNA loss...</span></span>
+<span><span class="co">#&gt; Simulating damage...</span></span>
 <span><span class="co">#&gt; Computing pANN...</span></span></code></pre></div>
 <p><img src="detection-vignette_files/figure-html/run_detection-1.png" alt="Scatter plot showing the outcome damage detection where cells of the input data are coloured according to the estimated level of damage with grey being no damage,  purple being light damage, and red being heavy damage." width="700"></p>
-<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span></span>
 <span><span class="co"># View output</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">detection_output</span><span class="op">$</span><span class="va">output</span><span class="op">[</span>, <span class="op">-</span><span class="fl">1</span><span class="op">]</span><span class="op">)</span></span>
-<span><span class="co">#&gt; [1] 0.075556111 0.028895278 0.066668333 0.435294118 0.013341667 0.002231944</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/table.html" class="external-link">table</a></span><span class="op">(</span><span class="va">detection_output</span><span class="op">$</span><span class="va">output</span><span class="op">$</span><span class="va">DamageDetective_filter</span><span class="op">)</span></span>
-<span><span class="co">#&gt; &lt; table of extent 0 &gt;</span></span></code></pre></div>
+<span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">detection_output</span><span class="op">$</span><span class="va">output</span><span class="op">)</span></span>
+<span><span class="co">#&gt;                                 Cells DamageDetective</span></span>
+<span><span class="co">#&gt; AAACCCAAGGAGAGTA-1 AAACCCAAGGAGAGTA-1     0.000000000</span></span>
+<span><span class="co">#&gt; AAACGCTTCAGCCCAG-1 AAACGCTTCAGCCCAG-1     0.005807623</span></span>
+<span><span class="co">#&gt; AAAGAACAGACGACTG-1 AAAGAACAGACGACTG-1     0.002836628</span></span>
+<span><span class="co">#&gt; AAAGAACCAATGGCAG-1 AAAGAACCAATGGCAG-1     0.045386047</span></span>
+<span><span class="co">#&gt; AAAGAACGTCTGCAAT-1 AAAGAACGTCTGCAAT-1     0.011615245</span></span>
+<span><span class="co">#&gt; AAAGGATAGTAGACAT-1 AAAGGATAGTAGACAT-1     0.005807623</span></span></code></pre></div>
+<p>From here, the matrix can be filtered according to a threshold damage
+value before continuing with the remainder of pre-processing steps
+required for a single cell analysis.</p>
+<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">undamaged_cells</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/subset.html" class="external-link">subset</a></span><span class="op">(</span><span class="va">detection_output</span><span class="op">$</span><span class="va">output</span>, <span class="va">DamageDetective</span> <span class="op">&lt;</span> <span class="fl">0.5</span><span class="op">)</span></span>
+<span><span class="va">filtered_matrix</span> <span class="op">&lt;-</span> <span class="va">alignment_counts</span><span class="op">[</span>, <span class="va">undamaged_cells</span><span class="op">$</span><span class="va">Cells</span><span class="op">]</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/dim.html" class="external-link">dim</a></span><span class="op">(</span><span class="va">alignment_counts</span><span class="op">)</span></span>
+<span><span class="co">#&gt; [1] 33538  1222</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/dim.html" class="external-link">dim</a></span><span class="op">(</span><span class="va">filtered_matrix</span><span class="op">)</span></span>
+<span><span class="co">#&gt; [1] 33538  1170</span></span></code></pre></div>
+<p><br></p>
 </div>
 <div class="section level2">
 <h2 id="session-information">Session Information<a class="anchor" aria-label="anchor" href="#session-information"></a>
@@ -492,9 +679,10 @@ damaged cells in plots.</li>
 <span><span class="co">#&gt; [1] stats     graphics  grDevices utils     datasets  methods   base     </span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; other attached packages:</span></span>
-<span><span class="co">#&gt; [1] patchwork_1.3.0            ggplot2_3.5.2             </span></span>
-<span><span class="co">#&gt; [3] Seurat_5.2.1               SeuratObject_5.0.2        </span></span>
-<span><span class="co">#&gt; [5] sp_2.2-0                   DamageDetective_1.0.0.9000</span></span>
+<span><span class="co">#&gt; [1] future_1.40.0              patchwork_1.3.0           </span></span>
+<span><span class="co">#&gt; [3] ggplot2_3.5.2              stringr_1.5.1             </span></span>
+<span><span class="co">#&gt; [5] Seurat_5.2.1               SeuratObject_5.0.2        </span></span>
+<span><span class="co">#&gt; [7] sp_2.2-0                   DamageDetective_1.0.0.9000</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; loaded via a namespace (and not attached):</span></span>
 <span><span class="co">#&gt;   [1] RColorBrewer_1.1-3     jsonlite_2.0.0         magrittr_2.0.3        </span></span>
@@ -508,37 +696,36 @@ damaged cells in plots.</li>
 <span><span class="co">#&gt;  [25] plotly_4.10.4          zoo_1.8-14             cachem_1.1.0          </span></span>
 <span><span class="co">#&gt;  [28] igraph_2.1.4           mime_0.13              lifecycle_1.0.4       </span></span>
 <span><span class="co">#&gt;  [31] pkgconfig_2.0.3        Matrix_1.7-3           R6_2.6.1              </span></span>
-<span><span class="co">#&gt;  [34] fastmap_1.2.0          fitdistrplus_1.2-2     future_1.40.0         </span></span>
-<span><span class="co">#&gt;  [37] shiny_1.10.0           digest_0.6.37          colorspace_2.1-1      </span></span>
-<span><span class="co">#&gt;  [40] tensor_1.5             RSpectra_0.16-2        irlba_2.3.5.1         </span></span>
-<span><span class="co">#&gt;  [43] textshaping_1.0.0      ggpubr_0.6.0           labeling_0.4.3        </span></span>
-<span><span class="co">#&gt;  [46] progressr_0.15.1       spatstat.sparse_3.1-0  httr_1.4.7            </span></span>
-<span><span class="co">#&gt;  [49] polyclip_1.10-7        abind_1.4-8            compiler_4.5.0        </span></span>
-<span><span class="co">#&gt;  [52] withr_3.0.2            backports_1.5.0        carData_3.0-5         </span></span>
-<span><span class="co">#&gt;  [55] fastDummies_1.7.5      ggsignif_0.6.4         MASS_7.3-65           </span></span>
-<span><span class="co">#&gt;  [58] tools_4.5.0            lmtest_0.9-40          httpuv_1.6.15         </span></span>
-<span><span class="co">#&gt;  [61] future.apply_1.11.3    goftest_1.2-3          glue_1.8.0            </span></span>
-<span><span class="co">#&gt;  [64] nlme_3.1-168           promises_1.3.2         grid_4.5.0            </span></span>
-<span><span class="co">#&gt;  [67] Rtsne_0.17             cluster_2.1.8.1        reshape2_1.4.4        </span></span>
-<span><span class="co">#&gt;  [70] generics_0.1.3         gtable_0.3.6           spatstat.data_3.1-6   </span></span>
-<span><span class="co">#&gt;  [73] tidyr_1.3.1            data.table_1.17.0      car_3.1-3             </span></span>
-<span><span class="co">#&gt;  [76] spatstat.geom_3.3-6    RcppAnnoy_0.0.22       ggrepel_0.9.6         </span></span>
-<span><span class="co">#&gt;  [79] RANN_2.6.2             pillar_1.10.2          stringr_1.5.1         </span></span>
-<span><span class="co">#&gt;  [82] spam_2.11-1            RcppHNSW_0.6.0         later_1.4.2           </span></span>
-<span><span class="co">#&gt;  [85] splines_4.5.0          dplyr_1.1.4            lattice_0.22-6        </span></span>
-<span><span class="co">#&gt;  [88] survival_3.8-3         deldir_2.0-4           tidyselect_1.2.1      </span></span>
-<span><span class="co">#&gt;  [91] miniUI_0.1.1.1         pbapply_1.7-2          knitr_1.50            </span></span>
-<span><span class="co">#&gt;  [94] gridExtra_2.3          scattermore_1.2        xfun_0.52             </span></span>
-<span><span class="co">#&gt;  [97] matrixStats_1.5.0      stringi_1.8.7          lazyeval_0.2.2        </span></span>
-<span><span class="co">#&gt; [100] yaml_2.3.10            evaluate_1.0.3         codetools_0.2-20      </span></span>
-<span><span class="co">#&gt; [103] tibble_3.2.1           cli_3.6.4              uwot_0.2.3            </span></span>
-<span><span class="co">#&gt; [106] xtable_1.8-4           reticulate_1.42.0      systemfonts_1.2.2     </span></span>
-<span><span class="co">#&gt; [109] munsell_0.5.1          jquerylib_0.1.4        Rcpp_1.0.14           </span></span>
-<span><span class="co">#&gt; [112] globals_0.16.3         spatstat.random_3.3-3  png_0.1-8             </span></span>
-<span><span class="co">#&gt; [115] spatstat.univar_3.1-2  parallel_4.5.0         pkgdown_2.1.1         </span></span>
-<span><span class="co">#&gt; [118] dotCall64_1.2          listenv_0.9.1          viridisLite_0.4.2     </span></span>
-<span><span class="co">#&gt; [121] scales_1.3.0           ggridges_0.5.6         purrr_1.0.4           </span></span>
-<span><span class="co">#&gt; [124] rlang_1.1.6            cowplot_1.1.3</span></span></code></pre>
+<span><span class="co">#&gt;  [34] fastmap_1.2.0          fitdistrplus_1.2-2     shiny_1.10.0          </span></span>
+<span><span class="co">#&gt;  [37] digest_0.6.37          colorspace_2.1-1       tensor_1.5            </span></span>
+<span><span class="co">#&gt;  [40] RSpectra_0.16-2        irlba_2.3.5.1          textshaping_1.0.0     </span></span>
+<span><span class="co">#&gt;  [43] ggpubr_0.6.0           labeling_0.4.3         progressr_0.15.1      </span></span>
+<span><span class="co">#&gt;  [46] spatstat.sparse_3.1-0  httr_1.4.7             polyclip_1.10-7       </span></span>
+<span><span class="co">#&gt;  [49] abind_1.4-8            compiler_4.5.0         withr_3.0.2           </span></span>
+<span><span class="co">#&gt;  [52] backports_1.5.0        carData_3.0-5          fastDummies_1.7.5     </span></span>
+<span><span class="co">#&gt;  [55] ggsignif_0.6.4         MASS_7.3-65            tools_4.5.0           </span></span>
+<span><span class="co">#&gt;  [58] lmtest_0.9-40          httpuv_1.6.16          future.apply_1.11.3   </span></span>
+<span><span class="co">#&gt;  [61] goftest_1.2-3          glue_1.8.0             nlme_3.1-168          </span></span>
+<span><span class="co">#&gt;  [64] promises_1.3.2         grid_4.5.0             Rtsne_0.17            </span></span>
+<span><span class="co">#&gt;  [67] cluster_2.1.8.1        reshape2_1.4.4         generics_0.1.3        </span></span>
+<span><span class="co">#&gt;  [70] gtable_0.3.6           spatstat.data_3.1-6    tidyr_1.3.1           </span></span>
+<span><span class="co">#&gt;  [73] data.table_1.17.0      car_3.1-3              spatstat.geom_3.3-6   </span></span>
+<span><span class="co">#&gt;  [76] RcppAnnoy_0.0.22       ggrepel_0.9.6          RANN_2.6.2            </span></span>
+<span><span class="co">#&gt;  [79] pillar_1.10.2          spam_2.11-1            RcppHNSW_0.6.0        </span></span>
+<span><span class="co">#&gt;  [82] later_1.4.2            splines_4.5.0          dplyr_1.1.4           </span></span>
+<span><span class="co">#&gt;  [85] lattice_0.22-6         survival_3.8-3         deldir_2.0-4          </span></span>
+<span><span class="co">#&gt;  [88] tidyselect_1.2.1       miniUI_0.1.2           pbapply_1.7-2         </span></span>
+<span><span class="co">#&gt;  [91] knitr_1.50             gridExtra_2.3          scattermore_1.2       </span></span>
+<span><span class="co">#&gt;  [94] xfun_0.52              matrixStats_1.5.0      stringi_1.8.7         </span></span>
+<span><span class="co">#&gt;  [97] lazyeval_0.2.2         yaml_2.3.10            evaluate_1.0.3        </span></span>
+<span><span class="co">#&gt; [100] codetools_0.2-20       tibble_3.2.1           cli_3.6.4             </span></span>
+<span><span class="co">#&gt; [103] uwot_0.2.3             xtable_1.8-4           reticulate_1.42.0     </span></span>
+<span><span class="co">#&gt; [106] systemfonts_1.2.2      munsell_0.5.1          jquerylib_0.1.4       </span></span>
+<span><span class="co">#&gt; [109] Rcpp_1.0.14            globals_0.17.0         spatstat.random_3.3-3 </span></span>
+<span><span class="co">#&gt; [112] png_0.1-8              spatstat.univar_3.1-2  parallel_4.5.0        </span></span>
+<span><span class="co">#&gt; [115] pkgdown_2.1.1          dotCall64_1.2          listenv_0.9.1         </span></span>
+<span><span class="co">#&gt; [118] viridisLite_0.4.2      scales_1.3.0           ggridges_0.5.6        </span></span>
+<span><span class="co">#&gt; [121] purrr_1.0.4            rlang_1.1.6            cowplot_1.1.3</span></span></code></pre>
 </div>
 <div class="section level2">
 <h2 id="references">References<a class="anchor" aria-label="anchor" href="#references"></a>
