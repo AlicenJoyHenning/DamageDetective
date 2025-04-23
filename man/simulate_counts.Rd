@@ -17,7 +17,7 @@ simulate_counts(
   palette = c("grey", "#7023FD", "#E60006"),
   plot_ribosomal_penalty = FALSE,
   display_plot = TRUE,
-  seed = NULL,
+  seed = 7,
   organism = "Hsap"
 )
 }
@@ -179,7 +179,6 @@ simulated_damage <- simulate_counts(
   damage_proportion = 0.1,
   ribosome_penalty = 0.01,
   target_damage = c(0.5, 0.9),
-  generate_plot = FALSE,
-  seed = 7
+  generate_plot = FALSE
 )
 }

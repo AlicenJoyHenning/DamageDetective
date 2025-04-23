@@ -56,8 +56,11 @@ test_that("select_penalty logic", {
   expect_lte(penalty_output$selected_penalty, 1)
 
   # Correct selection
-  expect_true(min(penalty_output$penalty_results) ==
-              penalty_output$selected_penalty)
+  penalty_df <- penalty_output$penalty_results
+  min_mean_idx <- which.min(penalty_df$Global_mean)
+  expected_penalty <- penalty_df$Penalty[min_mean_idx]
+
+  expect_equal(penalty_output$selected_penalty, expected_penalty)
 
 })
 

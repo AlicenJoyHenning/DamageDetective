@@ -9,20 +9,18 @@ detect_damage(
   ribosome_penalty = 0.01,
   organism = "Hsap",
   annotated_celltypes = FALSE,
-  target_damage = c(0.1, 0.8),
+  target_damage = c(0.65, 1),
   damage_distribution = "right_skewed",
   distribution_steepness = "moderate",
   pca_columns = c("log.features", "log.counts", "mt.prop", "rb.prop"),
   beta_shape_parameters = NULL,
-  damage_levels = 5,
   damage_proportion = 0.15,
   seed = 7,
-  mito_quantile = 0.75,
   kN = NULL,
   generate_plot = TRUE,
   display_plot = TRUE,
   palette = c("grey", "#7023FD", "#E60006"),
-  filter_threshold = 0.7,
+  filter_threshold = 0.5,
   filter_counts = FALSE,
   verbose = TRUE
 )
@@ -102,7 +100,7 @@ There are 8 options:
 \itemize{
 \item features
 \item log.features
-\item total_counts
+\item counts
 \item log.counts
 \item mt.prop
 \item rb.prop
@@ -121,34 +119,6 @@ offer.
 \item Default is 'NULL'
 }}
 
-\item{damage_levels}{Numeric specifying the number of distinct sets of
-artificial damaged cells simulated, each with a defined range of loss.
-Default ptions include,
-\itemize{
-\item 3 : c(0.00001, 0.08), c(0.1, 0.4), c(0.5, 0.9)
-\item 5 : c(0.00001, 0.08), c(0.1, 0.3), c(0.3, 0.5), c(0.5, 0.7), c(0.7, 0.9)
-\item 7 : c(0.00001, 0.08), c(0.1, 0.3), c(0.3, 0.4), c(0.4, 0.5), c(0.5, 0.7),
-c(0.7, 0.9), c(0.9, 0.99999).
-}
-
-A user can also provide a list specifying sets with their own ranges of
-loss,
-\itemize{
-\item damage_levels = list(
-pANN_50 = c(0.1, 0.5),
-pANN_100 = c(0.5, 1)
-)
-}
-
-By introducing more sets of damage a user can improve the accuracy of
-loss estimations (scaled_pANN) as they are found through scaling the pANN
-within each set according to the lower and upper boundary of the set's
-damage level. However, introducing more sets increases the computational
-time for the function.
-\itemize{
-\item Default is 5.
-}}
-
 \item{damage_proportion}{Numeric describing what proportion
 of the input data should be altered to resemble damaged data.
 \itemize{
@@ -161,14 +131,6 @@ and perturbation processes produce the same results when the function
 is run multiple times with the same input data and parameters.
 \itemize{
 \item Default is 7.
-}}
-
-\item{mito_quantile}{Numeric between 0 and 1 specifying below what
-level of mitochondrial proportion cells are sampled for simulations.
-This step is done to protect against simulating damaged cell profiles
-from cells that are likely damaged.
-\itemize{
-\item Default is 0.75.
 }}
 
 \item{kN}{Numeric describing how many nearest neighbours are considered
@@ -253,12 +215,10 @@ This filtering method is inspired by approaches developed for DoubletFinder
 }
 \examples{
 data("test_counts", package = "DamageDetective")
+test_counts <- test_counts[, 1:100]
 
 test <- detect_damage(
   count_matrix = test_counts,
-  ribosome_penalty = 0.001,
-  damage_levels = 3,
-  damage_proportion = 0.1,
   generate_plot = FALSE,
   seed = 7
 )

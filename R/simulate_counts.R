@@ -126,6 +126,7 @@
 #' @import patchwork
 #' @importFrom ggpubr get_legend
 #' @importFrom cowplot ggdraw draw_label plot_grid
+#' @importFrom Matrix colSums
 #' @export
 #' @examples
 #' data("test_counts", package = "DamageDetective")
@@ -135,8 +136,7 @@
 #'   damage_proportion = 0.1,
 #'   ribosome_penalty = 0.01,
 #'   target_damage = c(0.5, 0.9),
-#'   generate_plot = FALSE,
-#'   seed = 7
+#'   generate_plot = FALSE
 #' )
 simulate_counts <- function(
     count_matrix,
@@ -151,7 +151,7 @@ simulate_counts <- function(
     palette = c("grey", "#7023FD", "#E60006"),
     plot_ribosomal_penalty = FALSE,
     display_plot = TRUE,
-    seed = NULL,
+    seed = 7,
     organism = "Hsap"
 ) {
   # Data preparations ----
@@ -198,11 +198,15 @@ simulate_counts <- function(
   # Initial QC metrics ----
   qc_summary <- .generate_qc_summary(count_matrix, damage_label, gene_idx)
 
-
   # Perturb selected cells ----
-  count_matrix <- .perturb_cells(
-    count_matrix, damaged_cell_selections, damage_label,
-    gene_idx, ribosome_penalty, seed
+  count_matrix <- perturb_cells_cpp(
+    count_matrix = as.matrix(count_matrix),
+    damaged_cell_selections = damaged_cell_selections - 1,
+    damage_levels = damage_label$damage_level,
+    non_mito_idx = gene_idx$non_mito_idx - 1,
+    ribo_idx = gene_idx$ribo_idx - 1,
+    ribosome_penalty = ribosome_penalty,
+    seed = seed
   )
 
   # Update QC metrics & plot simulation output ----
@@ -409,54 +413,6 @@ simulate_counts <- function(
   )
 
   return(qc_summary)
-}
-
-
-.perturb_cells <- function(
-    count_matrix, damaged_cell_selections, damage_label,
-    gene_idx, ribosome_penalty, seed
-) {
-  barcode_map <- match(colnames(count_matrix), damage_label$barcode)
-
-  for (i in seq_along(damaged_cell_selections)) {
-    cell <- damaged_cell_selections[i]
-    cell_damage_level <- damage_label$damage_level[barcode_map[cell]]
-    total_count <- sum(count_matrix[gene_idx$non_mito_idx, cell])
-    total_loss <- round(cell_damage_level * total_count)
-
-    transcripts <- rep(
-      gene_idx$non_mito_idx,
-      times = count_matrix[gene_idx$non_mito_idx, cell]
-    )
-
-    gene_totals <- count_matrix[gene_idx$non_mito_idx, cell]
-    probabilities <- gene_totals / total_count
-    probabilities[gene_idx$ribo_idx] <- probabilities[gene_idx$ribo_idx] *
-      ribosome_penalty
-    probabilities <- probabilities / sum(probabilities)
-
-    prob_repeated <- rep(probabilities, times = gene_totals)
-
-    lost_transcripts <- withr::with_seed(seed, {
-      sample(
-        transcripts,
-        size = total_loss,
-        replace = FALSE,
-        prob = prob_repeated
-      )
-    })
-
-    remaining_counts <- table(
-      factor(
-        transcripts[!transcripts %in% lost_transcripts],
-        levels = gene_idx$non_mito_idx
-      )
-    )
-
-    count_matrix[gene_idx$non_mito_idx, cell] <- as.integer(remaining_counts)
-  }
-
-  return(count_matrix)
 }
 
 .update_qc_summary <- function(
