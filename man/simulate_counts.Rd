@@ -6,7 +6,7 @@
 \usage{
 simulate_counts(
   count_matrix,
-  damage_proportion,
+  damage_proportion = 0.15,
   annotated_celltypes = FALSE,
   target_damage = c(0.65, 1),
   damage_distribution = "right_skewed",
