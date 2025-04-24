@@ -8,7 +8,7 @@ simulate_counts(
   count_matrix,
   damage_proportion,
   annotated_celltypes = FALSE,
-  target_damage = c(0.1, 0.8),
+  target_damage = c(0.65, 1),
   damage_distribution = "right_skewed",
   distribution_steepness = "moderate",
   beta_shape_parameters = NULL,

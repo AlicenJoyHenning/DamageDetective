@@ -8,9 +8,9 @@ select_penalty(
   count_matrix,
   organism = "Hsap",
   mito_quantile = 0.75,
-  penalty_range = c(1e-05, 0.5),
-  penalty_step = 0.005,
-  max_penalty_trials = 10,
+  penalty_range = c(0.1, 1),
+  penalty_step = 0.05,
+  max_penalty_trials = 14,
   target_damage = c(0.2, 0.99),
   damage_distribution = "right_skewed",
   distribution_steepness = "steep",
@@ -57,19 +57,19 @@ mitochondrial counts are sampled for simulated.
 \item{penalty_range}{Numerical vector of length 2 specifying the lower
 and upper limit of values tested for the ribosomal penalty.
 \itemize{
-\item Default is c(0.00001, 0.5).
+\item Default is c(0.1, 1).
 }}
 
 \item{penalty_step}{Numeric specifying the value added to each increment
 of penalty tested.
 \itemize{
-\item Default is 0.005.
+\item Default is 0.05.
 }}
 
 \item{max_penalty_trials}{Numeric specifying the maximum number of
 iterations for the ribosomal penalty value.
 \itemize{
-\item Default is 10.
+\item Default is 14.
 }}
 
 \item{target_damage}{Numeric vector specifying the upper and lower range of
