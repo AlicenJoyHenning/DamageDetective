@@ -5,6 +5,7 @@ vignette: >
   %\VignetteIndexEntry{Damage cell quality control}
   %\VignetteEngine{knitr::rmarkdown}
   \usepackage[utf8]{inputenc}
+date: 'Compiled: `r format(Sys.Date(), "%B %d, %Y")`'
 ---
 
 ```{r setup, include = FALSE}
@@ -18,9 +19,11 @@ knitr::opts_chunk$set(
 
 The goal of `DamageDetective` is to simplify the process of making informed and reproducible damaged cell filtering decisions. This tutorial provides an outline of the steps needed to achieve this:
 
-1.  Data preparation
-2.  Parameter selection
-3.  Damaged cell detection
+-   Data preparation
+
+-   Parameter selection
+
+-   Damaged cell detection
 
 Ensure the following packages are installed and made available in your R environment to follow along:
 
@@ -38,31 +41,35 @@ library(patchwork)
 
 # Workflow overview
 
-Before discussing how `DamageDetective`'s core function, `detect_damage`, operates, it may be helpful for a user to understand how the detection process works.
+The `DamageDetective` workflow is made up of two stages, first, creating artificial profiles of damage using the cells of an input data set, and second, comparing the input cells to the artificial profiles. 
 
-The damage detection process is made up of two core components, first, creating artificial profiles of damage using the cells, and second, comparing the cells to the artificial profiles to estimate the extent of damage. Ultimately, `detect_damage` outputs a score from 0 to 1 indicating the estimated damage level of each true cell that can be used to filter cells.
+This approach is inspired by `DoubletFinder`—a high-performing tool for filtering doublets, another prominent scRNA-seq artifact. Here, artificial profiles of doublets are created through the random combination of existing cells. All cells are processed before being compared in a principal component analysis (PCA) from which proximity measures are taken and used to determine the proportion of a true cell's neighbours that are of artificial origin (proportion of artificial nearest neighbours, or pANN). Cells that show the highest pANN, i.e., have the highest proximity to artificial profiles, are ultimately labelled as doublets in accordance to anticipated doublet formation rate. 
 
-## Damage simulation
+In `DamageDetective`, a score is similarly calculated for each cell based on PCA comparisons where scores closer to one indicate a greater proximity to artificially profiles and a higher likelihood of damage. This score is used to filter cells, either automatically using the default threshold or manually according to a user-defined threshold.
 
-Damage is simulated by the loss of cytoplasmic RNA, a consequence of loss in plasma membrane integrity-a defining principle of damage used in many cell viability assays. Here, RNA that is not in the cytoplasm, such as that enclosed by the mitochondria or inside nuclear speckles, is more protected from loss. When looking at the total RNA of cells, true, unbroken cells are more likely to have a high proportion of cytoplasmic RNA compared to damaged, broken where due to escape out the impaired plasma membrane, the proportion of protected RNA, mitochondrial and nuclear RNA, appear elevated.
+*How* these scores are calculated and *what exactly* they describe will be explored briefly before heading into the demonstrations.
 
-`DamageDetective` assumes that the proportion of RNA lost is directly related to the extent of cellular damage. This allows for artificial damaged cell profiles to be created by imitating the loss of cytoplasmic RNA. The artificial cells will lose a proportion of cytoplasmic RNA equivalent to a target damage level, given as a number from 0 to 1.
+### Creating artificial damage
 
-This loss is achieved through probabilistic sampling of transcripts from the counts of the cell. Operating at the level of individual cells, a score is assigned to genes according to the abundance of transcripts present for that gene in that cell. This is expanded to transcript level representations such that transcripts from the same gene have an equal probability of being lost. Transcripts are then sampled without replacement according to the probability scores until the target transcript loss is met.
+The loss of plasma membrane integrity is a characteristic of cellular damage that has long since been exploited to assess cell viability. Compromised membranes allow cellular content, including RNA, to escape, leading to shifts in quality control metrics such as a reduction in library size and complexity.  
 
-> E.g. Assume a cell has 2500 transcripts and a target of damage level of 0.8. The cell is made up of 2380 cytoplasmic transcripts, and 120 transcripts from protected origins such as the mitochondria and nuclear speckles.
->
-> To imitate the intended damage, the cell must lose 80 % of its cytoplasmic RNA, 1904 transcripts. Probability scores are assigned to each cytoplasmic gene according to their abundance in the cell. Transcripts are then sampled from this probability without replacement until 1904 transcripts have been sampled.
->
-> Initial mitochondrial proportion: 120 / 2500 = 0.048
->
-> Mitochondrial proportion in damaged cell: 120 / 716 = 0.168
+An additional and fundamental consequence of membrane integrity loss is a shift in library composition. This occurs because not all RNA within a cell is equally vulnerable to loss. RNA enclosed by additional membranes, such as within mitochondria or nuclear speckles, is more protected than RNA freely present in the cytoplasm. As a result, viable cells have a higher proportion of cytoplasmic RNA, whereas damaged cells—where RNA has escaped—appear to have an elevated proportion of protected RNA. This forms the basis for simulating damage in `DamageDetective`.
 
-## Damage estimation
+Artificial damage profiles are generated by simulating the loss of cytoplasmic RNA to reflect varying levels of cellular damage. Each artificial cell is assigned a target damage level between 0 and 1, drawn from a normal distribution centered between 0.65 and 1. This range is based on the assumption that losing at least 65 % of cytoplasmic RNA represents a substantial level of damage warranting exclusion from downstream analysis. To simulate this, transcripts are sampled from each cell without replacement, according to gene abundance within the cell, until the desired proportion of RNA loss is achieved.
 
-`detect_damage` estimates the damage level of each true cell by measuring its similarity to artificially damaged cells.
+Simulations are grouped by cluster from the input data to generate cell type–specific profiles of damage. The goal is to create a pool of artificially damaged cells that reflects all cell types present in a heterogeneous sample. Depending on the target damage level, these artificial cells retain some of the original gene expression signatures of their cell type while exhibiting features typical of damage—such as reduced complexity, smaller library sizes, and increased mitochondrial RNA—resulting from the simulated loss of cytoplasmic RNA. This provides a realistic basis for comparison and, ultimately, a means of estimating true damage.
 
-Using the PC embeddings, a set of cells with the highest similarity to each true cell, the nearest neighbours (NN), is collected. The proportions of nearest neighbours that originate from damage level are found. The damage level of the artificial set to which the true cell shows the highest proportion of nearest neighbours is selected as the cell's estimated damage level. This is scaled to score the cells in each set in a way that reflects the relative differences in proportion.
+
+### Estimating true damage by comparison to artificial damage
+
+`DamageDetective` estimates the damage level of true cells by measuring their similarity to artificially damaged cells. Like `DoubletFinder`, this measurement is rooted in PCA. However, instead of using full gene expression values, it uses cell quality control (QC) metrics, including library size, complexity, and mitochondrial RNA proportion—a biologically informative and computationally efficient alternative.
+
+Using Euclidean distances between the PCA embeddings of cells, a set of $k$ nearest neighbours is identified for each cell via the HNSW (Hierarchical Navigable Small World) algorithm. This is optimized for high-dimensional data and implemented in R using C++ through the `RcppHNSW` package. 
+
+The proportions of a cell's nearest neighbours that originate from each artificial profile (pANN) are calculated. In other words, if there are five clusters in a dataset, there will be five sets of artificial profiles and five pANN scores for each cell. After scaling according to the size of each artificial profile, the maximum pANN is retrieved for each cell. This score naturally lies between 0 and 1 and indicates the similarity of true cells to damaged profiles.
+
+The proximity score forms the main output of `DamageDetective` and can be thought of as answering the question: on a scale of 0 to 1, how likely is it that this cell has lost a considerable amount of cytoplasmic RNA? Or, equivalently, how likely is it that this cell is damaged and should be filtered?
+
 
 <br> <br>
 
@@ -177,68 +184,40 @@ Once the count matrix is in the correct format, the `detect_damage` function of 
 
 Of the parameters that affect the output of the detection algorithm, some have only one possible input based on the data being investigated. In many cases, these require no alteration from the defaults. These include,
 
--   **`organism`**
+| Parameter             | Default    | Description                                                                                                                                                                                                                         |
+|-----------------------|------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `organism`            | `"Hsap"`   | Specifies the organism the data was derived from. Supports `"Hsap"` (human) and `"Mmus"` (mouse).                                                                                                                                  |
+| `annotated_celltypes` | `FALSE`    | Indicates whether cell types are already annotated. If `TRUE`, ensures simulations are distributed evenly across known cell types.                                                                                                  |
 
-What organism was the data derived from? Default of human, (`"Hsap"`) and accepts `"Mmus"`. To use a non-default organism, specify the strings that can be used to identify the mitochondrial genes (`mito_pattern`), ribosomal genes (`ribo_pattern`), and, if known, a set of genes that are securely located within the nucleus, such as within nuclear speckles. The format for this non-default input is demonstrated below using the information known for humans,
+> To use a non-default organism, specify the strings used to identify mitochondrial and ribosomal genes, and optionally, a set of nuclear-enriched genes.  
+> For example, the format for human data is:
+>
+> ```r
+> organism <- list(mito_pattern = "^MT-",
+>                  ribo_pattern = "^(RPS|RPL)",
+>                  nuclear = c("NEAT1", "XIST", "MALAT1"))
+> ```
 
-``` r
-organism <- list(mito_pattern = "^MT-",
-                 ribo_pattern = "^(RPS|RPL)",
-                 nuclear = c("NEAT1","XIST", "MALAT1"))
-```
-
--   **`annotated_celltypes`**
-
-Are cell types known? This has a default of `FALSE`, seeing that the typical single cell pre-processing workflow works to uncover cell type annotations, where this knowledge is not known from the start. This parameter allows a user to specify whether the input data is already annotated and ensures the simulations are distributed evenly across the cell types present. While this is already accounted for naturally by the clustering processes of the damage detection algorithm, this provides additional security.
 
 ### User-defined computational parameters
 
 The remaining computational parameters have a wider range of input possibilities. While the user is free to adjust these as they see fit, we recommend using the defaults provided as they resulted in consistent and intended performance during package development. This being said, the `ribosome_penalty` parameter must be adjusted according to the input data and is explored in more detail below.
 
--   **`seed`**
+| Parameter           | Default                                              | Description                                                                                                                                                                                                                                                                                                                                 |
+|---------------------|------------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `seed`              | User-defined                                         | Ensures reproducibility of the algorithm. While the seed affects random sampling, its impact is minimal unless using cells with unusually high expression and low sparsity.                                                                                                                          |
+| `kN`                | One third of the dataset size                        | Number of nearest neighbours considered when calculating the proportion of nearby damaged cells. Higher values increase chance of false detection due to unrelated artificial neighbours.                                                                                                            |
+| `target_damage`     | `c(0.65, 1)`                                          | Range of cytoplasmic RNA loss used to simulate damage. Higher values simulate more severely damaged cells, forming the basis of the comparison with true cells.                                                                                                                                      |
+| `pca_columns`       | `c("log.features", "log.counts", "mt.prop", "rb.prop")` | Variables used for principal component analysis during damage detection. Includes traditional and novel quality control metrics and transformations.                                                                                                                                                |
+| `filter_threshold`  | `0.5`                                                 | Score threshold (0 to 1) used to determine which cells are removed. Lower values enforce stricter filtering, while higher values are more permissive.                                                                                                                                                |
+| `ribosome_penalty`  | 0.5                        | Adjusts the likelihood of ribosomal RNA loss during simulation, correcting for observed discrepancies where ribosomal RNA is retained more than expected.                                                                                                                                            |
 
-Ensures the output of the damage detection algorithm can be reproduced exactly. This can be any number and has very little impact over the output, i.e., a seed of 7 and a seed of 7777 will provide very similar outputs. If present, differences between seed outputs are due to the stochastic nature of the damage simulation where cytoplasmic RNA transcripts are lost based on random sampling guided by abundance-derived probability scores. These probability scores are fixed and, unless enacted in cells with low sparsity and abundant expression values-atypical characteristics for single cell data, will not be greatly impacted by variation in seed values.
 
--   **`kN`**
-
-The number of nearest neighbours that are considered in the analysis during damage detection. This analysis entails finding the proportion of the `kN` nearest neighbours of each true cell that are of artificial, or 'damaged', origin. Since only cells that are present can be considered as possible neighbours, `kN` is limited to the size of the dataset. As the value of `kN` increases, it expands the analysis to cells that are less closely related, increasing the probability that artificial cells will be present by random chance. By default, `DamageDetective` selects `kN` that is a third the size of the input dataset.
-
--   **`target_damage`**
-
-This parameter is related to the damage simulation step that relies on the proportion of cytoplasmic RNA loss to estimate of the extent of cellular damage. In other words, cells where more cytoplasmic RNA is lost are assumed to be more likely to be damaged than cells where very little to no cytoplasmic RNA is lost. The simulation process works within specific target ranges of cytoplasmic RNA loss that are controlled by this parameter. For damage detection, we are interested in simulating cells that are damaged and require removal, meaning we set the target damage extent to a higher range. The default provided is between 65 and 100 % of cytoplasmic RNA loss.
-
--   **`pca_columns`**
-
-After simulating damage, the true cells are compared to the artificially damaged cells to determine whether they are similar enough to be inferred as damage themselves. The means of this comparison is principal component (PC) analysis where the variables to be considered are specified using this parameter. The variables available include traditional metrics for single cell quality control including mitochondrial percentage and library size, as well as newer metrics such as ribosomal and MALAT1 percentages. The complete set of variables available are,
-
--   features
--   counts
--   mitochondrial proportion (mt.prop)
--   ribosomal proportion (rb.prop)
--   MALAT1 proportion (malat1.prop)
-
-Additionally, options providing data transformations that reduce the skew of the data,
-
--   log(features)
--   log(counts)
--   mt.logit
--   malat1.arcsin
-
-The default for this parameter is c("log.features", "log.counts", "mt.prop", "rb.prop").
-
-<br>
-
--   **`filter_threshold`**
-
-A value between 0 and 1 to determine the level of damage, or proportion of RNA loss, above which cells will be excluded. By default, `DamageDetective` offers the threshold of `0.5`. Values greater than `0.5` reflect more permissive filtering while those closer to `0` reflect more stringent filtering. We recommend the default but suggest that if adjustments are made, they are informed by inspecting the output `detect_damage` plots, `generate_plot = TRUE`.
-
--   **`ribosome_penalty`**
-
-Damage simulation for `DamageDetectvie` is carried out by the probabilistic loss of cytoplasmic RNA according to transcript abundance, i.e., the chance of a transcript from a gene escaping and being lost from a cell is related to how many of those transcripts were present in the cell. However, it was observed that a subset of cytoplasmic RNA, ribosomal RNA, exhibits losses that are less frequent than what is estimated by abundance alone. The parameter `ribosome_penalty` accounts for this discrepancy.
+#### Computing the ideal `ribosome_penalty`
 
 `ribosome_penalty` is a value between 0 and 1 that is multiplied by the probability scores of ribosomal RNA loss, reducing the scores and making it less likely for the ribosomal transcripts to be sampled for loss.
 
-The impact of changing `ribosome_penalty` can be explored using the plots generated from `simulate_counts` below. The idea here is to see how well the artificial cells generated with a selected penalty describe the true cells. In other words, how well the coloured dots superimpose the grey dots. You will see that as you increase the penalty, i.e. go from values closer to 1 to values closer to 0$^*$, the coloured dots shift from an extreme position on the left-hand side of the plot to a more central position. At what point along this range true cells exist is dataset-dependent but generally lies closer to 0. Where,
+The impact of changing `ribosome_penalty` can be explored using the plots generated from `simulate_counts` below. The idea here is to see how well the artificial cells generated with a selected penalty describe the true cells. In other words, how well the coloured dots superimpose the grey dots. You will see that as you increase the penalty, i.e. go from values closer to 1 to values closer to 0, the coloured dots shift from an extreme position on the left-hand side of the plot to a more central position. At what point along this range true cells exist is dataset-dependent but generally lies closer to 0. Where,
 
 -   `count_matrix` is the data in a sparse matrix format as prepared above,
 -   `ribosome_penalty` is a numeric between 0 and 1, and
@@ -282,7 +261,8 @@ high_penalty <- DamageDetective::simulate_counts(
 
 > $^*$ ribosome_penalty is a multiplicative reduction factor meaning a value of 1 is the same as introducing no penalty while values increasingly closer to zero introduce increasingly greater reductions.
 
-### Computing the ideal `ribosome_penalty`
+<br>
+
 
 From the above plots you can see how selecting an unideal `ribosome_penalty` can generate damaged profiles that do not describe the data well and, as a result, generate estimations of damage that do not describe the data well.
 
@@ -300,7 +280,20 @@ selected_penalty
 
 As seen above, the `select_penalty` function generates artificial cells using different `ribosome_penalty` estimates and evaluates the similarity of the resulting artificial cells to true cells.
 
-Here, 'similarity' refers to the shortest distance from each artificial cell to a true cell in PC space. The mean shortest distances are taken for each level of damage simulated. The penalty that generates the smallest mean distance across damage levels is selected as the ideal `ribosome_penalty`. In other words, a penalty that generates artificial cells that are the most similar to true cells over a wide range of damage levels is ideal.
+Here, 'similarity' refers to the shortest distance from each artificial cell to a true cell in PC space. The mean shortest distances are taken for each level of damage simulated. The penalty that generates the smallest mean distance across damage levels is selected as the ideal `ribosome_penalty`. In other words, a penalty that generates artificial cells that are the most similar to true cells over a wide range of damage levels is ideal. This can be viewed in greater detail by setting the `return_output` parameter to `"full"`. 
+
+
+```{r detailed_select_penalty}
+selected_penalty <- DamageDetective::select_penalty(
+  count_matrix = alignment_counts,
+  max_penalty_trials = 3, 
+  seed = 7, 
+  return_output = "full",
+  verbose = TRUE
+)
+selected_penalty
+```
+
 
 Though not strictly necessary, the `select_penalty` function can be adjusted to give a user more control over the testing process. This includes,
 
@@ -317,11 +310,12 @@ Though not strictly necessary, the `select_penalty` function can be adjusted to 
 
 The remaining parameters control how the user receives the final output.
 
--   **`filter_counts`** If `TRUE`, the user will receive only the filtered count matrix as output, where filtering is done according to damaged cell classifications decided by the `filter_threshold`.
+| Parameter        | Default  | Description                                                                                                                                                                                                                     |
+|------------------|----------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `filter_counts`  | `TRUE`   | If `TRUE`, returns only the filtered count matrix based on damage classifications using `filter_threshold`. If `FALSE`, returns a data frame of damage scores per barcode for manual filtering or inspection.                    |
+| `palette`        | User-defined | Allows customization of the color palette used in damage score plots. Must be a vector of three colors indicating low to high damage severity.                                                                                 |
 
-Alternatively, if `filter_counts` is set to `FALSE`, a data frame will be given as output containing the damage scores for each barcode. This is provided for the user if they wish to interact with the `DamageDetective` results directly. From here, a user can filter their data manually, as is done by `filter_counts=TRUE` automatically.
 
--   **`palette`** This parameters allows the adjustment of the color palette used for the `DamageDetective` damage scores in plots. This is made up of three colours that define the cells with minimal to no estimated damage up to extreme damage.
 
 ```{r palette}
 
@@ -341,7 +335,7 @@ penalty_plot <- DamageDetective::simulate_counts(
 
 # Damaged cell detection
 
-Once the data is in sparse matrix form and an appropriate `ribosome_penalty` is selected, the `detect_damage` function can be run. Below, we have selected the default 'filter_counts=FALSE\` option to view the output directly.
+Once the data is in sparse matrix form and an appropriate `ribosome_penalty` is selected, the `detect_damage` function can be run. Below, we have selected the default `filter_counts=FALSE` option to view the output directly.
 
 ```{r run_detection}
 #| fig.alt: >
@@ -352,7 +346,7 @@ Once the data is in sparse matrix form and an appropriate `ribosome_penalty` is 
 # Run detection
 detection_output <- DamageDetective::detect_damage(
   count_matrix = alignment_counts, 
-  ribosome_penalty = selected_penalty,
+  ribosome_penalty = selected_penalty$selected_penalty,
   seed = 7
 )
 
@@ -372,6 +366,23 @@ dim(filtered_matrix)
 ```
 
 <br>
+
+This could be done automatically if `filter_counts=TRUE`. 
+
+```{r filtered_detection}
+
+# Run detection
+filtered_output <- DamageDetective::detect_damage(
+  count_matrix = alignment_counts, 
+  ribosome_penalty = selected_penalty$selected_penalty,
+  filter_counts = TRUE, 
+  generate_plot = FALSE,
+  seed = 7
+)
+
+dim(filtered_output)
+
+```
 
 # Session Information
 

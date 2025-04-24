@@ -29,15 +29,15 @@
 #' @param penalty_range Numerical vector of length 2 specifying the lower
 #'  and upper limit of values tested for the ribosomal penalty.
 #'
-#'  * Default is c(0.00001, 0.5).
+#'  * Default is c(0.1, 1).
 #' @param penalty_step Numeric specifying the value added to each increment
 #'  of penalty tested.
 #'
-#'  * Default is 0.005.
+#'  * Default is 0.05.
 #' @param max_penalty_trials Numeric specifying the maximum number of
 #'   iterations for the ribosomal penalty value.
 #'
-#'   * Default is 10.
+#'   * Default is 14.
 #' @param stability_limit Numeric specifying the number of additional iterations
 #'  allotted after the median minimum distance of the artificial cells to the
 #'  true cells is greater than the previous minimum distance.
@@ -83,9 +83,9 @@ select_penalty <- function(
     count_matrix,
     organism = "Hsap",
     mito_quantile = 0.75,
-    penalty_range = c(0.00001, 0.5),
-    penalty_step = 0.005,
-    max_penalty_trials = 10,
+    penalty_range = c(0.1, 1),
+    penalty_step = 0.05,
+    max_penalty_trials = 14,
     target_damage = c(0.2, 0.99),
     damage_distribution = "right_skewed",
     distribution_steepness = "steep",
