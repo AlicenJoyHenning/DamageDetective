@@ -6,7 +6,7 @@
 \usage{
 detect_damage(
   count_matrix,
-  ribosome_penalty = 0.01,
+  ribosome_penalty = 1,
   organism = "Hsap",
   annotated_celltypes = FALSE,
   target_damage = c(0.65, 1),
@@ -164,7 +164,7 @@ c("grey", "#7023FD", "#E60006").
 \item{filter_threshold}{Numeric specifying the proportion of RNA loss
 above which a cell should be considered damaged.
 \itemize{
-\item Default is 0.75.
+\item Default is 0.5.
 }}
 
 \item{filter_counts}{Boolean specifying whether the output matrix

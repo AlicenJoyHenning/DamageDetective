@@ -35,7 +35,7 @@
 #' @param filter_threshold Numeric specifying the proportion of RNA loss
 #'  above which a cell should be considered damaged.
 #'
-#'  * Default is 0.75.
+#'  * Default is 0.5.
 #' @param pca_columns String vector containing the names of the metrics used
 #'  for principal component analysis.
 #'
@@ -71,6 +71,7 @@
 #'
 #'  * Default is TRUE.
 #' @return Filtered matrix or data frame containing damage labels.
+#' @importFrom e1071 skewness
 #' @importFrom Seurat CreateSeuratObject NormalizeData ScaleData
 #' @importFrom Seurat FindVariableFeatures RunPCA FindNeighbors
 #' @importFrom Seurat FindClusters
@@ -94,7 +95,7 @@
 #' )
 detect_damage <- function(
     count_matrix,
-    ribosome_penalty = 0.01,
+    ribosome_penalty = 1,
     organism = "Hsap",
     annotated_celltypes = FALSE,
     target_damage = c(0.65, 1),
@@ -305,8 +306,18 @@ detect_damage <- function(
 }
 
 .perform_pca <- function(metadata_stored, pca_columns, kN) {
-  # pca_columns <- c("log.features", "log.counts", "mt.prop",
-  # "rb.prop", "malat1")
+
+  # Adjust heavily skewed data
+  skew_test <- e1071::skewness(metadata_stored$mt.prop) > 1.5
+  if (skew_test){
+    pca_columns <- c("log.features", "log.counts", "mt.logit", "rb.prop")
+  }
+
+  # Test for high expression of MALAT1
+  if (max(metadata_stored$malat1.prop) > 0.4){
+    pca_columns <- c("log.features", "mt.prop", "malat1.prop")
+  }
+
   qc_pcs <- length(pca_columns)
   metadata_pca <- metadata_stored[, pca_columns]
   pca_result <- prcomp(metadata_pca, center = TRUE, scale. = TRUE)

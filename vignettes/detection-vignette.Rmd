@@ -415,7 +415,7 @@ dim(filtered_output)
 
 ```{r filtered_detection_results, echo = FALSE}
 data("filtered_output", package = "DamageDetective")
-filtered_output
+dim(filtered_matrix)
 ```
 
 # Session Information
