@@ -133,7 +133,7 @@ detect_damage <- function(
 
   # Perform PCA and nearest neighbour search
   kN <- .find_knn(count_matrix, kN)
-  neighbour_indices <- .perform_pca(metadata_stored, pca_columns, kN)
+  neighbour_indices <- .perform_pca(metadata_stored, pca_columns, kN, verbose)
 
   # Compute pANN and scale damage levels
   metadata_plot <- .compile_pANN(
@@ -305,7 +305,7 @@ detect_damage <- function(
   return(kN)
 }
 
-.perform_pca <- function(metadata_stored, pca_columns, kN) {
+.perform_pca <- function(metadata_stored, pca_columns, kN, verbose) {
 
   # Adjust heavily skewed data
   skew_test <- e1071::skewness(metadata_stored$mt.prop) > 1.5
