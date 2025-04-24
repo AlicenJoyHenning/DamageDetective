@@ -319,8 +319,10 @@ detect_damage <- function(
     pca_columns <- c("log.features", "mt.prop", "malat1.prop")
   }
 
-  message("Using the following PCA columns: ", paste(pca_columns, collapse = ", "))
-
+  if (verbose){
+    message("PCA with ",
+            paste(pca_columns, collapse = ", "))
+  }
 
   qc_pcs <- length(pca_columns)
   metadata_pca <- metadata_stored[, pca_columns]
