@@ -225,39 +225,58 @@ The impact of changing `ribosome_penalty` can be explored using the plots genera
 
 <br>
 
-```{r view_penalty}
-#| fig.alt: >
-#|   Scatter plot showing the distribution of quality control 
-#|   metrics in altered and unaltered counts. 
+```{r view_penalty, eval = FALSE}
 no_penalty <- DamageDetective::simulate_counts(
   count_matrix = alignment_counts,
   ribosome_penalty = 1,  
-  damage_proportion = 0.1,  
-  target_damage = c(0.8, 1), 
+  damage_proportion = 0.25,  
+  target_damage = c(0.6, 1), 
   plot_ribosomal_penalty = TRUE,
   seed = 7
 )
 
+no_penalty_plot <- no_penalty$plot + ggtitle("No penalty") + 
+  theme(plot.title = element_text(face = "bold", hjust = 0.5))
+
 medium_penalty <- DamageDetective::simulate_counts(
   count_matrix = alignment_counts,
-  ribosome_penalty = 0.5,  
-  damage_proportion = 0.1,  
-  target_damage = c(0.8, 1), 
+  ribosome_penalty = 0.2,  
+  damage_proportion = 0.25,  
+  target_damage = c(0.6, 1),
   plot_ribosomal_penalty = TRUE,
   seed = 7
 )
+
+med_penalty_plot <- medium_penalty$plot + 
+  ggtitle("Average penalty (0.2)") + 
+  theme(plot.title = element_text(face = "bold", hjust = 0.5))
 
 high_penalty <- DamageDetective::simulate_counts(
   count_matrix = alignment_counts,
   ribosome_penalty = 0.01,  
-  damage_proportion = 0.1,  
-  target_damage = c(0.8, 1), 
+  damage_proportion = 0.25,  
+  target_damage = c(0.6, 1), 
   plot_ribosomal_penalty = TRUE,
   seed = 7
 )
 
+high_penalty_plot <- high_penalty$plot + 
+  ggtitle("Heavy penalty (0.01)") + 
+  theme(plot.title = element_text(face = "bold", hjust = 0.5))
+
+no_penalty_plot | med_penalty_plot | high_penalty_plot 
+
 
 ```
+
+```{r view_penalty_results, echo = FALSE, fig.width = 8, fig.height = 3.4}
+#| fig.alt: >
+#|   Scatter plot showing the distribution of quality control 
+#|   metrics in altered and unaltered counts. 
+data("penalty_plot", package = "DamageDetective")
+penalty_plot
+```
+
 
 > $^*$ ribosome_penalty is a multiplicative reduction factor meaning a value of 1 is the same as introducing no penalty while values increasingly closer to zero introduce increasingly greater reductions.
 
@@ -283,17 +302,27 @@ As seen above, the `select_penalty` function generates artificial cells using di
 Here, 'similarity' refers to the shortest distance from each artificial cell to a true cell in PC space. The mean shortest distances are taken for each level of damage simulated. The penalty that generates the smallest mean distance across damage levels is selected as the ideal `ribosome_penalty`. In other words, a penalty that generates artificial cells that are the most similar to true cells over a wide range of damage levels is ideal. This can be viewed in greater detail by setting the `return_output` parameter to `"full"`. 
 
 
-```{r detailed_select_penalty}
+```{r detailed_select_penalty, eval = FALSE}
 selected_penalty <- DamageDetective::select_penalty(
   count_matrix = alignment_counts,
-  max_penalty_trials = 3, 
+  max_penalty_trials = 5, 
   seed = 7, 
   return_output = "full",
   verbose = TRUE
 )
-selected_penalty
+
+# View full results 
+selected_penalty$penalty_results
+
+# View selected penalty (lowest global mean)
+selected_penalty$selected_penalty
 ```
 
+```{r detailed_select_penalty_results, echo = FALSE}
+data(selected_penalty, package = "DamageDetective")
+selected_penalty$penalty_results
+selected_penalty$selected_penalty
+```
 
 Though not strictly necessary, the `select_penalty` function can be adjusted to give a user more control over the testing process. This includes,
 
@@ -316,13 +345,12 @@ The remaining parameters control how the user receives the final output.
 | `palette`        | User-defined | Allows customization of the color palette used in damage score plots. Must be a vector of three colors indicating low to high damage severity.                                                                                 |
 
 
-
 ```{r palette}
 
 penalty_plot <- DamageDetective::simulate_counts(
   count_matrix = alignment_counts,
-  ribosome_penalty = 0.1,  
-  damage_proportion = 0.5,  
+  ribosome_penalty = selected_penalty$selected_penalty,  
+  damage_proportion = 0.2,  
   target_damage = c(0.4, 1),
   plot_ribosomal_penalty = TRUE,
   palette = c("grey", "#BCEEFB", "#325EF7"),
@@ -337,7 +365,7 @@ penalty_plot <- DamageDetective::simulate_counts(
 
 Once the data is in sparse matrix form and an appropriate `ribosome_penalty` is selected, the `detect_damage` function can be run. Below, we have selected the default `filter_counts=FALSE` option to view the output directly.
 
-```{r run_detection}
+```{r run_detection, fig.width = 6, fig.height = 3.4}
 #| fig.alt: >
 #|   Scatter plot showing the outcome damage detection where
 #|   cells of the input data are coloured according to the
@@ -355,10 +383,11 @@ head(detection_output$output)
 
 ```
 
+
 From here, the matrix can be filtered according to a threshold damage value before continuing with the remainder of pre-processing steps required for a single cell analysis.
 
 ```{r filter_output}
-undamaged_cells <- subset(detection_output$output, DamageDetective < 0.5)
+undamaged_cells <- subset(detection_output$output, DamageDetective <= 0.5)
 filtered_matrix <- alignment_counts[, undamaged_cells$Cells]
 dim(alignment_counts)
 dim(filtered_matrix)
@@ -369,7 +398,7 @@ dim(filtered_matrix)
 
 This could be done automatically if `filter_counts=TRUE`. 
 
-```{r filtered_detection}
+```{r filtered_detection, eval = FALSE}
 
 # Run detection
 filtered_output <- DamageDetective::detect_damage(
@@ -384,6 +413,11 @@ dim(filtered_output)
 
 ```
 
+```{r filtered_detection_results, echo = FALSE}
+data("filtered_output", package = "DamageDetective")
+filtered_output
+```
+
 # Session Information
 
 ```{r session-info, echo=FALSE}
@@ -394,6 +428,7 @@ sessionInfo()
 
 -   Amezquita R, et al. (2020). "Orchestrating single-cell analysis with Bioconductor." *Nature Methods*, *17*, 137-145.
 -   Hao et al. (2023). *Seurat V5*. Nature Biotechnology.
--   Satija R, et al. (2025). *SeuratData: Install and Manage Seurat Datasets*. R package version 0.2.2.9002.
+-   McGinnis, C. S., Murrow, L. M., & Gartner, Z. J. (2019). "DoubletFinder: Doublet Detection in Single-Cell RNA Sequencing Data Using Artificial Nearest Neighbors". *Cell Systems, 8*(4), 329-337.e4.
 -   Pedersen T (2024). *patchwork: The Composer of Plots*. R package version 1.3.0.
+-   Satija R, et al. (2025). *SeuratData: Install and Manage Seurat Datasets*. R package version 0.2.2.9002.
 -   Wickham. *ggplot2: Elegant Graphics for Data Analysis*. Springer-Verlag New York, 2016.

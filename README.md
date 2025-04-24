@@ -122,8 +122,6 @@ dim(detection_results$output)
 # [1] 32738   458
 ```
 
-<img src="man/figures/plot.svg" alt="Output of test_counts with cells coloured according to the estimated level of damage" width="600"/>
-
 <br>
 
 Alternatively, if `filter_counts` is set to `FALSE`, a data frame will be given as output containing the damage scores for each barcode. This is provided for the user if they wish to interact with the `DamageDetective` results directly. From here, a user can filter their data manually, as is done by `filter_counts=TRUE` automatically.
@@ -162,7 +160,7 @@ dim(filtered_matrix)
 
 ## Contribute
 
-We are committed to the ongoing improvement of `DamageDetective` and encourage users to report any bugs or difficulties they encounter. Contributions that refine or challenge the assumptions and heuristics used to detect damaged cells are also welcome. You can reach out via the maintainer's email listed in the `DESCRIPTION` file or start a public discussion through [![GitHub issues](https://img.shields.io/github/issues/AlicenJoyHenning/DamageDetective?label=Report%20an%20Issue&style=for-the-badge)](https://github.com/AlicenJoyHenning/DamageDetective/issues)
+We are committed to the ongoing improvement of `DamageDetective` and encourage users to report any bugs or difficulties they encounter. Contributions that refine or challenge the assumptions and heuristics used to detect damaged cells are also welcome. You can reach out via the maintainer's email listed in the `DESCRIPTION` file or start a public discussion through  [![Issue](https://img.shields.io/badge/Issues-blue?style=flat&logo=github)](https://github.com/AlicenJoyHenning/DamageDetective/issues). 
 
 ## License 
 
@@ -178,6 +176,6 @@ This work was done under the supervision of Prof Marlo Möller, Prof Gian van de
 
 ## References 
 
-1.  McGinnis, C. S., Murrow, L. M., & Gartner, Z. J. (2019). DoubletFinder: Doublet Detection in Single-Cell RNA Sequencing Data Using Artificial Nearest Neighbors. *Cell Systems, 8*(4), 329-337.e4. <https://doi.org/10.1016/j.cels.2019.03.003>
+- McGinnis, C. S., Murrow, L. M., & Gartner, Z. J. (2019). DoubletFinder: Doublet Detection in Single-Cell RNA Sequencing Data Using Artificial Nearest Neighbors. *Cell Systems, 8*(4), 329-337.e4. <https://doi.org/10.1016/j.cels.2019.03.003>
 
-2.  Risso D, Cole M (2024). *scRNAseq: Collection of Public Single-Cell RNA-Seq Datasets*. <doi:10.18129/B9.bioc.scRNAseq> <https://doi.org/10.18129/B9.bioc.scRNAseq>, R package version 2.20.0, <https://bioconductor.org/packages/scRNAseq>.
+- Risso D, Cole M (2024). *scRNAseq: Collection of Public Single-Cell RNA-Seq Datasets*. <doi:10.18129/B9.bioc.scRNAseq> <https://doi.org/10.18129/B9.bioc.scRNAseq>, R package version 2.20.0, <https://bioconductor.org/packages/scRNAseq>.
