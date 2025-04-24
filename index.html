@@ -169,7 +169,6 @@
 <span><span class="co"># View the resulting count matrix</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/dim.html" class="external-link">dim</a></span><span class="op">(</span><span class="va">detection_results</span><span class="op">$</span><span class="va">output</span><span class="op">)</span></span>
 <span><span class="co"># [1] 32738   458</span></span></code></pre></div>
-<p><img src="reference/figures/plot.svg" alt="Output of test_counts with cells coloured according to the estimated level of damage" width="600"></p>
 <p><br></p>
 <p>Alternatively, if <code>filter_counts</code> is set to <code>FALSE</code>, a data frame will be given as output containing the damage scores for each barcode. This is provided for the user if they wish to interact with the <code>DamageDetective</code> results directly. From here, a user can filter their data manually, as is done by <code>filter_counts=TRUE</code> automatically.</p>
 <div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
@@ -207,7 +206,7 @@
 <div class="section level2">
 <h2 id="contribute">Contribute<a class="anchor" aria-label="anchor" href="#contribute"></a>
 </h2>
-<p>We are committed to the ongoing improvement of <code>DamageDetective</code> and encourage users to report any bugs or difficulties they encounter. Contributions that refine or challenge the assumptions and heuristics used to detect damaged cells are also welcome. You can reach out via the maintainer’s email listed in the <code>DESCRIPTION</code> file or start a public discussion through <a href="https://github.com/AlicenJoyHenning/DamageDetective/issues" class="external-link"><img src="https://img.shields.io/github/issues/AlicenJoyHenning/DamageDetective?label=Report%20an%20Issue&amp;style=for-the-badge" alt="GitHub issues"></a></p>
+<p>We are committed to the ongoing improvement of <code>DamageDetective</code> and encourage users to report any bugs or difficulties they encounter. Contributions that refine or challenge the assumptions and heuristics used to detect damaged cells are also welcome. You can reach out via the maintainer’s email listed in the <code>DESCRIPTION</code> file or start a public discussion through <a href="https://github.com/AlicenJoyHenning/DamageDetective/issues" class="external-link"><img src="https://img.shields.io/badge/Issues-blue?style=flat&amp;logo=github" alt="Issue"></a>.</p>
 </div>
 <div class="section level2">
 <h2 id="license">License<a class="anchor" aria-label="anchor" href="#license"></a>
@@ -225,10 +224,10 @@ Bioinformatics and Computational Biology</p>
 <div class="section level2">
 <h2 id="references">References<a class="anchor" aria-label="anchor" href="#references"></a>
 </h2>
-<ol style="list-style-type: decimal">
+<ul>
 <li><p>McGinnis, C. S., Murrow, L. M., &amp; Gartner, Z. J. (2019). DoubletFinder: Doublet Detection in Single-Cell RNA Sequencing Data Using Artificial Nearest Neighbors. <em>Cell Systems, 8</em>(4), 329-337.e4. <a href="https://doi.org/10.1016/j.cels.2019.03.003" class="external-link uri">https://doi.org/10.1016/j.cels.2019.03.003</a></p></li>
 <li><p>Risso D, Cole M (2024). <em>scRNAseq: Collection of Public Single-Cell RNA-Seq Datasets</em>. <a href="doi:10.18129/B9.bioc.scRNAseq" class="uri">doi:10.18129/B9.bioc.scRNAseq</a> <a href="https://doi.org/10.18129/B9.bioc.scRNAseq" class="external-link uri">https://doi.org/10.18129/B9.bioc.scRNAseq</a>, R package version 2.20.0, <a href="https://bioconductor.org/packages/scRNAseq" class="external-link uri">https://bioconductor.org/packages/scRNAseq</a>.</p></li>
-</ol>
+</ul>
 </div>
 </div>
   </main><aside class="col-md-3"><div class="links">

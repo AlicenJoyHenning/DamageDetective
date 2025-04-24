@@ -486,34 +486,43 @@ faster</em>).</li>
 <code class="sourceCode R"><span><span class="va">no_penalty</span> <span class="op">&lt;-</span> <span class="fu">DamageDetective</span><span class="fu">::</span><span class="fu"><a href="../reference/simulate_counts.html">simulate_counts</a></span><span class="op">(</span></span>
 <span>  count_matrix <span class="op">=</span> <span class="va">alignment_counts</span>,</span>
 <span>  ribosome_penalty <span class="op">=</span> <span class="fl">1</span>,  </span>
-<span>  damage_proportion <span class="op">=</span> <span class="fl">0.1</span>,  </span>
-<span>  target_damage <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.8</span>, <span class="fl">1</span><span class="op">)</span>, </span>
+<span>  damage_proportion <span class="op">=</span> <span class="fl">0.25</span>,  </span>
+<span>  target_damage <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.6</span>, <span class="fl">1</span><span class="op">)</span>, </span>
 <span>  plot_ribosomal_penalty <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  seed <span class="op">=</span> <span class="fl">7</span></span>
-<span><span class="op">)</span></span></code></pre></div>
-<p><img src="detection-vignette_files/figure-html/view_penalty-1.png" alt="Scatter plot showing the distribution of quality control  metrics in altered and unaltered counts. " width="700"></p>
-<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">no_penalty_plot</span> <span class="op">&lt;-</span> <span class="va">no_penalty</span><span class="op">$</span><span class="va">plot</span> <span class="op">+</span> <span class="fu">ggtitle</span><span class="op">(</span><span class="st">"No penalty"</span><span class="op">)</span> <span class="op">+</span> </span>
+<span>  <span class="fu">theme</span><span class="op">(</span>plot.title <span class="op">=</span> <span class="fu">element_text</span><span class="op">(</span>face <span class="op">=</span> <span class="st">"bold"</span>, hjust <span class="op">=</span> <span class="fl">0.5</span><span class="op">)</span><span class="op">)</span></span>
+<span></span>
 <span><span class="va">medium_penalty</span> <span class="op">&lt;-</span> <span class="fu">DamageDetective</span><span class="fu">::</span><span class="fu"><a href="../reference/simulate_counts.html">simulate_counts</a></span><span class="op">(</span></span>
 <span>  count_matrix <span class="op">=</span> <span class="va">alignment_counts</span>,</span>
-<span>  ribosome_penalty <span class="op">=</span> <span class="fl">0.5</span>,  </span>
-<span>  damage_proportion <span class="op">=</span> <span class="fl">0.1</span>,  </span>
-<span>  target_damage <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.8</span>, <span class="fl">1</span><span class="op">)</span>, </span>
+<span>  ribosome_penalty <span class="op">=</span> <span class="fl">0.2</span>,  </span>
+<span>  damage_proportion <span class="op">=</span> <span class="fl">0.25</span>,  </span>
+<span>  target_damage <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.6</span>, <span class="fl">1</span><span class="op">)</span>,</span>
 <span>  plot_ribosomal_penalty <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  seed <span class="op">=</span> <span class="fl">7</span></span>
-<span><span class="op">)</span></span></code></pre></div>
-<p><img src="detection-vignette_files/figure-html/view_penalty-2.png" alt="Scatter plot showing the distribution of quality control  metrics in altered and unaltered counts. " width="700"></p>
-<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">med_penalty_plot</span> <span class="op">&lt;-</span> <span class="va">medium_penalty</span><span class="op">$</span><span class="va">plot</span> <span class="op">+</span> </span>
+<span>  <span class="fu">ggtitle</span><span class="op">(</span><span class="st">"Average penalty (0.2)"</span><span class="op">)</span> <span class="op">+</span> </span>
+<span>  <span class="fu">theme</span><span class="op">(</span>plot.title <span class="op">=</span> <span class="fu">element_text</span><span class="op">(</span>face <span class="op">=</span> <span class="st">"bold"</span>, hjust <span class="op">=</span> <span class="fl">0.5</span><span class="op">)</span><span class="op">)</span></span>
+<span></span>
 <span><span class="va">high_penalty</span> <span class="op">&lt;-</span> <span class="fu">DamageDetective</span><span class="fu">::</span><span class="fu"><a href="../reference/simulate_counts.html">simulate_counts</a></span><span class="op">(</span></span>
 <span>  count_matrix <span class="op">=</span> <span class="va">alignment_counts</span>,</span>
 <span>  ribosome_penalty <span class="op">=</span> <span class="fl">0.01</span>,  </span>
-<span>  damage_proportion <span class="op">=</span> <span class="fl">0.1</span>,  </span>
-<span>  target_damage <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.8</span>, <span class="fl">1</span><span class="op">)</span>, </span>
+<span>  damage_proportion <span class="op">=</span> <span class="fl">0.25</span>,  </span>
+<span>  target_damage <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.6</span>, <span class="fl">1</span><span class="op">)</span>, </span>
 <span>  plot_ribosomal_penalty <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  seed <span class="op">=</span> <span class="fl">7</span></span>
-<span><span class="op">)</span></span></code></pre></div>
-<p><img src="detection-vignette_files/figure-html/view_penalty-3.png" alt="Scatter plot showing the distribution of quality control  metrics in altered and unaltered counts. " width="700"></p>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">high_penalty_plot</span> <span class="op">&lt;-</span> <span class="va">high_penalty</span><span class="op">$</span><span class="va">plot</span> <span class="op">+</span> </span>
+<span>  <span class="fu">ggtitle</span><span class="op">(</span><span class="st">"Heavy penalty (0.01)"</span><span class="op">)</span> <span class="op">+</span> </span>
+<span>  <span class="fu">theme</span><span class="op">(</span>plot.title <span class="op">=</span> <span class="fu">element_text</span><span class="op">(</span>face <span class="op">=</span> <span class="st">"bold"</span>, hjust <span class="op">=</span> <span class="fl">0.5</span><span class="op">)</span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">no_penalty_plot</span> <span class="op">|</span> <span class="va">med_penalty_plot</span> <span class="op">|</span> <span class="va">high_penalty_plot</span> </span></code></pre></div>
+<p><img src="detection-vignette_files/figure-html/view_penalty_results-1.png" alt="Scatter plot showing the distribution of quality control  metrics in altered and unaltered counts. " width="768"></p>
 <blockquote>
 <p><math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msup><mi></mi><mo>*</mo></msup><annotation encoding="application/x-tex">^*</annotation></semantics></math>
 ribosome_penalty is a multiplicative reduction factor meaning a value of
@@ -529,7 +538,7 @@ that do not describe the data well.</p>
 a way that is relevant to the input data can be done through trial and
 error, similar to the plotting exercise above, or in an automated
 fashion using the <code>select_penalty</code> function,</p>
-<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">selected_penalty</span> <span class="op">&lt;-</span> <span class="fu">DamageDetective</span><span class="fu">::</span><span class="fu"><a href="../reference/select_penalty.html">select_penalty</a></span><span class="op">(</span></span>
 <span>  count_matrix <span class="op">=</span> <span class="va">alignment_counts</span>,</span>
 <span>  max_penalty_trials <span class="op">=</span> <span class="fl">3</span>, </span>
@@ -555,27 +564,26 @@ artificial cells that are the most similar to true cells over a wide
 range of damage levels is ideal. This can be viewed in greater detail by
 setting the <code>return_output</code> parameter to
 <code>"full"</code>.</p>
-<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">selected_penalty</span> <span class="op">&lt;-</span> <span class="fu">DamageDetective</span><span class="fu">::</span><span class="fu"><a href="../reference/select_penalty.html">select_penalty</a></span><span class="op">(</span></span>
 <span>  count_matrix <span class="op">=</span> <span class="va">alignment_counts</span>,</span>
-<span>  max_penalty_trials <span class="op">=</span> <span class="fl">3</span>, </span>
+<span>  max_penalty_trials <span class="op">=</span> <span class="fl">5</span>, </span>
 <span>  seed <span class="op">=</span> <span class="fl">7</span>, </span>
 <span>  return_output <span class="op">=</span> <span class="st">"full"</span>,</span>
 <span>  verbose <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span><span class="op">)</span></span>
-<span><span class="co">#&gt; Testing penalty of 0.1...</span></span>
-<span><span class="co">#&gt; Testing penalty of 0.15...</span></span>
-<span><span class="co">#&gt; Testing penalty of 0.2...</span></span>
-<span><span class="co">#&gt; Maximum penalty trials reached (3). Stopping.</span></span>
-<span><span class="va">selected_penalty</span></span>
-<span><span class="co">#&gt; $penalty_results</span></span>
-<span><span class="co">#&gt;   Penalty Global_mean     Mean_3     Mean_4     Mean_5     Mean_6</span></span>
+<span></span>
+<span><span class="co"># View full results </span></span>
+<span><span class="va">selected_penalty</span><span class="op">$</span><span class="va">penalty_results</span></span>
+<span></span>
+<span><span class="co"># View selected penalty (lowest global mean)</span></span>
+<span><span class="va">selected_penalty</span><span class="op">$</span><span class="va">selected_penalty</span></span></code></pre></div>
+<pre><code><span><span class="co">#&gt;   Penalty Global_mean     Mean_3     Mean_4     Mean_5     Mean_6</span></span>
 <span><span class="co">#&gt; 1    0.10  0.07205541 0.04395754 0.04783755 0.06005843 0.13636814</span></span>
 <span><span class="co">#&gt; 2    0.15  0.04990311 0.03003056 0.04784675 0.05462734 0.06710781</span></span>
 <span><span class="co">#&gt; 3    0.20  0.05339491 0.03922892 0.04730901 0.05555464 0.07148706</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; $selected_penalty</span></span>
-<span><span class="co">#&gt; [1] 0.15</span></span></code></pre></div>
+<span><span class="co">#&gt; 4    0.25  0.05346742 0.03445152 0.05333923 0.06202791 0.06405101</span></span>
+<span><span class="co">#&gt; [1] 0.15</span></span></code></pre>
 <p>Though not strictly necessary, the <code>select_penalty</code>
 function can be adjusted to give a user more control over the testing
 process. This includes,</p>
@@ -635,12 +643,12 @@ severity.</td>
 </tr>
 </tbody>
 </table>
-<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span></span>
 <span><span class="va">penalty_plot</span> <span class="op">&lt;-</span> <span class="fu">DamageDetective</span><span class="fu">::</span><span class="fu"><a href="../reference/simulate_counts.html">simulate_counts</a></span><span class="op">(</span></span>
 <span>  count_matrix <span class="op">=</span> <span class="va">alignment_counts</span>,</span>
-<span>  ribosome_penalty <span class="op">=</span> <span class="fl">0.1</span>,  </span>
-<span>  damage_proportion <span class="op">=</span> <span class="fl">0.5</span>,  </span>
+<span>  ribosome_penalty <span class="op">=</span> <span class="va">selected_penalty</span><span class="op">$</span><span class="va">selected_penalty</span>,  </span>
+<span>  damage_proportion <span class="op">=</span> <span class="fl">0.2</span>,  </span>
 <span>  target_damage <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.4</span>, <span class="fl">1</span><span class="op">)</span>,</span>
 <span>  plot_ribosomal_penalty <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  palette <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"grey"</span>, <span class="st">"#BCEEFB"</span>, <span class="st">"#325EF7"</span><span class="op">)</span>,</span>
@@ -658,7 +666,7 @@ severity.</td>
 <code>detect_damage</code> function can be run. Below, we have selected
 the default <code>filter_counts=FALSE</code> option to view the output
 directly.</p>
-<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Run detection</span></span>
 <span><span class="va">detection_output</span> <span class="op">&lt;-</span> <span class="fu">DamageDetective</span><span class="fu">::</span><span class="fu"><a href="../reference/detect_damage.html">detect_damage</a></span><span class="op">(</span></span>
 <span>  count_matrix <span class="op">=</span> <span class="va">alignment_counts</span>, </span>
@@ -667,8 +675,8 @@ directly.</p>
 <span><span class="op">)</span></span>
 <span><span class="co">#&gt; Simulating damage...</span></span>
 <span><span class="co">#&gt; Computing pANN...</span></span></code></pre></div>
-<p><img src="detection-vignette_files/figure-html/run_detection-1.png" alt="Scatter plot showing the outcome damage detection where cells of the input data are coloured according to the estimated level of damage with grey being no damage,  purple being light damage, and red being heavy damage." width="700"></p>
-<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
+<p><img src="detection-vignette_files/figure-html/run_detection-1.png" alt="Scatter plot showing the outcome damage detection where cells of the input data are coloured according to the estimated level of damage with grey being no damage,  purple being light damage, and red being heavy damage." width="576"></p>
+<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span></span>
 <span><span class="co"># View output</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">detection_output</span><span class="op">$</span><span class="va">output</span><span class="op">)</span></span>
@@ -682,8 +690,8 @@ directly.</p>
 <p>From here, the matrix can be filtered according to a threshold damage
 value before continuing with the remainder of pre-processing steps
 required for a single cell analysis.</p>
-<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">undamaged_cells</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/subset.html" class="external-link">subset</a></span><span class="op">(</span><span class="va">detection_output</span><span class="op">$</span><span class="va">output</span>, <span class="va">DamageDetective</span> <span class="op">&lt;</span> <span class="fl">0.5</span><span class="op">)</span></span>
+<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">undamaged_cells</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/subset.html" class="external-link">subset</a></span><span class="op">(</span><span class="va">detection_output</span><span class="op">$</span><span class="va">output</span>, <span class="va">DamageDetective</span> <span class="op">&lt;=</span> <span class="fl">0.5</span><span class="op">)</span></span>
 <span><span class="va">filtered_matrix</span> <span class="op">&lt;-</span> <span class="va">alignment_counts</span><span class="op">[</span>, <span class="va">undamaged_cells</span><span class="op">$</span><span class="va">Cells</span><span class="op">]</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/dim.html" class="external-link">dim</a></span><span class="op">(</span><span class="va">alignment_counts</span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1] 33538  1222</span></span>
@@ -692,7 +700,7 @@ required for a single cell analysis.</p>
 <p><br></p>
 <p>This could be done automatically if
 <code>filter_counts=TRUE</code>.</p>
-<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span></span>
 <span><span class="co"># Run detection</span></span>
 <span><span class="va">filtered_output</span> <span class="op">&lt;-</span> <span class="fu">DamageDetective</span><span class="fu">::</span><span class="fu"><a href="../reference/detect_damage.html">detect_damage</a></span><span class="op">(</span></span>
@@ -702,11 +710,9 @@ required for a single cell analysis.</p>
 <span>  generate_plot <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  seed <span class="op">=</span> <span class="fl">7</span></span>
 <span><span class="op">)</span></span>
-<span><span class="co">#&gt; Simulating damage...</span></span>
-<span><span class="co">#&gt; Computing pANN...</span></span>
 <span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/dim.html" class="external-link">dim</a></span><span class="op">(</span><span class="va">filtered_output</span><span class="op">)</span></span>
-<span><span class="co">#&gt; [1] 33538  1170</span></span></code></pre></div>
+<span><span class="fu"><a href="https://rdrr.io/r/base/dim.html" class="external-link">dim</a></span><span class="op">(</span><span class="va">filtered_output</span><span class="op">)</span></span></code></pre></div>
+<pre><code><span><span class="co">#&gt; [1] 33538  1168</span></span></code></pre>
 </div>
 <div class="section level2">
 <h2 id="session-information">Session Information<a class="anchor" aria-label="anchor" href="#session-information"></a>
@@ -786,10 +792,14 @@ required for a single cell analysis.</p>
 <li>Amezquita R, et al. (2020). “Orchestrating single-cell analysis with
 Bioconductor.” <em>Nature Methods</em>, <em>17</em>, 137-145.</li>
 <li>Hao et al. (2023). <em>Seurat V5</em>. Nature Biotechnology.</li>
-<li>Satija R, et al. (2025). <em>SeuratData: Install and Manage Seurat
-Datasets</em>. R package version 0.2.2.9002.</li>
+<li>McGinnis, C. S., Murrow, L. M., &amp; Gartner, Z. J. (2019).
+“DoubletFinder: Doublet Detection in Single-Cell RNA Sequencing Data
+Using Artificial Nearest Neighbors”. <em>Cell Systems, 8</em>(4),
+329-337.e4.</li>
 <li>Pedersen T (2024). <em>patchwork: The Composer of Plots</em>. R
 package version 1.3.0.</li>
+<li>Satija R, et al. (2025). <em>SeuratData: Install and Manage Seurat
+Datasets</em>. R package version 0.2.2.9002.</li>
 <li>Wickham. <em>ggplot2: Elegant Graphics for Data Analysis</em>.
 Springer-Verlag New York, 2016.</li>
 </ul>
