@@ -9,7 +9,7 @@ ideal ribosome_penalty value for the input data."><meta property="og:image" cont
 
     <a class="navbar-brand me-2" href="../index.html">DamageDetective</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.0.9000</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">2.0.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -49,9 +49,9 @@ ideal <code>ribosome_penalty</code> value for the input data.</p>
 <span>  <span class="va">count_matrix</span>,</span>
 <span>  organism <span class="op">=</span> <span class="st">"Hsap"</span>,</span>
 <span>  mito_quantile <span class="op">=</span> <span class="fl">0.75</span>,</span>
-<span>  penalty_range <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1e-05</span>, <span class="fl">0.5</span><span class="op">)</span>,</span>
-<span>  penalty_step <span class="op">=</span> <span class="fl">0.005</span>,</span>
-<span>  max_penalty_trials <span class="op">=</span> <span class="fl">10</span>,</span>
+<span>  penalty_range <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.1</span>, <span class="fl">1</span><span class="op">)</span>,</span>
+<span>  penalty_step <span class="op">=</span> <span class="fl">0.05</span>,</span>
+<span>  max_penalty_trials <span class="op">=</span> <span class="fl">14</span>,</span>
 <span>  target_damage <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.2</span>, <span class="fl">0.99</span><span class="op">)</span>,</span>
 <span>  damage_distribution <span class="op">=</span> <span class="st">"right_skewed"</span>,</span>
 <span>  distribution_steepness <span class="op">=</span> <span class="st">"steep"</span>,</span>
@@ -99,19 +99,19 @@ mitochondrial counts are sampled for simulated.</p></li>
 
 <dt id="arg-penalty-range">penalty_range<a class="anchor" aria-label="anchor" href="#arg-penalty-range"></a></dt>
 <dd><p>Numerical vector of length 2 specifying the lower
-and upper limit of values tested for the ribosomal penalty.</p><ul><li><p>Default is c(0.00001, 0.5).</p></li>
+and upper limit of values tested for the ribosomal penalty.</p><ul><li><p>Default is c(0.1, 1).</p></li>
 </ul></dd>
 
 
 <dt id="arg-penalty-step">penalty_step<a class="anchor" aria-label="anchor" href="#arg-penalty-step"></a></dt>
 <dd><p>Numeric specifying the value added to each increment
-of penalty tested.</p><ul><li><p>Default is 0.005.</p></li>
+of penalty tested.</p><ul><li><p>Default is 0.05.</p></li>
 </ul></dd>
 
 
 <dt id="arg-max-penalty-trials">max_penalty_trials<a class="anchor" aria-label="anchor" href="#arg-max-penalty-trials"></a></dt>
 <dd><p>Numeric specifying the maximum number of
-iterations for the ribosomal penalty value.</p><ul><li><p>Default is 10.</p></li>
+iterations for the ribosomal penalty value.</p><ul><li><p>Default is 14.</p></li>
 </ul></dd>
 
 
@@ -244,7 +244,7 @@ generated the lowest dTNN.</p>
 <span class="r-in"><span> max_penalty_trials <span class="op">=</span> <span class="fl">1</span>,</span></span>
 <span class="r-in"><span> seed <span class="op">=</span> <span class="fl">7</span></span></span>
 <span class="r-in"><span><span class="op">)</span></span></span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Testing penalty of 1e-05...</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Testing penalty of 0.1...</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> Maximum penalty trials reached (1). Stopping.</span>
 </code></pre></div>
     </div>

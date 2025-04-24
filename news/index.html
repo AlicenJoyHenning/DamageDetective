@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">DamageDetective</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0.0.9000</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">2.0.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -49,6 +49,12 @@ installation from GitHub. CRAN submission is in progress.</li>
 <li>Fixed DOI formatting.<br></li>
 <li>Fixed spacing in the vignette.<br></li>
 <li>Ensured code lines are shorter than 80 characters for good practice.</li>
+</ul></div>
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="2.0.0" id="damagedetective-200">DamageDetective 2.0.0<a class="anchor" aria-label="anchor" href="#damagedetective-200"></a></h2>
+<ul><li>Replaced the <code>.perturb_cells()</code> function with a C++ implementation to preserve transcript-level sampling while significantly improving runtime. Core functionality remains the same, with the exception of C++-based indexing (0-based vs. 1-based in R).</li>
+<li>Introduced a clustering-based damage detection approach: cells are grouped into populations using low-resolution Seurat clustering, and extreme cytoplasmic RNA loss is simulated within each group to better model realistic damaged profiles.</li>
+<li>Updated documentation throughout the package to reflect changes in methodology, implementation, and usage.</li>
 </ul></div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside></div>
