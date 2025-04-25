@@ -14,13 +14,13 @@
 
 [**Jump to the DamageDetective website**](https://alicenjoyhenning.github.io/DamageDetective/)
 
-Damaged cells are an artifact of single-cell RNA sequencing (scRNA-seq) data formed when cells succumb to stress before, or in the process of, being sequenced. As a result, the captured gene expression no longer reflects biologically viable cells. Continuing analysis with damaged cells compromises its reliability, as functionally relevant variability becomes indistinguishable from that caused by damage. Filtering damaged cells is therefore an essential component of scRNA-seq quality control (QC).
+Damaged cells are an artifact of single-cell RNA sequencing (scRNA-seq) formed when cells succumb to stress before being sequenced. As a result, the gene expression data captured does not reflect biologically viable cells and introduces technical variability that is indistinguishable from functionally relevant variability. Filtering these cells is a standard task in scRNA-seq quality control (QC), though lacks standardisation in practice.
 
-Current approaches filter damage according to deviations in cell-level QC metrics. This outlier-based detection assumes viable cells follow a unimodal distribution where deviation is synonymous with damage. However, this assumption fails in heterogeneous scRNA-seq data where QC metrics like mitochondrial proportion and library size vary by cell type, risking filtering bias based on cell type abundance. Recent methods address this by assessing deviations within distinct distributions independently. This, however, assumes all distinct distributions are associated with viable cell populations and risks leaving abundant damage undetected. 
+The majority of approaches filter damaged cells according to deviations in cell-level QC metrics. This outlier-based detection implicitly assumes viable cells follow unimodal distributions across QC metrics, where deviation is synonymous with damage. This assumption falters in the context of heterogeneous data and risks introducing filtering bias related to cell type abundance. Recent methods address this by defining damage within distinct distributions, representing cell populations, independently. This, however, assumes all distinct distributions are associated with viable cell populations and risks leaving abundant damage undetected and ultimately misclassified. 
 
-`DamageDetective` takes a different approach, rather than detecting damage by measuring the extent to which cells deviate from one another, it measures the extent to which cells deviate from artificially damaged profiles of themselves, simulated through the probabilistic escape of cytoplasmic RNA. This is inspired by the approach of `DoubletFinder`—a high-performing tool of another prominent scRNA-seq artifact. Like `DoubletFinder`, principal component analysis is used to compute the proximity of true cells to artificial cells in the form of a proportion of nearest neighbours of artificial origin (pANN). This ranges between 0 and 1 and reflects the likelihood that a cell is damaged, providing an intuitive scale for filtering damage that is standardised across cell types, sample origin, and experimental design.
+`DamageDetective` takes a different approach, rather than detecting damage by measuring the extent to which cells deviate from one another, it measures the extent to which cells deviate from artificially damaged profiles of themselves, created through simulating cytoplasmic RNA escape–a characteristic of damage resulting from the loss of plasma membrane integrity. This is inspired by the approach of `DoubletFinder`—a high-performing tool of another prominent scRNA-seq artifact. 
 
-`DamageDetective` accepts count matrices, `Seurat` or `SingleCellExperiment` objects, and alignment files ([package tutorials](https://alicenjoyhenning.github.io/DamageDetective/articles/detection-vignette.html)) as input. Though implemented in R, `DamageDetective` provides output that is platform-agnostic and can be integrated into any existing single-cell analysis workflow.
+Like `DoubletFinder`, `DamageDetective` uses principal component analysis to compute the proximity of true cells to artificial cells. This is calculated as a proportion (pANN) of a cell's nearest neighbours that are of artificial origin, reflecting the likelihood that the cell has experienced the same cytoplasmic RNA loss as its artificial neighbours, i.e., is damaged. This score, ranging from 0 to 1, provides an intuitive scale for filtering that is standardised across cell types, sample origin, and experimental design.
 
 <br>
 
@@ -50,11 +50,11 @@ help(package = "DamageDetective")
 
 ## Quick start
 
-The demonstrations below can be followed immediately after loading the package and serve as a test to ensure all is running smoothly. For more detailed examples and explanations, please refer to the package articles available on our [website](https://alicenjoyhenning.github.io/DamageDetective/).
+This demonstration can be followed immediately after loading the package using the internal dummy dataset. For examples with true data and more detailed explanations, please refer to the package articles [website](https://alicenjoyhenning.github.io/DamageDetective/). 
 
 ### Prepare input
 
-Damage detection is carried out by the `detect_damage` function and requires a count matrix to run. We will use the dummy count matrix provided by `DamageDetective`, `test_counts`, a subset of the [(kotliarov-pbmc-2020)](10.1038/s41591-020-0769-8%5D) PBMC dataset provided in the `scRNAseq` package.
+Damage detection is carried out by the `detect_damage` function that accepts count matrices, `Seurat` or `SingleCellExperiment` objects, or alignment files ([package tutorials](https://alicenjoyhenning.github.io/DamageDetective/articles/detection-vignette.html)) as input. We will demonstrate using a dummy count matrix, `test_counts`, a subset of the [(kotliarov-pbmc-2020)](10.1038/s41591-020-0769-8%5D) PBMC dataset provided in the `scRNAseq` package.
 
 ``` r
 library(DamageDetective)
@@ -70,14 +70,10 @@ dim(test_counts)
 
 #### `ribosome_penalty`
 
-While `detect_damage` requires only a count matrix as input, there are optional parameters that control the implementation of the function. Of these, we recommend `ribosome_penalty` be adjusted for each dataset. This can be done automatically with `select_penalty` using the count matrix as input.
+While `detect_damage` requires only a count matrix as input, additional parameters control aspects of the function's computations. Of these, we recommend `ribosome_penalty` be adjusted for each dataset using the `select_penalty` function as shown below,
 
 ``` r
-penalty <- select_penalty(
-  count_matrix = test_counts,
-  stability_limit = 5,
-  seed = 7
-)
+penalty <- select_penalty(count_matrix = test_counts)
 # Testing penalty of 0.1...
 # Testing penalty of 0.15...
 # Testing penalty of 0.2...
@@ -92,23 +88,20 @@ penalty
 
 #### `filter_threshold`
 
-`DamageDetective` performs filtering using damage level scores and a threshold specifying the score above which cells will be filtered. This score reflects the estimated extent of damage in the cell and is taken directly from the proportion of cytoplasmic RNA loss simulated in the set of artificial cells that a true cell shows the greatest proximity to.
-
-By default, `DamageDetective` offers the threshold of `0.5` where values greater than `0.5` reflect more permissive filtering and values closer to `0` reflect more stringent filtering. We recommend the default but suggest that if adjustments are made, they are informed by the output `detect_damage` plots, `generate_plot = TRUE`.
+`DamageDetective` performs filtering using the proximity scores according to a threshold. By default, `DamageDetective` offers the threshold of `0.5` where values greater than `0.5` reflect more permissive filtering and values closer to `0` reflect more stringent filtering. We recommend the default, but suggest that if adjustments are made, they are informed by the output `detect_damage` plots, `generate_plot = TRUE`.
 
 <br>
 
 ### Run damage detection
 
-Damage detection is run using the count matrix and ribosomal penalty as inputs. Below we have specified `filter_counts` parameter to be `TRUE`. This will use the default `filter_threshold` to detect cells for removal and return the filtered count matrix.
+Damage detection is run as shown below, using the count matrix and ribosomal penalty as inputs. Below, we have additionally specified for `filter_counts` parameter to be `TRUE`. This will use the default `filter_threshold` to detect damaged cells for removal and return the filtered count matrix that can be used immediately afterwards for the remainder of pre-processing. Though implemented in R, `DamageDetective` provides output that is platform-agnostic and can be integrated into any existing single-cell analysis workflow.
 
 ``` r
 # Perform damage detection
 detection_results <- detect_damage(
   count_matrix = test_counts,
   ribosome_penalty = penalty,
-  filter_counts = TRUE,
-  seed = 7
+  filter_counts = TRUE
 )
 # Simulating 1e-05 and 0.08 RNA loss...
 # Simulating 0.1 and 0.3 RNA loss...
@@ -124,7 +117,7 @@ dim(detection_results$output)
 
 <br>
 
-Alternatively, if `filter_counts` is set to `FALSE`, a data frame will be given as output containing the damage scores for each barcode. This is provided for the user if they wish to interact with the `DamageDetective` results directly. From here, a user can filter their data manually, as is done by `filter_counts=TRUE` automatically.
+Alternatively, if `filter_counts` is set to `FALSE`, a data frame will be given as output containing the damage scores for each cell. This is provided for the user if they wish to interact with the `DamageDetective` results directly. From here, a user can filter their data manually, as is done by `filter_counts=TRUE` automatically.
 
 ``` r
 # Perform damage detection
@@ -160,7 +153,7 @@ dim(filtered_matrix)
 
 ## Contribute
 
-We are committed to the ongoing improvement of `DamageDetective` and encourage users to report any bugs or difficulties they encounter. Contributions that refine or challenge the assumptions and heuristics used to detect damaged cells are also welcome. You can reach out via the maintainer's email listed in the `DESCRIPTION` file or start a public discussion through  [![Issue](https://img.shields.io/badge/Issues-blue?style=flat&logo=github)](https://github.com/AlicenJoyHenning/DamageDetective/issues). 
+We are committed to the improvement of `DamageDetective` and encourage users to report any bugs or difficulties they encounter. Contributions that refine or challenge the assumptions and heuristics used to detect damaged cells are also welcome. Please reach out via the maintainer's email listed in the `DESCRIPTION` file or start a public discussion [![Issue](https://img.shields.io/badge/Issues-blue?style=flat&logo=github)](https://github.com/AlicenJoyHenning/DamageDetective/issues). 
 
 ## License 
 
