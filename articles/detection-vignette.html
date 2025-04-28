@@ -26,7 +26,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">DamageDetective</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">2.0.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">2.0.1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -63,7 +63,7 @@
   <main id="main" class="col-md-9"><div class="page-header">
       <img src="../logo.svg" class="logo" alt=""><h1>Damage cell quality control</h1>
             
-            <h4 data-toc-skip class="date">Compiled: April 25, 2025</h4>
+            <h4 data-toc-skip class="date">Compiled: April 28, 2025</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/alicenjoyhenning/DamageDetective/blob/main/vignettes/detection-vignette.Rmd" class="external-link"><code>vignettes/detection-vignette.Rmd</code></a></small>
       <div class="d-none name"><code>detection-vignette.Rmd</code></div>
@@ -541,14 +541,15 @@ fashion using the <code>select_penalty</code> function,</p>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">selected_penalty</span> <span class="op">&lt;-</span> <span class="fu">DamageDetective</span><span class="fu">::</span><span class="fu"><a href="../reference/select_penalty.html">select_penalty</a></span><span class="op">(</span></span>
 <span>  count_matrix <span class="op">=</span> <span class="va">alignment_counts</span>,</span>
-<span>  max_penalty_trials <span class="op">=</span> <span class="fl">3</span>, </span>
+<span>  max_penalty_trials <span class="op">=</span> <span class="fl">5</span>, </span>
 <span>  seed <span class="op">=</span> <span class="fl">7</span>, </span>
 <span>  verbose <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span><span class="op">)</span></span>
 <span><span class="co">#&gt; Testing penalty of 0.1...</span></span>
 <span><span class="co">#&gt; Testing penalty of 0.15...</span></span>
 <span><span class="co">#&gt; Testing penalty of 0.2...</span></span>
-<span><span class="co">#&gt; Maximum penalty trials reached (3). Stopping.</span></span>
+<span><span class="co">#&gt; Testing penalty of 0.25...</span></span>
+<span><span class="co">#&gt; Stopping early: dTNN is no longer improving.</span></span>
 <span><span class="va">selected_penalty</span></span>
 <span><span class="co">#&gt; [1] 0.15</span></span></code></pre></div>
 <p>As seen above, the <code>select_penalty</code> function generates
@@ -673,6 +674,30 @@ directly.</p>
 <span>  ribosome_penalty <span class="op">=</span> <span class="va">selected_penalty</span><span class="op">$</span><span class="va">selected_penalty</span>,</span>
 <span>  seed <span class="op">=</span> <span class="fl">7</span></span>
 <span><span class="op">)</span></span>
+<span><span class="co">#&gt; Clustering cells...</span></span>
+<span><span class="co">#&gt; Warning: The `slot` argument of `GetAssayData()` is deprecated as of SeuratObject 5.0.0.</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> Please use the `layer` argument instead.</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> The deprecated feature was likely used in the <span style="color: #0000BB;">Seurat</span> package.</span></span>
+<span><span class="co">#&gt;   Please report the issue at <span style="color: #0000BB; font-style: italic;">&lt;https://github.com/satijalab/seurat/issues&gt;</span>.</span></span>
+<span><span class="co">#&gt; <span style="color: #555555;">This warning is displayed once every 8 hours.</span></span></span>
+<span><span class="co">#&gt; <span style="color: #555555;">Call `lifecycle::last_lifecycle_warnings()` to see where this warning was</span></span></span>
+<span><span class="co">#&gt; <span style="color: #555555;">generated.</span></span></span>
+<span><span class="co">#&gt; Warning: `PackageCheck()` was deprecated in SeuratObject 5.0.0.</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> Please use `rlang::check_installed()` instead.</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> The deprecated feature was likely used in the <span style="color: #0000BB;">Seurat</span> package.</span></span>
+<span><span class="co">#&gt;   Please report the issue at <span style="color: #0000BB; font-style: italic;">&lt;https://github.com/satijalab/seurat/issues&gt;</span>.</span></span>
+<span><span class="co">#&gt; <span style="color: #555555;">This warning is displayed once every 8 hours.</span></span></span>
+<span><span class="co">#&gt; <span style="color: #555555;">Call `lifecycle::last_lifecycle_warnings()` to see where this warning was</span></span></span>
+<span><span class="co">#&gt; <span style="color: #555555;">generated.</span></span></span>
+<span><span class="co">#&gt; For a (much!) faster implementation of the Wilcoxon Rank Sum Test,</span></span>
+<span><span class="co">#&gt; (default method for FindMarkers) please install the presto package</span></span>
+<span><span class="co">#&gt; --------------------------------------------</span></span>
+<span><span class="co">#&gt; install.packages('devtools')</span></span>
+<span><span class="co">#&gt; devtools::install_github('immunogenomics/presto')</span></span>
+<span><span class="co">#&gt; --------------------------------------------</span></span>
+<span><span class="co">#&gt; After installation of presto, Seurat will automatically use the more </span></span>
+<span><span class="co">#&gt; efficient implementation (no further action necessary).</span></span>
+<span><span class="co">#&gt; This message will be shown once per session</span></span>
 <span><span class="co">#&gt; Simulating damage...</span></span>
 <span><span class="co">#&gt; PCA with log.features, mt.prop, malat1.prop</span></span>
 <span><span class="co">#&gt; Computing pANN...</span></span></code></pre></div>
@@ -681,13 +706,20 @@ directly.</p>
 <code class="sourceCode R"><span></span>
 <span><span class="co"># View output</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">detection_output</span><span class="op">$</span><span class="va">output</span><span class="op">)</span></span>
-<span><span class="co">#&gt;                                 Cells DamageDetective</span></span>
-<span><span class="co">#&gt; AAACCCAAGGAGAGTA-1 AAACCCAAGGAGAGTA-1     0.006161746</span></span>
-<span><span class="co">#&gt; AAACGCTTCAGCCCAG-1 AAACGCTTCAGCCCAG-1     0.000000000</span></span>
-<span><span class="co">#&gt; AAAGAACAGACGACTG-1 AAAGAACAGACGACTG-1     0.000000000</span></span>
-<span><span class="co">#&gt; AAAGAACCAATGGCAG-1 AAAGAACCAATGGCAG-1     0.000000000</span></span>
-<span><span class="co">#&gt; AAAGAACGTCTGCAAT-1 AAAGAACGTCTGCAAT-1     0.000000000</span></span>
-<span><span class="co">#&gt; AAAGGATAGTAGACAT-1 AAAGGATAGTAGACAT-1     0.000000000</span></span></code></pre></div>
+<span><span class="co">#&gt;                                 Cells features counts    mt.prop   rb.prop</span></span>
+<span><span class="co">#&gt; AAACCCAAGGAGAGTA-1 AAACCCAAGGAGAGTA-1     2620   8288 0.10774614 0.1263272</span></span>
+<span><span class="co">#&gt; AAACGCTTCAGCCCAG-1 AAACGCTTCAGCCCAG-1     1808   5512 0.07964441 0.3222061</span></span>
+<span><span class="co">#&gt; AAAGAACAGACGACTG-1 AAAGAACAGACGACTG-1     1562   4283 0.06187252 0.2778426</span></span>
+<span><span class="co">#&gt; AAAGAACCAATGGCAG-1 AAAGAACCAATGGCAG-1     1225   2754 0.05991285 0.2316630</span></span>
+<span><span class="co">#&gt; AAAGAACGTCTGCAAT-1 AAAGAACGTCTGCAAT-1     1831   6592 0.06614078 0.3754551</span></span>
+<span><span class="co">#&gt; AAAGGATAGTAGACAT-1 AAAGGATAGTAGACAT-1     2048   8845 0.07959299 0.4301865</span></span>
+<span><span class="co">#&gt;                    malat1 DamageDetective</span></span>
+<span><span class="co">#&gt; AAACCCAAGGAGAGTA-1    182     0.006161746</span></span>
+<span><span class="co">#&gt; AAACGCTTCAGCCCAG-1    243     0.000000000</span></span>
+<span><span class="co">#&gt; AAAGAACAGACGACTG-1    271     0.000000000</span></span>
+<span><span class="co">#&gt; AAAGAACCAATGGCAG-1    159     0.000000000</span></span>
+<span><span class="co">#&gt; AAAGAACGTCTGCAAT-1    275     0.000000000</span></span>
+<span><span class="co">#&gt; AAAGGATAGTAGACAT-1    422     0.000000000</span></span></code></pre></div>
 <p>From here, the matrix can be filtered according to a threshold damage
 value before continuing with the remainder of pre-processing steps
 required for a single cell analysis.</p>
@@ -741,7 +773,7 @@ required for a single cell analysis.</p>
 <span><span class="co">#&gt; other attached packages:</span></span>
 <span><span class="co">#&gt; [1] future_1.40.0         patchwork_1.3.0       ggplot2_3.5.2        </span></span>
 <span><span class="co">#&gt; [4] stringr_1.5.1         Seurat_5.3.0          SeuratObject_5.1.0   </span></span>
-<span><span class="co">#&gt; [7] sp_2.2-0              DamageDetective_2.0.0</span></span>
+<span><span class="co">#&gt; [7] sp_2.2-0              DamageDetective_2.0.1</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; loaded via a namespace (and not attached):</span></span>
 <span><span class="co">#&gt;   [1] RColorBrewer_1.1-3     jsonlite_2.0.0         magrittr_2.0.3        </span></span>
@@ -784,8 +816,8 @@ required for a single cell analysis.</p>
 <span><span class="co">#&gt; [112] spatstat.random_3.3-3  png_0.1-8              spatstat.univar_3.1-2 </span></span>
 <span><span class="co">#&gt; [115] parallel_4.5.0         pkgdown_2.1.1          dotCall64_1.2         </span></span>
 <span><span class="co">#&gt; [118] listenv_0.9.1          viridisLite_0.4.2      scales_1.4.0          </span></span>
-<span><span class="co">#&gt; [121] ggridges_0.5.6         e1071_1.7-16           purrr_1.0.4           </span></span>
-<span><span class="co">#&gt; [124] rlang_1.1.6            cowplot_1.1.3</span></span></code></pre>
+<span><span class="co">#&gt; [121] ggridges_0.5.6         e1071_1.7-16           crayon_1.5.3          </span></span>
+<span><span class="co">#&gt; [124] purrr_1.0.4            rlang_1.1.6            cowplot_1.1.3</span></span></code></pre>
 </div>
 <div class="section level2">
 <h2 id="references">References<a class="anchor" aria-label="anchor" href="#references"></a>
