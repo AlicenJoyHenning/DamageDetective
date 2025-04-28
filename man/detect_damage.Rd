@@ -222,6 +222,7 @@ test <- detect_damage(
   generate_plot = FALSE,
   seed = 7
 )
+
 }
 \references{
 McGinnis, C. S., Murrow, L. M., & Gartner, Z. J. (2019). DoubletFinder:

@@ -74,7 +74,7 @@
 #' @importFrom e1071 skewness
 #' @importFrom Seurat CreateSeuratObject NormalizeData ScaleData
 #' @importFrom Seurat FindVariableFeatures RunPCA FindNeighbors
-#' @importFrom Seurat FindClusters
+#' @importFrom Seurat FindClusters Idents FindMarkers
 #' @importFrom Matrix colSums Matrix
 #' @importFrom RcppHNSW hnsw_knn
 #' @importFrom dplyr %>% group_by summarise mutate case_when
@@ -93,6 +93,7 @@
 #'   generate_plot = FALSE,
 #'   seed = 7
 #' )
+#'
 detect_damage <- function(
     count_matrix,
     ribosome_penalty = 1,
@@ -118,32 +119,45 @@ detect_damage <- function(
   gene_idx <- get_organism_indices(count_matrix, organism)
 
   # Cluster cells
-  cluster_cells <- .cluster_cells(count_matrix)
+  cluster_cells_info <- .cluster_cells(count_matrix, verbose)
+  cluster_cells <- cluster_cells_info$clusters
+  seurat_object <- cluster_cells_info$object
+
+  # Identify entire damaged clusters
+  damaged_cluster_cells <- .check_clusters(cluster_cells, seurat_object,
+                                           gene_idx)
+
 
   # Generate simulations for defined damage levels
   damaged_matrices <- .simulate_damage(
-    count_matrix, cluster_cells, damage_proportion, ribosome_penalty,
+    count_matrix, cluster_cells, damaged_cluster_cells,
+    damage_proportion, ribosome_penalty,
     damage_distribution, target_damage, distribution_steepness, seed, verbose
   )
-
   matrix_combined <- .combine_matrices(damaged_matrices, count_matrix)
 
-  # Compute quality control metrics
-  metadata_stored <- .compute_qc_metrics(matrix_combined, gene_idx, ranges)
+  # Compute cell QC metrics
+  metadata_stored <- .compute_qc_metrics(matrix_combined, gene_idx)
+  metadata_stored_filtered <- metadata_stored[
+    !rownames(metadata_stored) %in% damaged_cluster_cells,
+  ]
 
   # Perform PCA and nearest neighbour search
   kN <- .find_knn(count_matrix, kN)
-  neighbour_indices <- .perform_pca(metadata_stored, pca_columns, kN, verbose)
+  neighbour_indices <- .perform_pca(metadata_stored_filtered, pca_columns, kN, verbose)
 
   # Compute pANN and scale damage levels
   metadata_plot <- .compile_pANN(
-    metadata_stored, neighbour_indices, ranges, kN, verbose
+    metadata_stored, neighbour_indices, ranges,
+    kN, verbose, damaged_cluster_cells
   )
 
   # Visualize and filter results
-  output <- .finalise_output(metadata_plot, count_matrix, filter_counts,
-                             generate_plot, display_plot, target_damage,
-                             filter_threshold, palette)
+  output <- .finalise_output(
+    metadata_plot, count_matrix, filter_counts,
+    generate_plot, display_plot, target_damage,
+    filter_threshold, palette, damaged_cluster_cells, metadata_stored
+  )
 
   return(output)
 }
@@ -162,9 +176,13 @@ detect_damage <- function(
 }
 
 .cluster_cells <- function(
-    count_matrix
+    count_matrix, verbose
 ){
+  if (verbose) {
+    message("Clustering cells...")
+  }
 
+  # Use Seurat's default workflow to identify clusters
   seurat <- suppressWarnings(CreateSeuratObject(counts = count_matrix))
   seurat <- suppressWarnings(NormalizeData(seurat, verbose = FALSE) %>%
     ScaleData(verbose = FALSE) %>%
@@ -172,12 +190,6 @@ detect_damage <- function(
     RunPCA(verbose = FALSE) %>%
     FindNeighbors(verbose = FALSE) %>%
     FindClusters(resolution = 0.1, verbose = FALSE))
-
-  # seurat$mt.percent <- PercentageFeatureSet(seurat, pattern = "^MT-")
-  # DimPlot(seurat, group.by = "seurat_clusters")
-  # ggplot(seurat@meta.data,
-  #       aes(y = mt.percent, x = nFeature_RNA, colour = seurat_clusters)) +
-  #  geom_point()
 
   # Retrieve cluster numbers present
   clusters <- table(seurat$seurat_clusters)
@@ -189,28 +201,66 @@ detect_damage <- function(
     cluster_cells[[cluster_name]] <- cells
   }
 
-  return(cluster_cells)
+  return(list(
+    clusters = cluster_cells,
+    object = seurat)
+  )
+}
+
+.check_clusters <- function(cluster_cells, seurat_object, gene_idx) {
+  Seurat::Idents(seurat_object) <- "seurat_clusters"
+
+  if (length(cluster_cells) == 1) {
+    return(NULL)
+  } else {
+
+  damaged_cells <- c()
+
+  for (cluster in names(cluster_cells)) {
+    cluster_number <- as.numeric(gsub("cluster_", "", cluster))
+
+    markers <- Seurat::FindMarkers(seurat_object,
+                           ident.1 = cluster_number,
+                           ident.2 = NULL)
+
+    markers <- subset(markers, p_val_adj <= 0.05 & avg_log2FC >= 2)
+    markers <- markers[order(-markers$avg_log2FC), ]
+    top10_genes <- rownames(head(markers, 10))
+
+    num_matches <- sum(grepl(gene_idx$mito_pattern, top10_genes))
+    if (num_matches >= 5) {
+      damaged_cells <- c(damaged_cells, cluster_cells[[cluster]])
+    }
+  }
+
+  return(unique(damaged_cells))
+
+  }
 }
 
 .simulate_damage <- function(
-    count_matrix, cluster_cells, damage_proportion, ribosome_penalty,
+    count_matrix, cluster_cells, damaged_cluster_cells,
+    damage_proportion, ribosome_penalty,
     damage_distribution, target_damage, distribution_steepness, seed, verbose
 ){
-
   if (verbose) {
     message("Simulating damage...")
   }
 
   damaged_matrices <- list()
 
-  for (i in 1:length(cluster_cells)) {
-    # Isolate cells of interest
-    cluster_name <- paste0("cluster_", i - 1)
-    matrix_subset <- count_matrix[, cluster_cells[[cluster_name]]]
+  for (cluster_name in names(cluster_cells)) {
+    cells_to_simulate <- setdiff(cluster_cells[[cluster_name]], damaged_cluster_cells)
+    if (length(cells_to_simulate) == 0) {
+      next  # Skip clusters where all cells are damaged
+    }
 
-    if (dim(matrix_subset)[2] <= 500){damage_proportion = 1}
+    matrix_subset <- count_matrix[, cells_to_simulate, drop = FALSE]
 
-    # Simulate counts
+    if (ncol(matrix_subset) <= 500) {
+      damage_proportion <- 1
+    }
+
     damaged_cells <- simulate_counts(
       count_matrix = matrix_subset,
       damage_proportion = damage_proportion,
@@ -222,21 +272,14 @@ detect_damage <- function(
       seed = seed
     )
 
-    # Extract barcodes of damaged cells
     barcodes <- damaged_cells$qc_summary %>%
       dplyr::filter(.data$Damaged_Level != 0) %>%
       dplyr::pull(.data$Cell)
 
-    damaged_matrix <- damaged_cells$matrix[, barcodes]
+    damaged_matrix <- damaged_cells$matrix[, barcodes, drop = FALSE]
+    colnames(damaged_matrix) <- paste0(colnames(damaged_matrix), "_", cluster_name)
 
-    # Append the level of damage to the barcodes
-    colnames(damaged_matrix) <- paste0(
-      colnames(damaged_matrix), "_", cluster_name
-    )
-
-    # Store the damaged matrix in the list
     damaged_matrices[[cluster_name]] <- damaged_matrix
-
   }
 
   return(damaged_matrices)
@@ -344,12 +387,18 @@ detect_damage <- function(
 }
 
 .compile_pANN <- function(
-    metadata_stored, neighbour_indices, ranges, kN, verbose
+    metadata_stored, neighbour_indices, ranges,
+    kN, verbose, damaged_cluster_cells
 ) {
   # Compute proportion of artificial neighbours
   if (verbose) {
     message("Computing pANN...")
   }
+
+  # Isolate cells where damage needs to be found
+  metadata_stored <- metadata_stored[!rownames(metadata_stored) %in%
+                                       damaged_cluster_cells, ]
+
 
   # Isolate columns & ensure cell names are present
   metadata_columns <- c("features", "counts", "mt.prop", "rb.prop",
@@ -401,7 +450,7 @@ detect_damage <- function(
   if (length(pann_cols) == 1){
     metadata_plot$pANN <- metadata_plot[[pann_cols]]
   } else {
-  metadata_plot$pANN <- apply(metadata_plot[, pann_cols], 1, max)
+    metadata_plot$pANN <- apply(metadata_plot[, pann_cols], 1, max)
   }
 
   return(metadata_plot)
@@ -410,43 +459,56 @@ detect_damage <- function(
 
 .finalise_output <- function(metadata_plot, count_matrix, filter_counts,
                              generate_plot, display_plot, target_damage,
-                             filter_threshold, palette
-) {
+                             filter_threshold, palette, damaged_cluster_cells, metadata_stored) {
 
-  # Perform min-max scaling on pANN column and assign to DamageDetective
+  # Cells with simulated damage scores
   metadata_plot$DamageDetective <-
     (metadata_plot$pANN - min(metadata_plot$pANN, na.rm = TRUE)) /
     (max(metadata_plot$pANN, na.rm = TRUE) - min(metadata_plot$pANN, na.rm = TRUE))
 
-  # Apply filtering based on the DamageDetective score
-  metadata_plot$DamageDetective_filter <- ifelse(
-    metadata_plot$DamageDetective > filter_threshold, "damaged", "cell"
-  )
-  output_columns <- c("Cells", "DamageDetective")
-  metadata_output <- metadata_plot[, output_columns]
+  simulated_output <- metadata_plot[, c("Cells", "features", "counts", "mt.prop", "rb.prop", "malat1", "DamageDetective")]
 
-  # Filter the count matrix if requested
+  # Damaged cluster cells qc metrics
+  if (!is.null(damaged_cluster_cells)){
+  damaged_metadata <- metadata_stored[rownames(metadata_stored) %in% damaged_cluster_cells, ]
+
+  damaged_output <- data.frame(
+    Cells = rownames(damaged_metadata),
+    features = damaged_metadata$features,
+    counts = damaged_metadata$counts,
+    mt.prop = damaged_metadata$mt.prop,
+    rb.prop = damaged_metadata$rb.prop,
+    malat1 = damaged_metadata$malat1,
+    DamageDetective = 1
+  )
+
+  # Combine & reorder
+  metadata_output <- rbind(simulated_output, damaged_output)
+  metadata_output <- metadata_output[match(colnames(count_matrix),
+                                           metadata_output$Cells), ]
+  } else {
+    metadata_output <- simulated_output
+    metadata_output <- metadata_output[match(colnames(count_matrix),
+                                             metadata_output$Cells), ]
+  }
+
   if (filter_counts) {
-    # Filter cells classified as "cell" (not damaged)
-    metadata_filtered <- metadata_plot %>%
-      dplyr::filter(.data$DamageDetective_filter == "cell")
-    final_filtered_cells <- metadata_filtered$Cells
-    final_filtered_matrix <- count_matrix[, final_filtered_cells]
+    filtered_cells <- metadata_output$Cells[metadata_output$DamageDetective <= filter_threshold]
+    final_filtered_matrix <- count_matrix[, filtered_cells, drop = FALSE]
     output <- final_filtered_matrix
   } else {
-    # Only return damage labels
     output <- metadata_output
   }
 
-  # Return both the output and the plot if requrested
+  # Generate plot if needed
   if (generate_plot) {
     final_plot <- plot_detection_outcome(
-      qc_summary = metadata_plot,
+      qc_summary = metadata_output,
       target_damage = target_damage,
       palette = palette
     )
 
-    if (display_plot){
+    if (display_plot) {
       print(final_plot)
     }
 
@@ -457,6 +519,5 @@ detect_damage <- function(
   }
 
   return(output)
-
 }
 

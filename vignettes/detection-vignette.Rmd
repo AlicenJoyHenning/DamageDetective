@@ -290,7 +290,7 @@ Selecting a `ribosome_penalty` that simulates RNA loss in a way that is relevant
 ```{r select_penalty}
 selected_penalty <- DamageDetective::select_penalty(
   count_matrix = alignment_counts,
-  max_penalty_trials = 3, 
+  max_penalty_trials = 5, 
   seed = 7, 
   verbose = TRUE
 )
