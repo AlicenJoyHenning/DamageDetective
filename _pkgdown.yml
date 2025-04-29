@@ -11,10 +11,12 @@ reference:
       - detect_damage
       - simulate_counts
       - select_penalty
-  - title: "Package data"
+  - title: "Internal data"
     contents:
       - test_counts
       - selected_penalty
+      - filtered_output
+      - penalty_plot
 
 articles:
   - title: "Detecting damage demonstration"
