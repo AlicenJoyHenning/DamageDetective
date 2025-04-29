@@ -41,7 +41,6 @@ Imports:
 Suggests:
     knitr,
     rmarkdown,
-    presto,
     spelling,
     testthat (>= 3.0.0)
 VignetteBuilder: knitr

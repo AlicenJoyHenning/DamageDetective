@@ -36,9 +36,18 @@ dim(test_counts)
 
 ## Libraries 
 
-```{r library_prep, message=FALSE, warning=FALSE}
+For an improvement in speed, load the `presto` package in addition to `DamageDetective`.
+
+```{r library_prep, echo=FALSE, message=FALSE, warning=FALSE}
 library(DamageDetective)
-library(presto) # speeds up aspects of computation
+```
+
+```{r library_prep_shown, eval=FALSE}
+install.packages("remotes")
+remotes::install_github("madsen-lab/valiDrops")
+
+library(DamageDetective)
+library(presto)
 ```
 
 
