@@ -55,6 +55,7 @@ input count matrix, where 'damage' is defined by the loss of cytoplasmic RNA.</p
 <span>  damage_proportion <span class="op">=</span> <span class="fl">0.15</span>,</span>
 <span>  seed <span class="op">=</span> <span class="fl">7</span>,</span>
 <span>  kN <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  resolution <span class="op">=</span> <span class="fl">0.1</span>,</span>
 <span>  generate_plot <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  display_plot <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  palette <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"grey"</span>, <span class="st">"#7023FD"</span>, <span class="st">"#E60006"</span><span class="op">)</span>,</span>
@@ -172,6 +173,13 @@ is run multiple times with the same input data and parameters.</p><ul><li><p>Def
 <dt id="arg-kn">kN<a class="anchor" aria-label="anchor" href="#arg-kn"></a></dt>
 <dd><p>Numeric describing how many nearest neighbours are considered
 for pANN calculations. kN cannot exceed the total cell number.</p><ul><li><p>Default is one third of the total cell number.</p></li>
+</ul></dd>
+
+
+<dt id="arg-resolution">resolution<a class="anchor" aria-label="anchor" href="#arg-resolution"></a></dt>
+<dd><p>Numeric controlling the number of communities found during
+clustering where values above one indicate more, smaller communities will
+be found.</p><ul><li><p>Default is 0.1</p></li>
 </ul></dd>
 
 
