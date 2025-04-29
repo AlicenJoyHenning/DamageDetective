@@ -6,13 +6,14 @@ Authors@R:
     person("Alicen", "Henning", email = "alicen.jhb@gmail.com",
     role = c("aut", "cre", "cph"),
     comment = c(ORCID = "0009-0004-0535-1624"))
-Description: Detects and filters damaged cells in single-cell RNA sequencing
-    (scRNA-seq) data using a novel approach inspired by 'DoubletFinder'. Damage
-    is detected by measuring the extent to which cells deviate from
-    artificially damaged profiles of themselves, simulated through the
-    probabilistic escape of cytoplasmic RNA. As output, a damage score
-    ranging from 0 to 1 is given for each cell providing an intuitive scale for 
-    filtering that is standardised across cell types, samples and experiments.
+Description: Detects and filters damaged cells in single-cell RNA sequencing 
+    (scRNA-seq) data using a novel approach inspired by 'DoubletFinder'. Damage 
+    is assessed by measuring how much each cell deviates from an artificially 
+    damaged version of itself, simulated through the probabilistic loss of 
+    cytoplasmic RNA. The method outputs a damage score ranging from 0 (viable,
+    intact cell) to 1 (broken, non-viable cell), providing an intuitive scale 
+    for filtering that is standardised across cell types, sample origin, and 
+    experimental design.
 License: AGPL (>= 3)
 Encoding: UTF-8
 Language: en-US
@@ -40,6 +41,7 @@ Imports:
 Suggests:
     knitr,
     rmarkdown,
+    presto,
     spelling,
     testthat (>= 3.0.0)
 VignetteBuilder: knitr

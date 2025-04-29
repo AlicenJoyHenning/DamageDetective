@@ -4,4 +4,10 @@ template:
   bootswatch: flatly
 navbar:
   bg: primary
+articles:
+  - title: "How DamageDetective Works"
+    contents:
+      - pkgdown/articles/detailed-detection-vignette.Rmd
+
+
 

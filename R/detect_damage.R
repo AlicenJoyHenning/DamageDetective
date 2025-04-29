@@ -195,7 +195,7 @@ detect_damage <- function(
   clusters <- table(seurat$seurat_clusters)
   cluster_cells <- list()
   for (cluster in names(clusters)) {
-    cells <- subset(seurat, seurat_clusters == cluster)
+    cells <- subset(seurat, subset = seurat_clusters == cluster)
     cells <- rownames(cells@meta.data)
     cluster_name <- paste0("cluster_", cluster)
     cluster_cells[[cluster_name]] <- cells
