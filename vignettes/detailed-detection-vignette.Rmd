@@ -37,7 +37,6 @@ library(Seurat)
 library(stringr)
 library(ggplot2)
 library(patchwork)
-library(presto)
 ```
 
 <br>
