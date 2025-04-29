@@ -11,9 +11,6 @@ reference:
       - detect_damage
       - simulate_counts
       - select_penalty
-  - title: "Visualisation"
-    contents:
-      - plot_outcome
   - title: "Package data"
     contents:
       - test_counts
