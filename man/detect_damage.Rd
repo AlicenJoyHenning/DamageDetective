@@ -17,6 +17,7 @@ detect_damage(
   damage_proportion = 0.15,
   seed = 7,
   kN = NULL,
+  resolution = 0.1,
   generate_plot = TRUE,
   display_plot = TRUE,
   palette = c("grey", "#7023FD", "#E60006"),
@@ -137,6 +138,13 @@ is run multiple times with the same input data and parameters.
 for pANN calculations. kN cannot exceed the total cell number.
 \itemize{
 \item Default is one third of the total cell number.
+}}
+
+\item{resolution}{Numeric controlling the number of communities found during
+clustering where values above one indicate more, smaller communities will
+be found.
+\itemize{
+\item Default is 0.1
 }}
 
 \item{generate_plot}{Boolean specifying whether the QC plot should

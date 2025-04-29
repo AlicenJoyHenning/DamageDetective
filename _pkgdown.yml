@@ -4,9 +4,25 @@ template:
   bootswatch: flatly
 navbar:
   bg: primary
+
+reference:
+  - title: "Damage detection"
+    contents:
+      - detect_damage()
+      - simulate_counts()
+      - select_penalty()
+  - title: "Visualisation"
+    contents:
+      - plot_outcome()
+  - title: "Package data"
+    contents:
+      - test_counts()
+      - selected_penalty()
+
 articles:
   - title: "Detecting damage demonstration"
     contents:
       - detailed-detection-vignette
+  - title: "Package overview"
+    contents:
       - detection-vignette
-

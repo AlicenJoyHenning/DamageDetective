@@ -36,6 +36,11 @@
 #'  above which a cell should be considered damaged.
 #'
 #'  * Default is 0.5.
+#' @param resolution Numeric controlling the number of communities found during
+#'  clustering where values above one indicate more, smaller communities will
+#'  be found.
+#'
+#'  * Default is 0.1
 #' @param pca_columns String vector containing the names of the metrics used
 #'  for principal component analysis.
 #'
@@ -107,6 +112,7 @@ detect_damage <- function(
     damage_proportion = 0.15,
     seed = 7,
     kN = NULL,
+    resolution = 0.1,
     generate_plot = TRUE,
     display_plot = TRUE,
     palette = c("grey", "#7023FD", "#E60006"),
@@ -119,7 +125,7 @@ detect_damage <- function(
   gene_idx <- get_organism_indices(count_matrix, organism)
 
   # Cluster cells
-  cluster_cells_info <- .cluster_cells(count_matrix, verbose)
+  cluster_cells_info <- .cluster_cells(count_matrix, resolution, verbose)
   cluster_cells <- cluster_cells_info$clusters
   seurat_object <- cluster_cells_info$object
 
@@ -176,7 +182,7 @@ detect_damage <- function(
 }
 
 .cluster_cells <- function(
-    count_matrix, verbose
+    count_matrix, resolution, verbose
 ){
   if (verbose) {
     message("Clustering cells...")
@@ -189,7 +195,7 @@ detect_damage <- function(
     FindVariableFeatures(verbose = FALSE) %>%
     RunPCA(verbose = FALSE) %>%
     FindNeighbors(verbose = FALSE) %>%
-    FindClusters(resolution = 0.1, verbose = FALSE))
+    FindClusters(resolution = resolution, verbose = FALSE))
 
   # Retrieve cluster numbers present
   clusters <- table(seurat$seurat_clusters)

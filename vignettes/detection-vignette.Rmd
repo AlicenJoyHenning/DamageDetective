@@ -1,8 +1,8 @@
 ---
-title: "DamageDetective Guide"
+title: "DamageDetective Overview"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{DamageDetective Guide}
+  %\VignetteIndexEntry{DamageDetective Overview}
   %\VignetteEngine{knitr::rmarkdown}
   \usepackage[utf8]{inputenc}
 date: 'Compiled: `r format(Sys.Date(), "%B %d, %Y")`'
@@ -17,7 +17,7 @@ knitr::opts_chunk$set(
 options(lifecycle_verbosity = "quiet")
 ```
 
-# Package overview
+# Package description
 
 The goal of `DamageDetective` is to simplify the process of making informed and reproducible damaged cell filtering decisions during the pre-processing of single cell RNA sequencing data.
 
