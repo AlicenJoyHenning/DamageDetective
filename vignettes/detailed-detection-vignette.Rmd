@@ -1,11 +1,11 @@
 ---
 title: "Damage cell quality control"
-output: rmarkdown::html_vignette
-vignette: >
-  %\VignetteIndexEntry{Damage cell quality control}
-  %\VignetteEngine{knitr::rmarkdown}
-  \usepackage[utf8]{inputenc}
-date: 'Compiled: `r format(Sys.Date(), "%B %d, %Y")`'
+output:
+  html_document:
+    theme: united
+    df_print: kable
+  pdf_document: default
+date: 'Compiled: `r Sys.Date()`'
 ---
 
 ```{r setup, include = FALSE}

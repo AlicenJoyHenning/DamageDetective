@@ -5,9 +5,11 @@ template:
 navbar:
   bg: primary
 articles:
-  - title: "How DamageDetective Works"
+  - title: "Detecting damage demonstration"
     contents:
-      - pkgdown/articles/detailed-detection-vignette.Rmd
+      - detailed-detection-vignette
+
+
 
 
 
