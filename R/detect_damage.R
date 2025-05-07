@@ -105,8 +105,8 @@ detect_damage <- function(
     organism = "Hsap",
     annotated_celltypes = FALSE,
     target_damage = c(0.65, 1),
-    damage_distribution = "right_skewed",
-    distribution_steepness = "moderate",
+    damage_distribution = "left_skewed",
+    distribution_steepness = "steep",
     pca_columns = c("log.features", "log.counts", "mt.prop", "rb.prop"),
     beta_shape_parameters = NULL,
     damage_proportion = 0.15,
@@ -368,11 +368,6 @@ detect_damage <- function(
     pca_columns <- c("log.features", "mt.prop", "malat1.prop")
   }
 
-  if (verbose){
-    message("PCA with ",
-            paste(pca_columns, collapse = ", "))
-  }
-
   qc_pcs <- length(pca_columns)
   metadata_pca <- metadata_stored[, pca_columns]
   pca_result <- prcomp(metadata_pca, center = TRUE, scale. = TRUE)
@@ -503,7 +498,8 @@ detect_damage <- function(
     final_filtered_matrix <- count_matrix[, filtered_cells, drop = FALSE]
     output <- final_filtered_matrix
   } else {
-    output <- metadata_output
+    final_output <- metadata_output[, c("Cells", "DamageDetective")]
+    output <- final_output
   }
 
   # Generate plot if needed

@@ -61,8 +61,12 @@ library(DamageDetective)
 library(Matrix)
 data("test_counts", package = "DamageDetective")
 dim(test_counts)
-# [1] 32738   500
 ```
+> Expected outcome, 
+> ```R 
+> [1] 32738   500
+> ```
+
 
 <br>
 
@@ -74,17 +78,19 @@ While `detect_damage` requires only a count matrix as input, additional paramete
 
 ``` r
 penalty <- select_penalty(count_matrix = test_counts)
-# Testing penalty of 0.1...
-# Testing penalty of 0.15...
-# Testing penalty of 0.2...
-# Testing penalty of 0.25...
-# Testing penalty of 0.3...
-# Testing penalty of 0.35...
-# Stopping early: dTNN is no longer improving.
-
 penalty
-# [1] 0.3
 ```
+> Expected outcome, 
+> ```R 
+> Testing penalty of 0.1...
+Testing penalty of 0.15...
+Testing penalty of 0.2...
+Testing penalty of 0.25...
+Stopping early: dTNN is no longer improving.
+>
+> 0.1
+> ```
+
 
 #### `filter_threshold`
 
@@ -103,17 +109,18 @@ detection_results <- detect_damage(
   ribosome_penalty = penalty,
   filter_counts = TRUE
 )
-# Simulating 1e-05 and 0.08 RNA loss...
-# Simulating 0.1 and 0.3 RNA loss...
-# Simulating 0.3 and 0.5 RNA loss...
-# Simulating 0.5 and 0.7 RNA loss...
-# Simulating 0.7 and 0.9 RNA loss...
-# Computing pANN...
 
 # View the resulting count matrix
 dim(detection_results$output)
-# [1] 32738   458
 ```
+> Expected outcome, 
+> ```R 
+> Clustering cells...
+Simulating damage...
+Computing pANN...
+>
+>  32738   461
+> ```
 
 <br>
 
@@ -127,29 +134,31 @@ detection_results <- detect_damage(
   filter_counts = FALSE,
   seed = 7
 )
-# Simulating cells between 1e-05 and 0.08 RNA loss...
-# Simulating cells between 0.1 and 0.3 RNA loss...
-# Simulating cells between 0.3 and 0.5 RNA loss...
-# Simulating cells between 0.5 and 0.7 RNA loss...
-# Simulating cells between 0.7 and 0.9 RNA loss...
-# Computing pANN...
 
 # View output
 print(head(detection_results$output), row.names = FALSE)
-#                     Cells DamageDetective DamageDetective_filter
-#  TCTGGAAAGCCCAACC_H1B2ln6      0.03826609                   cell
-#  CCGTTCATCGTGGGAA_H1B2ln2      0.23600000                   cell
-#  CTTCTCTTCAGCCTAA_H1B2ln1      0.05565522                   cell
-#  GGATTACAGGGATGGG_H1B2ln1      0.01044348                   cell
-#  TCTATTGTCTGGTATG_H1B2ln2      0.02435478                   cell
-#  ACGGGTCAGACAAGCC_H1B2ln6      0.27600000                   cell
 
 # Filter matrix 
 undamaged_cells <- subset(detection_results$output, DamageDetective < 0.7)
 filtered_matrix <- test_counts[, undamaged_cells$Cells]
 dim(filtered_matrix)
-# [1] 32738   458
 ```
+> Expected outcome, 
+> ```R 
+> Clustering cells...
+> Simulating damage...
+> Computing pANN...
+>
+>                      Cells DamageDetective
+> TCTGGAAAGCCCAACC_H1B2ln6               0
+> CCGTTCATCGTGGGAA_H1B2ln2               0
+> CTTCTCTTCAGCCTAA_H1B2ln1               0
+> GGATTACAGGGATGGG_H1B2ln1               0
+> TCTATTGTCTGGTATG_H1B2ln2               0
+> ACGGGTCAGACAAGCC_H1B2ln6               0
+> 
+> 32738   461
+> ```
 
 ## Contribute
 

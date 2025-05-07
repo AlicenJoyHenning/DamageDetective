@@ -134,8 +134,8 @@
 #' simulated_damage <- simulate_counts(
 #'   count_matrix = test_counts,
 #'   damage_proportion = 0.1,
-#'   ribosome_penalty = 0.01,
-#'   target_damage = c(0.5, 0.9),
+#'   ribosome_penalty = 0.25,
+#'   target_damage = c(0.8, 1),
 #'   generate_plot = FALSE
 #' )
 simulate_counts <- function(
@@ -143,8 +143,8 @@ simulate_counts <- function(
     damage_proportion = 0.15,
     annotated_celltypes = FALSE,
     target_damage = c(0.65, 1),
-    damage_distribution = "right_skewed",
-    distribution_steepness = "moderate",
+    damage_distribution = "left_skewed",
+    distribution_steepness = "steep",
     beta_shape_parameters = NULL,
     ribosome_penalty = 0.5,
     generate_plot = TRUE,
@@ -199,6 +199,12 @@ simulate_counts <- function(
   qc_summary <- .generate_qc_summary(count_matrix, damage_label, gene_idx)
 
   # Perturb selected cells ----
+  gene_idx$mito_idx <- grep(gene_idx$mito_pattern,
+                            rownames(count_matrix),
+                            value = FALSE)
+  gene_idx$ribo_idx <- grep(gene_idx$ribo_pattern,
+                            rownames(count_matrix),
+                            value = FALSE)
   count_matrix <- perturb_cells_cpp(
     count_matrix = as.matrix(count_matrix),
     damaged_cell_selections = damaged_cell_selections - 1,
@@ -210,7 +216,9 @@ simulate_counts <- function(
   )
 
   # Update QC metrics & plot simulation output ----
-  qc_summary <- .update_qc_summary(qc_summary, count_matrix, damage_label, gene_idx)
+  qc_summary <- .update_qc_summary(
+    qc_summary, count_matrix, damage_label, gene_idx
+  )
 
   if (generate_plot) {
     final_plot <- if (plot_ribosomal_penalty) {
@@ -400,6 +408,13 @@ simulate_counts <- function(
   matched_indices <- match(colnames(count_matrix), damage_label$barcode)
   total_counts <- colSums(count_matrix)
 
+  gene_idx$mito_idx <- grep(gene_idx$mito_pattern,
+                            rownames(count_matrix),
+                            value = FALSE)
+  gene_idx$ribo_idx <- grep(gene_idx$ribo_pattern,
+                            rownames(count_matrix),
+                            value = FALSE)
+
   qc_summary <- data.frame(
     Cell = colnames(count_matrix),
     Damaged_Level = as.numeric(damage_label$damage_level[matched_indices]),
@@ -418,6 +433,12 @@ simulate_counts <- function(
 .update_qc_summary <- function(
     qc_summary, count_matrix, damage_label, gene_idx) {
 
+  gene_idx$mito_idx <- grep(gene_idx$mito_pattern,
+                            rownames(count_matrix),
+                            value = FALSE)
+  gene_idx$ribo_idx <- grep(gene_idx$ribo_pattern,
+                            rownames(count_matrix),
+                            value = FALSE)
   total_counts <- colSums(count_matrix)
 
   updated_qc_summary <- data.frame(

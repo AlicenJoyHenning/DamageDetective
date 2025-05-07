@@ -9,8 +9,8 @@ simulate_counts(
   damage_proportion = 0.15,
   annotated_celltypes = FALSE,
   target_damage = c(0.65, 1),
-  damage_distribution = "right_skewed",
-  distribution_steepness = "moderate",
+  damage_distribution = "left_skewed",
+  distribution_steepness = "steep",
   beta_shape_parameters = NULL,
   ribosome_penalty = 0.5,
   generate_plot = TRUE,
@@ -177,8 +177,8 @@ data("test_counts", package = "DamageDetective")
 simulated_damage <- simulate_counts(
   count_matrix = test_counts,
   damage_proportion = 0.1,
-  ribosome_penalty = 0.01,
-  target_damage = c(0.5, 0.9),
+  ribosome_penalty = 0.25,
+  target_damage = c(0.8, 1),
   generate_plot = FALSE
 )
 }
