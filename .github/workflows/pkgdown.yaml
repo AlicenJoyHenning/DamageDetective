@@ -33,6 +33,8 @@ jobs:
 
       - uses: r-lib/actions/setup-r-dependencies@v2
         with:
+          use-public-rspm: false
+          install-args: --no-install-recommends --no-save --no-restore
           extra-packages: any::pkgdown, local::.
           needs: website
 
