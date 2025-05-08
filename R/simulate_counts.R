@@ -199,12 +199,15 @@ simulate_counts <- function(
   qc_summary <- .generate_qc_summary(count_matrix, damage_label, gene_idx)
 
   # Perturb selected cells ----
-  gene_idx$mito_idx <- grep(gene_idx$mito_pattern,
-                            rownames(count_matrix),
-                            value = FALSE)
+  gene_idx$non_mito_idx <- which(
+    !rownames(count_matrix) %in%
+      c(grep(gene_idx$mito_pattern, rownames(count_matrix), value = TRUE),
+        gene_idx$nuclear)
+  )
   gene_idx$ribo_idx <- grep(gene_idx$ribo_pattern,
                             rownames(count_matrix),
                             value = FALSE)
+
   count_matrix <- perturb_cells_cpp(
     count_matrix = as.matrix(count_matrix),
     damaged_cell_selections = damaged_cell_selections - 1,

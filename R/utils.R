@@ -77,6 +77,7 @@ get_organism_indices <- function(
     non_mito_idx = non_mito_idx,
     mito_pattern =  mito_pattern,
     ribo_pattern = ribo_pattern,
+    nuclear = nuclear,
     MALAT1 = MALAT1
   ))
 
