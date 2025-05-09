@@ -106,7 +106,6 @@ plot_detection_outcome <- function(
         barwidth = 10
       )
     ) +
-    ggplot2::scale_y_continuous(limits = c(0, 1)) +
     ggplot2::labs(x = NULL, y = "Mito. prop", color = "Damage score") +
     ggplot2::theme_minimal(base_size = 10) +
     ggplot2::theme(
