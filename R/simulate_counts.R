@@ -345,21 +345,36 @@ simulate_counts <- function(
       stop("Please ensure cell types are assigned correctly.")
     }
 
-    damage_per_type <- round(cell_type_counts * damage_proportion)
+    # Initial allocation with floor to avoid over-assignment
+    damage_per_type <- floor(cell_type_counts * damage_proportion)
     total_damaged <- sum(damage_per_type)
 
-    if (total_damaged != damaged_cell_number) {
-      diff <- damaged_cell_number - total_damaged
-      damage_per_type <- damage_per_type + round(
-        diff * damage_per_type / sum(damage_per_type)
-      )
+    # Distribute remaining damaged cells fairly
+    remaining <- damaged_cell_number - total_damaged
+    if (remaining > 0) {
+      additional <- rep(0, length(damage_per_type))
+      names(additional) <- names(damage_per_type)
+      # Prioritize cell types with the most headroom
+      priority <- order(cell_type_counts - damage_per_type, decreasing = TRUE)
+
+      for (i in seq_len(remaining)) {
+        for (p in priority) {
+          ct <- names(damage_per_type)[p]
+          if (damage_per_type[ct] < cell_type_counts[ct]) {
+            additional[ct] <- additional[ct] + 1
+            break
+          }
+        }
+      }
+
+      damage_per_type <- damage_per_type + additional
     }
 
-    damaged_cell_selections <- unlist(lapply(names(damage_per_type),
-                                             function(ct) {
+    # Sample damaged cells per type
+    damaged_cell_selections <- unlist(lapply(names(damage_per_type), function(ct) {
       cells_of_type <- which(cell_types == ct)
       withr::with_seed(seed, {
-        sample(cells_of_type, size = damage_per_type[ct], replace = FALSE)
+        sample(cells_of_type, size = min(damage_per_type[ct], length(cells_of_type)), replace = FALSE)
       })
     }))
   } else {
