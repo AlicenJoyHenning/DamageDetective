@@ -101,7 +101,6 @@ plot_detection_outcome <- function(
     ggplot2::scale_color_gradientn(
       colours = palette,
       values = scales::rescale(target_damage),
-      limits = c(0, 1),
       guide = guide_colorbar(
         title.position = "top",
         barwidth = 10
@@ -194,7 +193,6 @@ plot_altered_counts <- function(
     ggplot2::scale_color_gradientn(
       colours = palette,
       values = scales::rescale(target_damage),
-      limits = c(0, 1),
       guide = guide_colorbar(
         title.position = "top",
         barwidth = 10
@@ -349,7 +347,6 @@ plot_ribosomal_penalty <- function(
     ggplot2::scale_color_gradientn(
       colours = palette,
       values = scales::rescale(target_damage),
-      limits = c(0, 1),
       guide = guide_colorbar(
         title.position = "top",
         barwidth = 10
