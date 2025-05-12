@@ -320,14 +320,18 @@ detect_damage <- function(
     matrix_combined[
       grep(gene_idx$ribo_pattern, rownames(matrix_combined)), , drop = FALSE]
   ) / total_counts
-  malat1_expr <- matrix_combined[gene_idx$MALAT1, , drop = FALSE]
-  malat1 <- as.vector(malat1_expr)
-  malat1.prop <- Matrix::colSums(
-    matrix_combined[
-      gene_idx$MALAT1, , drop = FALSE]
-  ) / total_counts
-  malat1.arcsin <- asin(sqrt(malat1.prop))
 
+  if (gene_idx$MALAT1 %in% seq_len(nrow(matrix_combined))) {
+    malat1_expr <- matrix_combined[gene_idx$MALAT1, , drop = FALSE]
+    malat1 <- as.vector(malat1_expr)
+    malat1.prop <- Matrix::colSums(malat1_expr) / total_counts
+  } else {
+    # Create zero values if MALAT1 is not in the count matrix
+    malat1_expr <- Matrix::Matrix(0, nrow = 1, ncol = ncol(matrix_combined), sparse = TRUE)
+    malat1 <- rep(0, ncol(matrix_combined))
+    malat1.prop <- rep(0, ncol(matrix_combined))
+  }
+  malat1.arcsin <- asin(sqrt(malat1.prop))
 
   # Compile QC dataframe
   metadata_stored <- data.frame(
