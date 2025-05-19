@@ -258,7 +258,7 @@ detect_damage <- function(
   for (cluster_name in names(cluster_cells)) {
     cells_to_simulate <- setdiff(cluster_cells[[cluster_name]], damaged_cluster_cells)
     if (length(cells_to_simulate) == 0) {
-      next  # Skip clusters where all cells are damaged
+      next  # Skip clusters with immediate damaged signature
     }
 
     matrix_subset <- count_matrix[, cells_to_simulate, drop = FALSE]
