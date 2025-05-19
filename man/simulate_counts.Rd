@@ -12,7 +12,7 @@ simulate_counts(
   damage_distribution = "left_skewed",
   distribution_steepness = "steep",
   beta_shape_parameters = NULL,
-  ribosome_penalty = 0.5,
+  ribosome_penalty = 1,
   generate_plot = TRUE,
   palette = c("grey", "#7023FD", "#E60006"),
   plot_ribosomal_penalty = FALSE,
@@ -44,7 +44,7 @@ Here, damage refers to the amount of cytoplasmic RNA lost by a cell where
 values closer to 1 indicate more loss and therefore more heavily damaged
 cells.
 \itemize{
-\item Default is c(0.1, 0.8)
+\item Default is c(0.65, 1)
 }}
 
 \item{damage_distribution}{String specifying whether the distribution of
@@ -55,7 +55,7 @@ a symmetric distribution between them. There are three valid options:
 \item "right_skewed"
 \item "left_skewed"
 \item "symmetric"
-\item Default is "right_skewed"
+\item Default is "left_skewed"
 }}
 
 \item{distribution_steepness}{String specifying how concentrated the spread
@@ -66,7 +66,7 @@ apparent skewness.There are three valid options:
 \item "shallow"
 \item "moderate"
 \item "steep"
-\item Default is "moderate"
+\item Default is "steep"
 }}
 
 \item{beta_shape_parameters}{Numeric vector that allows for the shape
@@ -82,7 +82,7 @@ offer.
 probability of loosing a transcript from a ribosomal gene is multiplied by.
 Here, values closer to 0 represent a greater penalty.
 \itemize{
-\item Default is 0.01.
+\item Default is 1.
 }}
 
 \item{generate_plot}{Boolean specifying whether the QC plot should
