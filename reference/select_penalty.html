@@ -117,7 +117,7 @@ iterations for the ribosomal penalty value.</p><ul><li><p>Default is 14.</p></li
 the level of damage that will be introduced.</p>
 <p>Here, damage refers to the amount of cytoplasmic RNA lost by a cell where
 values closer to 1 indicate more loss and therefore more heavily damaged
-cells.</p><ul><li><p>Default is c(0.1, 0.8)</p></li>
+cells.</p><ul><li><p>Default is c(0.65, 1)</p></li>
 </ul></dd>
 
 
@@ -128,7 +128,7 @@ upper or lower range of damage specified in 'target_damage' or follow
 a symmetric distribution between them. There are three valid options:</p><ul><li><p>"right_skewed"</p></li>
 <li><p>"left_skewed"</p></li>
 <li><p>"symmetric"</p></li>
-<li><p>Default is "right_skewed"</p></li>
+<li><p>Default is "left_skewed"</p></li>
 </ul></dd>
 
 
@@ -139,7 +139,7 @@ of damaged cells are about the mean of the target distribution specified in
 apparent skewness.There are three valid options:</p><ul><li><p>"shallow"</p></li>
 <li><p>"moderate"</p></li>
 <li><p>"steep"</p></li>
-<li><p>Default is "moderate"</p></li>
+<li><p>Default is "steep"</p></li>
 </ul></dd>
 
 
@@ -189,7 +189,7 @@ tested. This allows insight into how the penalty was selected.</p><ul><li><p>Def
 <dt id="arg-ribosome-penalty">ribosome_penalty<a class="anchor" aria-label="anchor" href="#arg-ribosome-penalty"></a></dt>
 <dd><p>Numeric specifying the factor by which the
 probability of loosing a transcript from a ribosomal gene is multiplied by.
-Here, values closer to 0 represent a greater penalty.</p><ul><li><p>Default is 0.01.</p></li>
+Here, values closer to 0 represent a greater penalty.</p><ul><li><p>Default is 1.</p></li>
 </ul></dd>
 
 
