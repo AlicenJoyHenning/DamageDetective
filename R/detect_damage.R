@@ -255,15 +255,20 @@ detect_damage <- function(
 
   damaged_matrices <- list()
 
+  # Skip clusters with immediate damaged signature
   for (cluster_name in names(cluster_cells)) {
     cells_to_simulate <- setdiff(cluster_cells[[cluster_name]], damaged_cluster_cells)
     if (length(cells_to_simulate) == 0) {
-      next  # Skip clusters with immediate damaged signature
+      next
     }
 
     matrix_subset <- count_matrix[, cells_to_simulate, drop = FALSE]
 
-    if (ncol(matrix_subset) <= 500) {
+    # Calculate proportion of damage so that 1000 cells are simulated
+    damage_proportion <- 1000 / ncol(count_matrix)
+
+    # Simulate all if very few cells available
+    if (ncol(matrix_subset) <= 1000) {
       damage_proportion <- 1
     }
 
