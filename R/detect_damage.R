@@ -120,7 +120,7 @@ detect_damage <- function(
     palette = c("grey", "#7023FD", "#E60006"),
     filter_threshold = 0.5,
     filter_counts = FALSE,
-    parallel_threshold = 5000,
+    parallel_threshold = 3000,
     verbose = TRUE
 ) {
   # Data preparation
