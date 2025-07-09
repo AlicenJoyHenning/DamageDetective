@@ -9,20 +9,20 @@ detect_damage(
   ribosome_penalty = 1,
   organism = "Hsap",
   annotated_celltypes = FALSE,
-  target_damage = c(0.65, 1),
+  target_damage = c(0.7, 1),
   damage_distribution = "left_skewed",
   distribution_steepness = "steep",
-  pca_columns = c("log.features", "log.counts", "mt.prop", "rb.prop"),
+  qc_columns = c("mt.prop"),
   beta_shape_parameters = NULL,
   damage_proportion = 0.15,
   seed = 7,
-  kN = NULL,
   resolution = 0.1,
   generate_plot = TRUE,
   display_plot = TRUE,
   palette = c("grey", "#7023FD", "#E60006"),
   filter_threshold = 0.5,
   filter_counts = FALSE,
+  parallel_threshold = 5000,
   verbose = TRUE
 )
 }
@@ -94,7 +94,7 @@ apparent skewness.There are three valid options:
 \item Default is "steep"
 }}
 
-\item{pca_columns}{String vector containing the names of the metrics used
+\item{qc_columns}{String vector containing the names of the metrics used
 for principal component analysis.
 
 There are 8 options:
@@ -132,12 +132,6 @@ and perturbation processes produce the same results when the function
 is run multiple times with the same input data and parameters.
 \itemize{
 \item Default is 7.
-}}
-
-\item{kN}{Numeric describing how many nearest neighbours are considered
-for pANN calculations. kN cannot exceed the total cell number.
-\itemize{
-\item Default is one third of the total cell number.
 }}
 
 \item{resolution}{Numeric controlling the number of communities found during
@@ -182,6 +176,14 @@ barcodes and their associated label as either 'damaged' or 'cell'
 is returned.
 \itemize{
 \item Default is FALSE.
+}}
+
+\item{parallel_threshold}{Numeric specifying the maximum number of cells
+for which parallel processing will be used. For datasets larger than this
+threshold, sequential processing will be used to avoid memory issues with
+large data exports to parallel workers.
+\itemize{
+\item Default is 10000.
 }}
 
 \item{verbose}{Boolean specifying whether messages and function progress

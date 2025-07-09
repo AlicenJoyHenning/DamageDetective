@@ -41,7 +41,7 @@
 #'  be found.
 #'
 #'  * Default is 0.1
-#' @param pca_columns String vector containing the names of the metrics used
+#' @param qc_columns String vector containing the names of the metrics used
 #'  for principal component analysis.
 #'
 #'  There are 8 options:
@@ -55,10 +55,6 @@
 #'   - malat1
 #'
 #' Default is c("log.features", "log.counts", "mt.prop", "rb.prop").
-#' @param kN Numeric describing how many nearest neighbours are considered
-#'  for pANN calculations. kN cannot exceed the total cell number.
-#'
-#'  * Default is one third of the total cell number.
 #' @param filter_counts Boolean specifying whether the output matrix
 #'  should be filtered, returned containing only cells that fall below
 #'  the filter threshold. Alternatively, a data frame containing cell
@@ -75,6 +71,12 @@
 #'  should be displayed in the console.
 #'
 #'  * Default is TRUE.
+#' @param parallel_threshold Numeric specifying the maximum number of cells
+#'  for which parallel processing will be used. For datasets larger than this
+#'  threshold, sequential processing will be used to avoid memory issues with
+#'  large data exports to parallel workers.
+#'
+#'  * Default is 10000.
 #' @return Filtered matrix or data frame containing damage labels.
 #' @importFrom e1071 skewness
 #' @importFrom Seurat CreateSeuratObject NormalizeData ScaleData
@@ -88,6 +90,7 @@
 #' @importFrom rlang expr !!! .data
 #' @importFrom stats prcomp
 #' @importFrom stringr str_extract
+#' @importFrom future.apply future_lapply
 #' @export
 #' @examples
 #' data("test_counts", package = "DamageDetective")
@@ -104,20 +107,20 @@ detect_damage <- function(
     ribosome_penalty = 1,
     organism = "Hsap",
     annotated_celltypes = FALSE,
-    target_damage = c(0.65, 1),
+    target_damage = c(0.7, 1),
     damage_distribution = "left_skewed",
     distribution_steepness = "steep",
-    pca_columns = c("log.features", "log.counts", "mt.prop", "rb.prop"),
+    qc_columns = c( "mt.prop"),
     beta_shape_parameters = NULL,
     damage_proportion = 0.15,
     seed = 7,
-    kN = NULL,
     resolution = 0.1,
     generate_plot = TRUE,
     display_plot = TRUE,
     palette = c("grey", "#7023FD", "#E60006"),
     filter_threshold = 0.5,
     filter_counts = FALSE,
+    parallel_threshold = 5000,
     verbose = TRUE
 ) {
   # Data preparation
@@ -131,14 +134,15 @@ detect_damage <- function(
 
   # Identify entire damaged clusters
   damaged_cluster_cells <- .check_clusters(cluster_cells, seurat_object,
-                                           gene_idx)
+                                           gene_idx, verbose)
 
 
   # Generate simulations for defined damage levels
   damaged_matrices <- .simulate_damage(
     count_matrix, cluster_cells, damaged_cluster_cells,
-    damage_proportion, ribosome_penalty,
-    damage_distribution, target_damage, distribution_steepness, seed, verbose
+    damage_proportion, ribosome_penalty, organism,
+    damage_distribution, target_damage, distribution_steepness, seed, verbose,
+    parallel_threshold
   )
   matrix_combined <- .combine_matrices(damaged_matrices, count_matrix)
 
@@ -149,20 +153,31 @@ detect_damage <- function(
   ]
 
   # Perform PCA and nearest neighbour search
-  kN <- .find_knn(count_matrix, kN)
-  neighbour_indices <- .perform_pca(metadata_stored_filtered, pca_columns, kN, verbose)
+  metadata_compared <- .compare_qc(
+    metadata_stored = metadata_stored_filtered,
+    qc_columns = qc_columns,
+    seurat_object = seurat_object,
+    verbose = verbose
+  )
 
   # Compute pANN and scale damage levels
-  metadata_plot <- .compile_pANN(
-    metadata_stored, neighbour_indices, ranges,
-    kN, verbose, damaged_cluster_cells
+  metadata_plot <- .compile_metadata(
+    metadata_compared = metadata_compared,
+    damaged_cluster_cells = damaged_cluster_cells,
+    verbose = verbose
   )
 
   # Visualize and filter results
   output <- .finalise_output(
-    metadata_plot, count_matrix, filter_counts,
-    generate_plot, display_plot, target_damage,
-    filter_threshold, palette, damaged_cluster_cells, metadata_stored
+    metadata_plot = metadata_plot,
+    count_matrix = count_matrix,
+    filter_counts = filter_counts,
+    generate_plot = generate_plot,
+    display_plot = display_plot,
+    target_damage = target_damage,
+    filter_threshold = filter_threshold,
+    palette = palette,
+    damaged_cluster_cells = damaged_cluster_cells
   )
 
   return(output)
@@ -189,13 +204,14 @@ detect_damage <- function(
   }
 
   # Use Seurat's default workflow to identify clusters
+  options(Seurat.threads = parallel::detectCores())
   seurat <- suppressWarnings(CreateSeuratObject(counts = count_matrix))
   seurat <- suppressWarnings(NormalizeData(seurat, verbose = FALSE) %>%
     ScaleData(verbose = FALSE) %>%
     FindVariableFeatures(verbose = FALSE) %>%
-    RunPCA(verbose = FALSE) %>%
-    FindNeighbors(verbose = FALSE) %>%
-    FindClusters(resolution = resolution, verbose = FALSE))
+    RunPCA(verbose = FALSE, dims = 1:10) %>%
+    FindNeighbors(verbose = FALSE, dims = 1:10) %>%
+    FindClusters(resolution = resolution, verbose = FALSE, dims = 1:10))
 
   # Retrieve cluster numbers present
   clusters <- table(seurat$seurat_clusters)
@@ -213,7 +229,11 @@ detect_damage <- function(
   )
 }
 
-.check_clusters <- function(cluster_cells, seurat_object, gene_idx) {
+.check_clusters <- function(cluster_cells, seurat_object, gene_idx, verbose) {
+  if (verbose) {
+    message("Checking clustering signal...")
+  }
+
   Seurat::Idents(seurat_object) <- "seurat_clusters"
 
   if (length(cluster_cells) == 1) {
@@ -246,51 +266,138 @@ detect_damage <- function(
 
 .simulate_damage <- function(
     count_matrix, cluster_cells, damaged_cluster_cells,
-    damage_proportion, ribosome_penalty,
-    damage_distribution, target_damage, distribution_steepness, seed, verbose
+    damage_proportion, ribosome_penalty, organism,
+    damage_distribution, target_damage, distribution_steepness, seed, verbose,
+    parallel_threshold
 ){
   if (verbose) {
     message("Simulating damage...")
   }
 
-  damaged_matrices <- list()
+  # Filter out clusters with no cells to simulate
+  valid_clusters <- names(cluster_cells)[
+    vapply(names(cluster_cells), function(cluster_name) {
+      cells_to_simulate <- setdiff(cluster_cells[[cluster_name]], damaged_cluster_cells)
+      length(cells_to_simulate) > 0
+    }, logical(1))
+  ]
 
-  # Skip clusters with immediate damaged signature
-  for (cluster_name in names(cluster_cells)) {
-    cells_to_simulate <- setdiff(cluster_cells[[cluster_name]], damaged_cluster_cells)
-    if (length(cells_to_simulate) == 0) {
-      next
+  if (length(valid_clusters) == 0) {
+    return(list())
+  }
+
+  # Check if the dataset is large and decide on parallelization strategy
+  total_cells <- ncol(count_matrix)
+  use_parallel <- total_cells <= parallel_threshold
+
+  if (use_parallel) {
+    # For smaller datasets, prepare cluster-specific data to minimize exports
+    cluster_data <- lapply(valid_clusters, function(cluster_name) {
+      cells_to_simulate <- setdiff(cluster_cells[[cluster_name]], damaged_cluster_cells)
+      matrix_subset <- count_matrix[, cells_to_simulate, drop = FALSE]
+
+      # Calculate damage proportion
+      cells <- ncol(matrix_subset)
+      damage_prop <- if (cells <= 1000) {
+        0.7
+      } else if (cells <= 2000) {
+        0.25
+      } else if (cells <= 5000) {
+        0.2
+      } else {
+        0.1
+      }
+
+      cluster_seed <- seed + as.numeric(gsub("cluster_", "", cluster_name))
+
+      list(
+        matrix_subset = matrix_subset,
+        damage_prop = damage_prop,
+        cluster_seed = cluster_seed,
+        cluster_name = cluster_name
+      )
+    })
+    names(cluster_data) <- valid_clusters
+
+    # Process clusters in parallel using future.apply with pre-prepared data
+    damaged_matrices <- future.apply::future_lapply(cluster_data, function(data) {
+      damaged_cells <- simulate_counts(
+        count_matrix = data$matrix_subset,
+        damage_proportion = data$damage_prop,
+        target_damage = target_damage,
+        ribosome_penalty = ribosome_penalty,
+        damage_distribution = damage_distribution,
+        distribution_steepness = distribution_steepness,
+        generate_plot = FALSE,
+        organism = organism,
+        seed = data$cluster_seed
+      )
+
+      barcodes <- damaged_cells$qc_summary %>%
+        dplyr::filter(.data$Damaged_Level != 0) %>%
+        dplyr::pull(.data$Cell)
+
+      damaged_matrix <- damaged_cells$matrix[, barcodes, drop = FALSE]
+      colnames(damaged_matrix) <- paste0(colnames(damaged_matrix), "_", data$cluster_name)
+
+      return(damaged_matrix)
+    }, future.seed = TRUE)
+  } else {
+    # For large datasets, fall back to sequential processing
+    if (verbose) {
+      message("Large dataset detected. Using sequential processing to avoid memory issues.")
     }
 
-    matrix_subset <- count_matrix[, cells_to_simulate, drop = FALSE]
+    damaged_matrices <- list()
+    for (cluster_name in valid_clusters) {
+      cells_to_simulate <- setdiff(cluster_cells[[cluster_name]], damaged_cluster_cells)
+      matrix_subset <- count_matrix[, cells_to_simulate, drop = FALSE]
 
-    # Calculate proportion of damage so that 1000 cells are simulated
-    damage_proportion <- 1000 / ncol(count_matrix)
+      # Simulate all as many as feasible without taking too long
+      cells <- ncol(matrix_subset)
+      damage_prop <- if (cells <= 1000) {
+        1
+      } else if (cells <= 2000) {
+        0.5
+      } else if (cells <= 5000) {
+        0.2
+      } else {
+        0.1
+      }
 
-    # Simulate all if very few cells available
-    if (ncol(matrix_subset) <= 1000) {
-      damage_proportion <- 1
+      # if (verbose) {
+      #   message("Processing cluster ", cluster_name, " with damage proportion: ", damage_prop)
+      # }
+
+      # Use unique seed for each cluster to ensure reproducibility
+      cluster_seed <- seed + as.numeric(gsub("cluster_", "", cluster_name))
+
+      damaged_cells <- simulate_counts(
+        count_matrix = matrix_subset,
+        damage_proportion = damage_prop,
+        target_damage = target_damage,
+        ribosome_penalty = ribosome_penalty,
+        damage_distribution = damage_distribution,
+        distribution_steepness = distribution_steepness,
+        generate_plot = FALSE,
+        organism = organism,
+        seed = cluster_seed
+      )
+
+      barcodes <- damaged_cells$qc_summary %>%
+        dplyr::filter(.data$Damaged_Level != 0) %>%
+        dplyr::pull(.data$Cell)
+
+      damaged_matrix <- damaged_cells$matrix[, barcodes, drop = FALSE]
+      colnames(damaged_matrix) <- paste0(colnames(damaged_matrix), "_", cluster_name)
+
+      damaged_matrices[[cluster_name]] <- damaged_matrix
     }
+  }
 
-    damaged_cells <- simulate_counts(
-      count_matrix = matrix_subset,
-      damage_proportion = damage_proportion,
-      target_damage = target_damage,
-      ribosome_penalty = ribosome_penalty,
-      damage_distribution = damage_distribution,
-      distribution_steepness = distribution_steepness,
-      generate_plot = FALSE,
-      seed = seed
-    )
-
-    barcodes <- damaged_cells$qc_summary %>%
-      dplyr::filter(.data$Damaged_Level != 0) %>%
-      dplyr::pull(.data$Cell)
-
-    damaged_matrix <- damaged_cells$matrix[, barcodes, drop = FALSE]
-    colnames(damaged_matrix) <- paste0(colnames(damaged_matrix), "_", cluster_name)
-
-    damaged_matrices[[cluster_name]] <- damaged_matrix
+  # Name the list elements (if not already named)
+  if (use_parallel) {
+    names(damaged_matrices) <- valid_clusters
   }
 
   return(damaged_matrices)
@@ -299,15 +406,15 @@ detect_damage <- function(
 .combine_matrices <- function(damaged_matrices, count_matrix) {
   matrix_updated <- do.call(cbind, damaged_matrices)
   matrix_combined <- cbind(matrix_updated, count_matrix)
-  matrix_combined <- matrix_combined[, unique(colnames(matrix_combined))]
+  #matrix_combined <- matrix_combined[, unique(colnames(matrix_combined))]
   return(matrix_combined)
 }
 
-.compute_qc_metrics <- function(matrix_combined, gene_idx, ranges) {
+.compute_qc_metrics <- function(matrix_combined, gene_idx) {
 
   # Mark damaged cells as 1 and true as 0
   Damage_level <- str_extract(colnames(matrix_combined), "cluster_\\d+")
-  Damage_level <- ifelse(is.na(Damage_level), "true", Damage_level)
+  Damage_level <- ifelse(is.na(Damage_level), "true", Damage_level) # true cells identified
 
   # Compute QC metrics
   features <- Matrix::colSums(matrix_combined > 0)
@@ -338,7 +445,7 @@ detect_damage <- function(
   }
   malat1.arcsin <- asin(sqrt(malat1.prop))
 
-  # Compile QC dataframe
+  # Compile QC data frame
   metadata_stored <- data.frame(
     features = features,
     log.features = log.features,
@@ -356,165 +463,139 @@ detect_damage <- function(
   return(metadata_stored)
 }
 
-.find_knn <- function(count_matrix, kN) {
-  if (is.null(kN)) {
-    kN <- round(dim(count_matrix)[2] / 5, 0)
-  }
-  return(kN)
-}
-
-.perform_pca <- function(metadata_stored, pca_columns, kN, verbose) {
-
-  # Adjust heavily skewed data
-  skew_test <- e1071::skewness(metadata_stored$mt.prop) > 1.5
-  if (skew_test){
-    pca_columns <- c("log.features", "log.counts", "mt.logit", "rb.prop")
+.compare_qc <- function(metadata_stored, qc_columns, seurat_object, verbose) {
+  if (verbose){
+    message("Comparing QC metrics...")
   }
 
   # Test for high expression of MALAT1
   malat_test <- (max(metadata_stored$malat1.prop) > 0.5)
   if (malat_test){
-    pca_columns <- c("log.features", "mt.prop", "malat1.prop")
+    qc_columns <- append("malat1.prop", qc_columns)
   }
 
-  qc_pcs <- length(pca_columns)
-  metadata_pca <- metadata_stored[, pca_columns]
-  pca_result <- prcomp(metadata_pca, center = TRUE, scale. = TRUE)
-  RcppHNSW::hnsw_knn(pca_result$x[, 1:qc_pcs], k = kN)$idx
+  # Add original cluster label to true cells
+  metadata_stored$true_cluster <- suppressWarnings(ifelse(
+    row.names(metadata_stored) %in% colnames(seurat_object),
+    seurat_object$seurat_clusters[match(row.names(metadata_stored),
+                                        colnames(seurat_object))],
+    "artificial"
+  ))
+  metadata_stored$true_cluster <- suppressWarnings(paste0("cluster_",
+                 as.numeric(metadata_stored$true_cluster) - 1))
+
+  # Prepare empty column for storage
+  metadata_stored$QC_position <- 0
+
+  # Compare distribution in each cluster for matching true & artificial cells
+  clusters <- unique(metadata_stored$Damage_level)
+  clusters <- setdiff(clusters, "true")
+
+  for (cluster in clusters){
+    QC_position <- list()
+
+    # Find means of QC metric of interest for artificial & true populations
+    for(qc_column in qc_columns){
+      # Find the means for each group
+      true_QC_mean <- mean(
+        metadata_stored[
+          metadata_stored$true_cluster == cluster,
+          qc_column, drop = TRUE]
+      )
+
+      artificial_QC_mean <- mean(
+        metadata_stored[
+          metadata_stored$Damage_level == cluster,
+          qc_column, drop = TRUE]
+      )
+
+      # Compute the position of a true cell value relative to the two means
+      true_values <- metadata_stored[
+        metadata_stored$true_cluster == cluster,
+        qc_column, drop = TRUE]
+
+      # Direct comparison adjusted to meet assumptions of damage
+      rescaled_values <- numeric(length(true_values))
+      if (qc_column %in% c("mt.prop", "malat1.prop")){
+        rescaled_values[true_values <= true_QC_mean] <- 0
+        rescaled_values[true_values >= artificial_QC_mean] <- 1
+        in_range <- which(true_values > true_QC_mean & true_values
+                          < artificial_QC_mean)
+        rescaled_values[in_range] <- (true_values[in_range] - true_QC_mean) /
+          (artificial_QC_mean - true_QC_mean)
+      } else {
+        rescaled_values[true_values >= true_QC_mean] <- 0
+        rescaled_values[true_values <= artificial_QC_mean] <- 1
+        in_range <- which(true_values > artificial_QC_mean & true_values < true_QC_mean)
+        rescaled_values[in_range] <- (true_values[in_range] - true_QC_mean) /
+          (artificial_QC_mean - true_QC_mean)
+      }
+      # Store outcome for each metric
+      QC_position[[qc_column]] <- rescaled_values
+    }
+
+    # Find mean across QC metrics
+    QC_position_df <- as.data.frame(QC_position)
+    QC_position_values <- rowMeans(QC_position_df, na.rm = TRUE)
+    metadata_stored[metadata_stored$true_cluster == cluster, ]$QC_position <-
+      QC_position_values
+  }
+  return(metadata_stored)
 }
 
-.compute_pANN <- function(barcode_set, metadata_stored, neighbour_indices, kN) {
-  vapply(rownames(metadata_stored), function(cell) {
 
-    # Get the neighbours for the cell (excluding itself)
-    index <- which(rownames(metadata_stored) == cell)
-    neighbours <- neighbour_indices[index, -1]
-    neighbour_barcodes <- rownames(metadata_stored)[neighbours]
-
-    # Compute proportion of neighbours in the barcode set
-    sum(neighbour_barcodes %in% barcode_set) / kN
-  }, FUN.VALUE = numeric(1))
-}
-
-.compile_pANN <- function(
-    metadata_stored, neighbour_indices, ranges,
-    kN, verbose, damaged_cluster_cells
+.compile_metadata <- function(
+    metadata_compared, damaged_cluster_cells, verbose
 ) {
   # Compute proportion of artificial neighbours
   if (verbose) {
-    message("Computing pANN...")
+    message("Compiling output...")
   }
 
-  # Isolate cells where damage needs to be found
-  metadata_stored <- metadata_stored[!rownames(metadata_stored) %in%
-                                       damaged_cluster_cells, ]
+  # If present, mark damaged cluster highly
+  metadata_compared$QC_position <- ifelse(
+    metadata_compared$Damage_level %in% damaged_cluster_cells, 1,
+    metadata_compared$QC_position)
 
+  # Isolate true cells
+  metadata_compared <- subset(metadata_compared,
+                            metadata_compared$Damage_level == "true")
+  metadata_compared$Damage_level <- NULL
 
-  # Isolate columns & ensure cell names are present
-  metadata_columns <- c("features", "counts", "mt.prop", "rb.prop",
-                        "malat1", "Damage_level")
-
-  metadata_plot <- metadata_stored[, metadata_columns]
-  metadata_plot$Cells <- rownames(metadata_stored)
-  metadata_plot$Damage_level <- as.character(metadata_plot$Damage_level)
-
-  # Retrieve barcodes based on each artificial cluster
-  clusters <- unique(metadata_plot$Damage_level)
-  clusters <- clusters[clusters != "true"]
-
-  barcodes <- list()
-  for (cluster in clusters) {
-    barcodes[[cluster]] <- metadata_plot$Cells[metadata_plot$Damage_level
-                                               == cluster]
-  }
-
-  # Compute proportion of neighbours for each artificial cluster
-  pANN_names <- c()
-  for (cluster in clusters) {
-    pANN_name <- paste0("pANN_", cluster)
-    pANN_names <- append(pANN_name, pANN_names)
-    metadata_plot[[pANN_name]] <- .compute_pANN(
-      barcodes[[cluster]], metadata_stored, neighbour_indices, kN
-    )
-  }
-
-  # Normalize according to the population size of each artificial cluster
-  n_artificial <- sum(metadata_plot$Damage_level != "true")
-  cluster_sizes <- table(metadata_plot$Damage_level)
-  cluster_sizes <- subset(cluster_sizes, names(cluster_sizes) != "true")
-  cluster_proportions <- cluster_sizes / n_artificial
-
-  # Isolate true cells & define relevant columns
-  metadata_plot <- metadata_plot %>%
-    dplyr::filter(.data$Damage_level == "true")
-
-  for (cluster in clusters){
-    cluster_name <- paste0("pANN_", cluster)
-    metadata_plot[[cluster_name]] <- metadata_plot[[cluster_name]] /
-      cluster_proportions[[cluster]]
-  }
-
-  # Assign the value of the highest pANN
-  pann_cols <- grep("^pANN_cluster_", colnames(metadata_plot), value = TRUE)
-
-  if (length(pann_cols) == 1){
-    metadata_plot$pANN <- metadata_plot[[pann_cols]]
-  } else {
-    metadata_plot$pANN <- apply(metadata_plot[, pann_cols], 1, max)
-  }
-
-  return(metadata_plot)
+  return(metadata_compared)
 
 }
 
 .finalise_output <- function(metadata_plot, count_matrix, filter_counts,
                              generate_plot, display_plot, target_damage,
-                             filter_threshold, palette, damaged_cluster_cells, metadata_stored) {
+                             filter_threshold, palette, damaged_cluster_cells) {
 
-  # Cells with simulated damage scores
-  metadata_plot$DamageDetective <-
-    (metadata_plot$pANN - min(metadata_plot$pANN, na.rm = TRUE)) /
-    (max(metadata_plot$pANN, na.rm = TRUE) - min(metadata_plot$pANN, na.rm = TRUE))
+  # Clean the output columns
+  metadata_plot$DamageDetective <- metadata_plot$QC_position
+  metadata_plot <- metadata_plot[,
+    c("features", "counts", "mt.prop", "rb.prop", "malat1", "DamageDetective"),
+    drop = FALSE]
 
-  simulated_output <- metadata_plot[, c("Cells", "features", "counts", "mt.prop", "rb.prop", "malat1", "DamageDetective")]
-
-  # Damaged cluster cells qc metrics
-  if (!is.null(damaged_cluster_cells)){
-  damaged_metadata <- metadata_stored[rownames(metadata_stored) %in% damaged_cluster_cells, ]
-
-  damaged_output <- data.frame(
-    Cells = rownames(damaged_metadata),
-    features = damaged_metadata$features,
-    counts = damaged_metadata$counts,
-    mt.prop = damaged_metadata$mt.prop,
-    rb.prop = damaged_metadata$rb.prop,
-    malat1 = damaged_metadata$malat1,
-    DamageDetective = 1
-  )
-
-  # Combine & reorder
-  metadata_output <- rbind(simulated_output, damaged_output)
-  metadata_output <- metadata_output[match(colnames(count_matrix),
-                                           metadata_output$Cells), ]
-  } else {
-    metadata_output <- simulated_output
-    metadata_output <- metadata_output[match(colnames(count_matrix),
-                                             metadata_output$Cells), ]
-  }
 
   if (filter_counts) {
-    filtered_cells <- metadata_output$Cells[metadata_output$DamageDetective <= filter_threshold]
+    filtered_data <- subset(
+      metadata_plot,
+      metadata_plot$DamageDetective <= filter_threshold)
+    filtered_cells <- rownames(filtered_data)
     final_filtered_matrix <- count_matrix[, filtered_cells, drop = FALSE]
     output <- final_filtered_matrix
+
   } else {
-    final_output <- metadata_output[, c("Cells", "DamageDetective")]
+    final_output <- metadata_plot[, c("DamageDetective"), drop = FALSE]
+    row.names(final_output) <- row.names(metadata_plot)
     output <- final_output
   }
 
-  # Generate plot if needed
+  # Generate plot if specified
+  target_damage <- 0.5
   if (generate_plot) {
     final_plot <- plot_detection_outcome(
-      qc_summary = metadata_output,
+      qc_summary = metadata_plot,
       target_damage = target_damage,
       palette = palette
     )

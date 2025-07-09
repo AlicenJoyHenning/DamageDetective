@@ -69,15 +69,23 @@ plot_simulation_outcome <- function(
 #' @keywords internal
 plot_detection_outcome <- function(
     qc_summary,
-    target_damage =  c(0.1, 0.8),
+    target_damage =  0.5,
     palette = c("grey", "#7023FD", "#E60006")
 ) {
-  # Isolate columns of interest
+  # Sanity check for colouring damage
+  damage_range <- range(qc_summary$DamageDetective, na.rm = TRUE)
+  if (target_damage < damage_range[1] || target_damage > damage_range[2]) {
+    warning("target_damage is outside the range of DamageDetective values.")
+  }
+  # Rescale positions for 3-color gradient
+  gradient_values <- scales::rescale(
+    c(0, 0.5, 1),
+    from = damage_range
+  )
+
+  # Prepare data
   qc_summary_long <- qc_summary %>%
-    dplyr::select(features,
-                  mt.prop,
-                  rb.prop,
-                  DamageDetective) %>%
+    dplyr::select(features, mt.prop, rb.prop, DamageDetective) %>%
     dplyr::rename(
       Features = features,
       `Mito. prop` = mt.prop,
@@ -89,7 +97,7 @@ plot_detection_outcome <- function(
       values_to = "X_Value"
     )
 
-  # Create scatter plot showing QC metric distribution
+  # Plot
   final_plot <- ggplot2::ggplot(qc_summary_long,
                                 aes(x = .data$X_Value,
                                     y = .data$`Mito. prop`,
@@ -100,7 +108,7 @@ plot_detection_outcome <- function(
                strip.position = "bottom") +
     ggplot2::scale_color_gradientn(
       colours = palette,
-      values = scales::rescale(target_damage),
+      values = gradient_values,
       guide = guide_colorbar(
         title.position = "top",
         barwidth = 10
@@ -117,14 +125,14 @@ plot_detection_outcome <- function(
       strip.text = element_text(face = "bold", size = 9),
       strip.placement = "outside",
       legend.position = "bottom",
-      legend.title = element_text(
-        face = "bold", hjust = 0.5, vjust = 2, size = 10),
+      legend.title = element_text(face = "bold", hjust = 0.5, vjust = 2, size = 10),
       legend.margin = margin(t = 0, b = 0),
       legend.key.height = unit(0.5, "cm")
     )
 
   return(final_plot)
 }
+
 
 #' plot_altered_counts
 #'

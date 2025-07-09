@@ -20,12 +20,13 @@ Language: en-US
 LazyData: false
 RoxygenNote: 7.3.2
 Depends: 
-    R (>= 3.5.0)
+    R (>= 4.4.0)
 Roxygen: list(markdown = TRUE)
 Imports: 
     cowplot,
     dplyr,
     e1071,
+    future.apply,
     ggplot2,
     ggpubr,
     Matrix,
