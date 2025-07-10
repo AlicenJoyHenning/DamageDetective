@@ -38,10 +38,10 @@ test_that("correctness of detect_damage unfiltered output", {
     seed = 777, verbose = FALSE)
 
   # Are all cells retained?
-  expect_equal(dim(unfiltered_output)[1], dim(test_counts)[2])
+  expect_equal(length(unfiltered_output$Cells), dim(test_counts)[2])
 
   # Are the correct columns present?
-  expect_true(all(c('DamageDetective') %in%
+  expect_true(all(c('Cells', 'DamageDetective') %in%
                     colnames(unfiltered_output))
   )
 

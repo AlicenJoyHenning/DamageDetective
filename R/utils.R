@@ -35,7 +35,7 @@ get_organism_indices <- function(
     MALAT1 <- "MALAT1"
   } else if (is.character(organism) && length(organism) == 1 && organism == "Mmus") {
     mito_pattern <- "^mt-"
-    ribo_pattern <- "^(Rps|Rpl)"
+    ribo_pattern <- "^(rps|rpl)"
     nuclear <- c("Firre", "Neat1", "Xist", "Malat1", "Miat",
                  "Meg3", "Kcnq1ot1", "Hoxa11-as", "Ftx")
     MALAT1 <- "Malat1"

@@ -6,7 +6,7 @@
 \usage{
 plot_detection_outcome(
   qc_summary,
-  target_damage = 0.5,
+  target_damage = c(0.1, 0.8),
   palette = c("grey", "#7023FD", "#E60006")
 )
 }
