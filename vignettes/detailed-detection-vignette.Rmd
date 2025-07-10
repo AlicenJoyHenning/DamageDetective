@@ -113,6 +113,11 @@ extracted_dir <- file.path(temp_dir, "filtered_feature_bc_matrix")
 alignment_counts <- Seurat::Read10X(extracted_dir)
 ```
 
+```{r subset sample for testing echo=FALSE}
+alignment_seurat <- CreateSeuratObject(alignment_counts, min.cells = 7)
+alignment_counts <- alignment_seurat@assays$RNA$counts
+```
+
 ```{r demonstrate_alignment_conversion, eval=FALSE}
 # Set the file paths relative to location on your device
 matrix_file <- "~/Projects/filtered_feature_bc_matrix/matrix.mtx.gz"     
@@ -390,7 +395,7 @@ From here, the matrix can be filtered according to a threshold damage value befo
 
 ```{r filter_output}
 undamaged_cells <- subset(detection_output$output, DamageDetective <= 0.5)
-filtered_matrix <- alignment_counts[, undamaged_cells$Cells]
+filtered_matrix <- alignment_counts[, row.names(undamaged_cells)]
 dim(alignment_counts)
 dim(filtered_matrix)
 
