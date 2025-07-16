@@ -199,17 +199,21 @@ simulate_counts <- function(
   qc_summary <- .generate_qc_summary(count_matrix, damage_label, gene_idx)
 
   # Perturb selected cells ----
-  # If minimum damage target is above 90 %, exclude nuclear genes
-  if (target_damage[[1]] >= 0.9){
+  # If minimum damage target is above 90%, exclude nuclear genes
+  if (target_damage[[1]] >= 0.9) {
+    # Exclude nuclear genes
     gene_idx$non_mito_idx <- which(
       !rownames(count_matrix) %in%
-        c(grep(gene_idx$mito_pattern, rownames(count_matrix), value = TRUE),
-          gene_idx$nuclear)
+        grep(gene_idx$mito_pattern, rownames(count_matrix), value = TRUE)
     )
   } else {
+    # Include nuclear genes
     gene_idx$non_mito_idx <- which(
       !rownames(count_matrix) %in%
-        grep(gene_idx$mito_pattern, rownames(count_matrix), value = TRUE),
+        c(
+          grep(gene_idx$mito_pattern, rownames(count_matrix), value = TRUE),
+          gene_idx$nuclear
+        )
     )
   }
 
