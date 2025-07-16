@@ -545,7 +545,7 @@ fashion using the <code>select_penalty</code> function,</p>
 <span><span class="co">#&gt; Testing penalty of 0.25...</span></span>
 <span><span class="co">#&gt; Stopping early: dTNN is no longer improving.</span></span>
 <span><span class="va">selected_penalty</span></span>
-<span><span class="co">#&gt; [1] 0.2</span></span></code></pre></div>
+<span><span class="co">#&gt; [1] 0.15</span></span></code></pre></div>
 <p>As seen above, the <code>select_penalty</code> function generates
 artificial cells using different <code>ribosome_penalty</code> estimates
 and evaluates the similarity of the resulting artificial cells to true
@@ -701,7 +701,7 @@ required for a single cell analysis.</p>
 <span><span class="fu"><a href="https://rdrr.io/r/base/dim.html" class="external-link">dim</a></span><span class="op">(</span><span class="va">alignment_counts</span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1] 13287  1222</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/dim.html" class="external-link">dim</a></span><span class="op">(</span><span class="va">filtered_matrix</span><span class="op">)</span></span>
-<span><span class="co">#&gt; [1] 13287  1184</span></span></code></pre></div>
+<span><span class="co">#&gt; [1] 13287  1183</span></span></code></pre></div>
 <p><br></p>
 <p>This could be done automatically if
 <code>filter_counts=TRUE</code>.</p>
@@ -717,7 +717,7 @@ required for a single cell analysis.</p>
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/dim.html" class="external-link">dim</a></span><span class="op">(</span><span class="va">filtered_output</span><span class="op">)</span></span></code></pre></div>
-<pre><code><span><span class="co">#&gt; [1] 13287  1184</span></span></code></pre>
+<pre><code><span><span class="co">#&gt; [1] 13287  1183</span></span></code></pre>
 </div>
 <div class="section level2">
 <h2 id="session-information">Session Information<a class="anchor" aria-label="anchor" href="#session-information"></a>
