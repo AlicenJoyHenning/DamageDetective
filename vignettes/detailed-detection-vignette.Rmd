@@ -113,7 +113,7 @@ extracted_dir <- file.path(temp_dir, "filtered_feature_bc_matrix")
 alignment_counts <- Seurat::Read10X(extracted_dir)
 ```
 
-```{r subset sample for testing echo=FALSE}
+```{r subset_testing, echo=FALSE}
 alignment_seurat <- CreateSeuratObject(alignment_counts, min.cells = 7)
 alignment_counts <- alignment_seurat@assays$RNA$counts
 ```
