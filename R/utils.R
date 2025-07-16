@@ -56,8 +56,8 @@ get_organism_indices <- function(
 
   # Isolate gene set indices (consistent across cells, not subsetting)
   mito_idx <- grep(mito_pattern, rownames(count_matrix), ignore.case = FALSE)
-  nucl_idx <- which(rownames(count_matrix) %in% nuclear)
-  mito_idx <- c(mito_idx, nucl_idx)
+  # nucl_idx <- which(rownames(count_matrix) %in% nuclear)
+  # mito_idx <- c(mito_idx, nucl_idx)
   all_indices <- seq.int(1, nrow(count_matrix))
   non_mito_idx <- setdiff(all_indices, mito_idx)
   ribo_idx <- grep(ribo_pattern, rownames(count_matrix), ignore.case = FALSE)
