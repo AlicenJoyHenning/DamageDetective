@@ -59,6 +59,26 @@
 #'  for pANN calculations. kN cannot exceed the total cell number.
 #'
 #'  * Default is one third of the total cell number.
+#' @param p_val_adj Adjusted p value for preliminary cluster quality check.
+#'  Differential genes expressed for each cluster that are below this threshold
+#'  continue for mitochondrial and nuclear content checking.
+#'
+#'  * Default is 0.05.
+#' @param avg_log2FC Log fold change value for preliminary cluster quality
+#'  check. In addition to the p value, genes with a log fold change above this
+#'  value continue for mitochondrial and nuclear content checking.
+#'
+#'  * Note that this value must be positive to identify retained expression.
+#'    Default is 1.5.
+#' @param num_markers After marker genes have been identified in the
+#'  preliminary cluster quality check, they are ordered according to increasing
+#'  log fold change. This parameter indicates how many genes in this set are
+#'  considered as the top markers for the cluster.
+#'
+#'  * Note that increasing this value weakens the inclusion criteria, risking a
+#'  damage-unrelated detection of mitochondrial gene expression, while
+#'  decreasing it makes the criteria more stringent, risking leaving damaged
+#'  clusters undetected. The recommended default is 10.
 #' @param filter_counts Boolean specifying whether the output matrix
 #'  should be filtered, returned containing only cells that fall below
 #'  the filter threshold. Alternatively, a data frame containing cell
@@ -113,6 +133,9 @@ detect_damage <- function(
     seed = 7,
     kN = NULL,
     resolution = 0.1,
+    p_val_adj = 0.05,
+    avg_log2FC = 1.5,
+    num_markers = 10,
     generate_plot = TRUE,
     display_plot = TRUE,
     palette = c("grey", "#7023FD", "#E60006"),
@@ -131,7 +154,8 @@ detect_damage <- function(
 
   # Identify entire damaged clusters
   damaged_cluster_cells <- .check_clusters(cluster_cells, seurat_object,
-                                           gene_idx)
+                                           gene_idx, p_val_adj, avg_log2FC,
+                                           num_markers)
 
 
   # Generate simulations for defined damage levels
@@ -213,34 +237,37 @@ detect_damage <- function(
   )
 }
 
-.check_clusters <- function(cluster_cells, seurat_object, gene_idx) {
+.check_clusters <- function(cluster_cells, seurat_object, gene_idx,
+                            p_val_adj, avg_log2FC, num_markers) {
   Seurat::Idents(seurat_object) <- "seurat_clusters"
-
   if (length(cluster_cells) == 1) {
     return(NULL)
   } else {
-
   damaged_cells <- c()
-
   for (cluster in names(cluster_cells)) {
     cluster_number <- as.numeric(gsub("cluster_", "", cluster))
-
+    # Find marker genes for each cluster
     markers <- Seurat::FindMarkers(seurat_object,
                            ident.1 = cluster_number,
                            ident.2 = NULL)
-
-    markers <- subset(markers, p_val_adj <= 0.05 & avg_log2FC >= 2)
+    # Filter for significance
+    markers <- subset(markers, p_val_adj <= p_val_adj &
+                        avg_log2FC >= avg_log2FC)
     markers <- markers[order(-markers$avg_log2FC), ]
-    top10_genes <- rownames(head(markers, 10))
-
-    num_matches <- sum(grepl(gene_idx$mito_pattern, top10_genes))
-    if (num_matches >= 5) {
+    # Isolate marker genes
+    top_genes <- rownames(head(markers, num_markers))
+    top_half <- round(num_markers/2, 0)
+    # Count mitochondrial genes in the set of top markers
+    num_matches <- sum(grepl(gene_idx$mito_pattern, top_genes))
+    if (num_matches >= top_half) {
+      damaged_cells <- c(damaged_cells, cluster_cells[[cluster]])
+    }
+    # Check for nuclear RNA retention
+    if (any(gene_idx$nuclear %in% top_genes)){
       damaged_cells <- c(damaged_cells, cluster_cells[[cluster]])
     }
   }
-
   return(unique(damaged_cells))
-
   }
 }
 
