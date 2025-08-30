@@ -4,7 +4,7 @@ pkgdown_sha: ~
 articles:
   detailed-detection-vignette: detailed-detection-vignette.html
   detection-vignette: detection-vignette.html
-last_built: 2025-08-30T10:24Z
+last_built: 2025-08-30T11:18Z
 urls:
   reference: https://alicenjoyhenning.github.io/DamageDetective/reference
   article: https://alicenjoyhenning.github.io/DamageDetective/articles
