@@ -117,7 +117,7 @@ select_penalty <- function(
   penalty_results <- .iterate_penalties(
     penalties, filtered_matrix, df, target_damage, damage_distribution,
     distribution_steepness, beta_shape_parameters, damage_proportion,
-    stability_limit, max_penalty_trials, seed, verbose
+    stability_limit, max_penalty_trials, organism, seed, verbose
   )
 
   # Return the selected penalty or full results
@@ -190,7 +190,7 @@ select_penalty <- function(
 .iterate_penalties <- function(
     penalties, filtered_matrix, df, target_damage, damage_distribution,
     distribution_steepness, beta_shape_parameters, damage_proportion,
-    stability_limit, max_penalty_trials, seed, verbose
+    stability_limit, max_penalty_trials, organism, seed, verbose
 ) {
   penalty_results <- data.frame(
     Penalty = numeric(0),
@@ -224,6 +224,7 @@ select_penalty <- function(
       ribosome_penalty = penalty,
       damage_distribution = damage_distribution,
       distribution_steepness = distribution_steepness,
+      organism = organism,
       seed = seed,
       generate_plot = FALSE
     )
