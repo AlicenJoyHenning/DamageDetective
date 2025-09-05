@@ -56,9 +56,7 @@ input count matrix, where 'damage' is defined by the loss of cytoplasmic RNA.</p
 <span>  seed <span class="op">=</span> <span class="fl">7</span>,</span>
 <span>  kN <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  resolution <span class="op">=</span> <span class="fl">0.1</span>,</span>
-<span>  p_val_adj <span class="op">=</span> <span class="fl">0.05</span>,</span>
-<span>  avg_log2FC <span class="op">=</span> <span class="fl">1.5</span>,</span>
-<span>  num_markers <span class="op">=</span> <span class="fl">10</span>,</span>
+<span>  mad_coef <span class="op">=</span> <span class="fl">3</span>,</span>
 <span>  generate_plot <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  display_plot <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  palette <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"grey"</span>, <span class="st">"#7023FD"</span>, <span class="st">"#E60006"</span><span class="op">)</span>,</span>
@@ -186,29 +184,11 @@ be found.</p><ul><li><p>Default is 0.1</p></li>
 </ul></dd>
 
 
-<dt id="arg-p-val-adj">p_val_adj<a class="anchor" aria-label="anchor" href="#arg-p-val-adj"></a></dt>
-<dd><p>Adjusted p value for preliminary cluster quality check.
-Differential genes expressed for each cluster that are below this threshold
-continue for mitochondrial and nuclear content checking.</p><ul><li><p>Default is 0.05.</p></li>
-</ul></dd>
-
-
-<dt id="arg-avg-log-fc">avg_log2FC<a class="anchor" aria-label="anchor" href="#arg-avg-log-fc"></a></dt>
-<dd><p>Log fold change value for preliminary cluster quality
-check. In addition to the p value, genes with a log fold change above this
-value continue for mitochondrial and nuclear content checking.</p><ul><li><p>Note that this value must be positive to identify retained expression.
-Default is 1.5.</p></li>
-</ul></dd>
-
-
-<dt id="arg-num-markers">num_markers<a class="anchor" aria-label="anchor" href="#arg-num-markers"></a></dt>
-<dd><p>After marker genes have been identified in the
-preliminary cluster quality check, they are ordered according to increasing
-log fold change. This parameter indicates how many genes in this set are
-considered as the top markers for the cluster.</p><ul><li><p>Note that increasing this value weakens the inclusion criteria, risking a
-damage-unrelated detection of mitochondrial gene expression, while
-decreasing it makes the criteria more stringent, risking leaving damaged
-clusters undetected. The recommended default is 10.</p></li>
+<dt id="arg-mad-coef">mad_coef<a class="anchor" aria-label="anchor" href="#arg-mad-coef"></a></dt>
+<dd><p>Numeric scalar specifying the multiplier for the
+Median Absolute Deviation (MAD) used to define thresholds for
+quality control metrics of damaged clusters, allowing flexibility to make
+the detection more or less stringent.</p><ul><li><p>Default is 3.</p></li>
 </ul></dd>
 
 
@@ -298,6 +278,7 @@ Nearest neighbours. <em>Cell Systems, 8</em>(4), 329-337.e4.
 <span class="r-in"><span>  seed <span class="op">=</span> <span class="fl">7</span></span></span>
 <span class="r-in"><span><span class="op">)</span></span></span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> Clustering cells...</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Checking clusters...</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> Simulating damage...</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> Computing pANN...</span>
 <span class="r-in"><span></span></span>
