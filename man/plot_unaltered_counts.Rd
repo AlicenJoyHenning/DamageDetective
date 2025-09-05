@@ -4,7 +4,7 @@
 \alias{plot_unaltered_counts}
 \title{plot_unaltered_counts}
 \usage{
-plot_unaltered_counts(qc_summary)
+plot_unaltered_counts(qc_summary, base_size = 14)
 }
 \arguments{
 \item{qc_summary}{A data frame containing the quality control summary for

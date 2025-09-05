@@ -7,7 +7,8 @@
 plot_ribosomal_penalty(
   qc_summary,
   palette = c("grey", "#7023FD", "#E60006"),
-  target_damage = c(0.5, 1)
+  target_damage = c(0.5, 1),
+  base_size = 14
 )
 }
 \arguments{

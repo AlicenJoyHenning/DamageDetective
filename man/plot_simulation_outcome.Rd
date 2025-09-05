@@ -7,7 +7,8 @@
 plot_simulation_outcome(
   qc_summary,
   target_damage = c(0.1, 0.8),
-  palette = c("grey", "#7023FD", "#E60006")
+  palette = c("grey", "#7023FD", "#E60006"),
+  base_size = 14
 )
 }
 \arguments{

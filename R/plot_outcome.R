@@ -23,17 +23,21 @@
 plot_simulation_outcome <- function(
     qc_summary,
     target_damage =  c(0.1, 0.8),
-    palette = c("grey", "#7023FD", "#E60006")
+    palette = c("grey", "#7023FD", "#E60006"),
+    base_size = 14
 ) {
   # Generate QC plots for altered & unaltered counts
+
   altered_counts_plot <- plot_altered_counts(
     qc_summary = qc_summary,
     palette = palette,
-    target_damage = target_damage
+    target_damage = target_damage,
+    base_size = base_size
   )
 
   unaltered_counts_plot <- plot_unaltered_counts(
-    qc_summary = qc_summary
+    qc_summary = qc_summary,
+    base_size = base_size
   )
 
   # Combine & return
@@ -68,9 +72,10 @@ plot_simulation_outcome <- function(
 #' @importFrom scales rescale
 #' @keywords internal
 plot_detection_outcome <- function(
-    qc_summary,
-    target_damage =  c(0.1, 0.8),
-    palette = c("grey", "#7023FD", "#E60006")
+  qc_summary,
+  target_damage =  c(0.1, 0.8),
+  palette = c("grey", "#7023FD", "#E60006"),
+  base_size = 14
 ) {
   # Isolate columns of interest
   qc_summary_long <- qc_summary %>%
@@ -107,18 +112,18 @@ plot_detection_outcome <- function(
       )
     ) +
     ggplot2::labs(x = NULL, y = "Mito. prop", color = "Damage score") +
-    ggplot2::theme_minimal(base_size = 10) +
+    ggplot2::theme_minimal(base_size = base_size) +
     ggplot2::theme(
       panel.background = element_rect(fill = "#F5F5F5", color = NA),
       panel.grid.minor = element_blank(),
       axis.ticks = element_blank(),
-      axis.title.y = element_text(face = "bold", size = 10, vjust = 2),
-      axis.title.x = element_text(face = "bold"),
-      strip.text = element_text(face = "bold", size = 9),
+      axis.title.y = element_text(face = "bold", size = base_size, vjust = 2),
+      axis.title.x = element_text(face = "bold", size = base_size),
+      strip.text = element_text(face = "bold", size = base_size * 0.9),
       strip.placement = "outside",
       legend.position = "bottom",
       legend.title = element_text(
-        face = "bold", hjust = 0.5, vjust = 2, size = 10),
+        face = "bold", hjust = 0.5, vjust = 2, size = base_size),
       legend.margin = margin(t = 0, b = 0),
       legend.key.height = unit(0.5, "cm")
     )
@@ -151,9 +156,10 @@ plot_detection_outcome <- function(
 #' @importFrom scales rescale
 #' @keywords internal
 plot_altered_counts <- function(
-    qc_summary,
-    palette = c("grey", "#7023FD", "#E60006"),
-    target_damage = c(0.5, 1)
+  qc_summary,
+  palette = c("grey", "#7023FD", "#E60006"),
+  target_damage = c(0.5, 1),
+  base_size = 14
 ){
   # Isolate altered counts for visualizing QC metrics
   qc_summary_long_filtered <- qc_summary %>%
@@ -199,18 +205,18 @@ plot_altered_counts <- function(
     ) +
     # ggplot2::scale_y_continuous(limits = c(0, 1)) +
     ggplot2::labs(x = NULL, y = "Mito. prop", color = "Damage score") +
-    ggplot2::theme_minimal(base_size = 10) +
+    ggplot2::theme_minimal(base_size = base_size) +
     ggplot2::theme(
       panel.background = element_rect(fill = "#F5F5F5", color = NA),
       panel.grid.minor = element_blank(),
       axis.ticks = element_blank(),
-      axis.title.y = element_text(face = "bold", size = 10, vjust = 2),
-      axis.title.x = element_text(face = "bold"),
-      strip.text = element_text(face = "bold", size = 9),
+      axis.title.y = element_text(face = "bold", size = base_size, vjust = 2),
+      axis.title.x = element_text(face = "bold", size = base_size),
+      strip.text = element_text(face = "bold", size = base_size * 0.9),
       strip.placement = "outside",
       legend.position = "bottom",
       legend.title = element_text(
-        face = "bold", hjust = 0.5, vjust = 2, size = 10),
+        face = "bold", hjust = 0.5, vjust = 2, size = base_size),
       legend.margin = margin(t = 0, b = 0),
       legend.key.height = unit(0.5, "cm")
     )
@@ -238,7 +244,8 @@ plot_altered_counts <- function(
 #' @importFrom scales rescale
 #' @keywords internal
 plot_unaltered_counts <- function(
-    qc_summary
+  qc_summary,
+  base_size = 14
 ){
 
   # Isolate unaltered counts for visualizing QC metrics
@@ -276,14 +283,14 @@ plot_unaltered_counts <- function(
                         scales = "free_x",
                         strip.position = "bottom") +
     ggplot2::labs(x = NULL, y = "Mito. prop", color = "Damage score") +
-    ggplot2::theme_minimal(base_size = 10) +
+    ggplot2::theme_minimal(base_size = base_size) +
     ggplot2::theme(
       panel.background = element_rect(fill = "#F5F5F5", color = NA),
       panel.grid.minor = element_blank(),
       axis.ticks = element_blank(),
-      axis.title.y = element_text(face = "bold", size = 10, vjust = 2),
-      axis.title.x = element_text(face = "bold"),
-      strip.text = element_text(face = "bold", size = 9),
+      axis.title.y = element_text(face = "bold", size = base_size, vjust = 2),
+      axis.title.x = element_text(face = "bold", size = base_size),
+      strip.text = element_text(face = "bold", size = base_size * 0.9),
       strip.placement = "outside"
     )
 
@@ -313,9 +320,10 @@ plot_unaltered_counts <- function(
 #' @importFrom scales rescale
 #' @keywords internal
 plot_ribosomal_penalty <- function(
-    qc_summary,
-    palette = c("grey", "#7023FD", "#E60006"),
-    target_damage = c(0.5, 1)
+  qc_summary,
+  palette = c("grey", "#7023FD", "#E60006"),
+  target_damage = c(0.5, 1),
+  base_size = 14
 ){
   # Isolate altered counts for visualizing QC metrics
   altered_data <- qc_summary %>%
@@ -353,16 +361,16 @@ plot_ribosomal_penalty <- function(
     ) +
     ggplot2::scale_y_continuous(limits = c(0, 1)) +
     ggplot2::labs(x = "Ribo. prop", y = "Mito. prop", color = "Damage score") +
-    ggplot2::theme_minimal(base_size = 10) +
+    ggplot2::theme_minimal(base_size = base_size) +
     ggplot2::theme(
       panel.background = element_rect(fill = "#F5F5F5", color = NA),
       panel.grid.minor = element_blank(),
       axis.ticks = element_blank(),
-      axis.title.y = element_text(face = "bold", size = 10, vjust = 2),
-      axis.title.x = element_text(face = "bold"),
+      axis.title.y = element_text(face = "bold", size = base_size, vjust = 2),
+      axis.title.x = element_text(face = "bold", size = base_size),
       legend.position = "bottom",
       legend.title = element_text(
-        face = "bold", hjust = 0.5, vjust = 2, size = 10),
+        face = "bold", hjust = 0.5, vjust = 2, size = base_size),
       legend.margin = margin(t = 0, b = 0),
       legend.key.height = unit(0.5, "cm")
     )

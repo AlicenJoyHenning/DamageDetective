@@ -18,9 +18,7 @@ detect_damage(
   seed = 7,
   kN = NULL,
   resolution = 0.1,
-  p_val_adj = 0.05,
-  avg_log2FC = 1.5,
-  num_markers = 10,
+  mad_coef = 3,
   generate_plot = TRUE,
   display_plot = TRUE,
   palette = c("grey", "#7023FD", "#E60006"),
@@ -150,30 +148,12 @@ be found.
 \item Default is 0.1
 }}
 
-\item{p_val_adj}{Adjusted p value for preliminary cluster quality check.
-Differential genes expressed for each cluster that are below this threshold
-continue for mitochondrial and nuclear content checking.
+\item{mad_coef}{Numeric scalar specifying the multiplier for the
+Median Absolute Deviation (MAD) used to define thresholds for
+quality control metrics of damaged clusters, allowing flexibility to make
+the detection more or less stringent.
 \itemize{
-\item Default is 0.05.
-}}
-
-\item{avg_log2FC}{Log fold change value for preliminary cluster quality
-check. In addition to the p value, genes with a log fold change above this
-value continue for mitochondrial and nuclear content checking.
-\itemize{
-\item Note that this value must be positive to identify retained expression.
-Default is 1.5.
-}}
-
-\item{num_markers}{After marker genes have been identified in the
-preliminary cluster quality check, they are ordered according to increasing
-log fold change. This parameter indicates how many genes in this set are
-considered as the top markers for the cluster.
-\itemize{
-\item Note that increasing this value weakens the inclusion criteria, risking a
-damage-unrelated detection of mitochondrial gene expression, while
-decreasing it makes the criteria more stringent, risking leaving damaged
-clusters undetected. The recommended default is 10.
+\item Default is 3.
 }}
 
 \item{generate_plot}{Boolean specifying whether the QC plot should

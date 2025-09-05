@@ -41,6 +41,12 @@
 #'  be found.
 #'
 #'  * Default is 0.1
+#' @param mad_coef Numeric scalar specifying the multiplier for the
+#'   Median Absolute Deviation (MAD) used to define thresholds for
+#'   quality control metrics of damaged clusters, allowing flexibility to make
+#'   the detection more or less stringent.
+#'
+#'    * Default is 3.
 #' @param pca_columns String vector containing the names of the metrics used
 #'  for principal component analysis.
 #'
@@ -59,26 +65,6 @@
 #'  for pANN calculations. kN cannot exceed the total cell number.
 #'
 #'  * Default is one third of the total cell number.
-#' @param p_val_adj Adjusted p value for preliminary cluster quality check.
-#'  Differential genes expressed for each cluster that are below this threshold
-#'  continue for mitochondrial and nuclear content checking.
-#'
-#'  * Default is 0.05.
-#' @param avg_log2FC Log fold change value for preliminary cluster quality
-#'  check. In addition to the p value, genes with a log fold change above this
-#'  value continue for mitochondrial and nuclear content checking.
-#'
-#'  * Note that this value must be positive to identify retained expression.
-#'    Default is 1.5.
-#' @param num_markers After marker genes have been identified in the
-#'  preliminary cluster quality check, they are ordered according to increasing
-#'  log fold change. This parameter indicates how many genes in this set are
-#'  considered as the top markers for the cluster.
-#'
-#'  * Note that increasing this value weakens the inclusion criteria, risking a
-#'  damage-unrelated detection of mitochondrial gene expression, while
-#'  decreasing it makes the criteria more stringent, risking leaving damaged
-#'  clusters undetected. The recommended default is 10.
 #' @param filter_counts Boolean specifying whether the output matrix
 #'  should be filtered, returned containing only cells that fall below
 #'  the filter threshold. Alternatively, a data frame containing cell
@@ -100,6 +86,7 @@
 #' @importFrom Seurat CreateSeuratObject NormalizeData ScaleData
 #' @importFrom Seurat FindVariableFeatures RunPCA FindNeighbors
 #' @importFrom Seurat FindClusters Idents FindMarkers
+#' @importFrom stats median
 #' @importFrom Matrix colSums Matrix
 #' @importFrom RcppHNSW hnsw_knn
 #' @importFrom dplyr %>% group_by summarise mutate case_when
@@ -133,9 +120,7 @@ detect_damage <- function(
     seed = 7,
     kN = NULL,
     resolution = 0.1,
-    p_val_adj = 0.05,
-    avg_log2FC = 1.5,
-    num_markers = 10,
+    mad_coef = 3,
     generate_plot = TRUE,
     display_plot = TRUE,
     palette = c("grey", "#7023FD", "#E60006"),
@@ -152,16 +137,15 @@ detect_damage <- function(
   cluster_cells <- cluster_cells_info$clusters
   seurat_object <- cluster_cells_info$object
 
-  # Identify entire damaged clusters
+  # Check for entirely damaged clusters
   damaged_cluster_cells <- .check_clusters(cluster_cells, seurat_object,
-                                           gene_idx, p_val_adj, avg_log2FC,
-                                           num_markers)
+                                           gene_idx, mad_coef, verbose)
 
 
   # Generate simulations for defined damage levels
   damaged_matrices <- .simulate_damage(
     count_matrix, cluster_cells, damaged_cluster_cells,
-    damage_proportion, ribosome_penalty,
+    damage_proportion, ribosome_penalty, organism,
     damage_distribution, target_damage, distribution_steepness, seed, verbose
   )
   matrix_combined <- .combine_matrices(damaged_matrices, count_matrix)
@@ -237,52 +221,79 @@ detect_damage <- function(
   )
 }
 
-.check_clusters <- function(cluster_cells, seurat_object, gene_idx,
-                            p_val_adj, avg_log2FC, num_markers) {
+.check_clusters <- function(
+    cluster_cells, seurat_object, gene_idx, mad_coef, verbose) {
+  if (verbose) message("Checking clusters...")
+
   Seurat::Idents(seurat_object) <- "seurat_clusters"
-  if (length(cluster_cells) == 1) {
-    return(NULL)
+
+  if (length(cluster_cells) <= 1) return(NULL)
+
+  # Compute mitochondrial and ribosomal proportions for each cell
+  counts <- Seurat::GetAssayData(seurat_object, slot = "counts")
+  mito_genes <- grep(gene_idx$mito_pattern, rownames(seurat_object), value = TRUE)
+  ribo_genes <- grep(gene_idx$ribo_pattern, rownames(seurat_object), value = TRUE)
+
+  total_counts <- Matrix::colSums(counts)
+  mito_prop <- Matrix::colSums(counts[mito_genes, , drop = FALSE]) / total_counts
+  ribo_prop <- Matrix::colSums(counts[ribo_genes, , drop = FALSE]) / total_counts
+
+  cluster_ids <- as.character(Seurat::Idents(seurat_object))
+
+  # Compute medians per cluster
+  cluster_medians <- tapply(seq_along(cluster_ids), cluster_ids, function(idx) {
+    list(
+      mito = median(mito_prop[idx], na.rm = TRUE),
+      ribo = median(ribo_prop[idx], na.rm = TRUE)
+    )
+  })
+
+  mito_medians <- sapply(cluster_medians, function(x) x$mito)
+  ribo_medians <- sapply(cluster_medians, function(x) x$ribo)
+
+  # Compute thresholds
+  min_mito_median <- min(mito_medians, na.rm = TRUE)
+  max_ribo_median <- max(ribo_medians, na.rm = TRUE)
+  mito_mad <- stats::mad(mito_prop, constant = 1, na.rm = TRUE)
+  ribo_mad <- stats::mad(mito_prop, constant = 1, na.rm = TRUE)
+  mito_threshold <- min_mito_median + mad_coef * mito_mad
+  ribo_threshold <- max_ribo_median - mad_coef * ribo_mad
+
+  # Identify damaged clusters
+  damaged_clusters <- c()
+  for (cl in names(cluster_medians)) {
+    mito_pass <- mito_medians[cl] >= mito_threshold
+    ribo_pass <- ribo_medians[cl] <= ribo_threshold
+
+    if (!is.na(mito_pass) && !is.na(ribo_pass) && mito_pass && ribo_pass) {
+      # Match the full cluster name in cluster_cells
+      damaged_clusters <- c(damaged_clusters, paste0("cluster_", cl))
+    }
+  }
+
+  if (length(damaged_clusters) > 0) {
+    damaged_cells <- unlist(cluster_cells[damaged_clusters], use.names = FALSE)
   } else {
-  damaged_cells <- c()
-  for (cluster in names(cluster_cells)) {
-    cluster_number <- as.numeric(gsub("cluster_", "", cluster))
-    # Find marker genes for each cluster
-    markers <- Seurat::FindMarkers(seurat_object,
-                           ident.1 = cluster_number,
-                           ident.2 = NULL)
-    # Filter for significance
-    markers <- subset(markers, p_val_adj <= p_val_adj &
-                        avg_log2FC >= avg_log2FC)
-    markers <- markers[order(-markers$avg_log2FC), ]
-    # Isolate marker genes
-    top_genes <- rownames(head(markers, num_markers))
-    top_half <- round(num_markers/2, 0)
-    # Count mitochondrial genes in the set of top markers
-    num_matches <- sum(grepl(gene_idx$mito_pattern, top_genes))
-    if (num_matches >= top_half) {
-      damaged_cells <- c(damaged_cells, cluster_cells[[cluster]])
-    }
-    # Check for nuclear RNA retention
-    if (any(gene_idx$nuclear %in% top_genes)){
-      damaged_cells <- c(damaged_cells, cluster_cells[[cluster]])
-    }
+    damaged_cells <- integer(0)
   }
   return(unique(damaged_cells))
-  }
 }
 
 .simulate_damage <- function(
     count_matrix, cluster_cells, damaged_cluster_cells,
-    damage_proportion, ribosome_penalty,
+    damage_proportion, ribosome_penalty, organism,
     damage_distribution, target_damage, distribution_steepness, seed, verbose
 ){
   if (verbose) {
     message("Simulating damage...")
   }
-
   damaged_matrices <- list()
 
-  # Skip clusters with immediate damaged signature
+  # Find the total number of cells across clusters
+  total_cells <- sum(vapply(cluster_cells, length, 1L))
+  total_to_simulate <- round(total_cells * damage_proportion)
+
+  # Skip clusters with damaged signature
   for (cluster_name in names(cluster_cells)) {
     cells_to_simulate <- setdiff(cluster_cells[[cluster_name]], damaged_cluster_cells)
     if (length(cells_to_simulate) == 0) {
@@ -290,13 +301,18 @@ detect_damage <- function(
     }
 
     matrix_subset <- count_matrix[, cells_to_simulate, drop = FALSE]
+    cluster_size <- ncol(matrix_subset)
 
-    # Calculate proportion of damage so that 1000 cells are simulated
-    damage_proportion <- 1000 / ncol(count_matrix)
+    # Calculate proportion of damage so that proportion is met
+    cluster_to_simulate <- round(
+      (cluster_size / total_cells) * total_to_simulate)
+    # damage_proportion <- 1000 / ncol(count_matrix) # alt
 
     # Simulate all if very few cells available
-    if (ncol(matrix_subset) <= 1000) {
-      damage_proportion <- 1
+    if (cluster_size <= 1000) {
+      cluster_damage_proportion <- 1
+    } else {
+      cluster_damage_proportion <- min(1, cluster_to_simulate / cluster_size)
     }
 
     damaged_cells <- simulate_counts(
@@ -455,7 +471,7 @@ detect_damage <- function(
                                                == cluster]
   }
 
-  # Compute proportion of neighbours for each artificial cluster
+  # Compute proportion of artificial neighbours for each cluster
   pANN_names <- c()
   for (cluster in clusters) {
     pANN_name <- paste0("pANN_", cluster)
@@ -496,7 +512,8 @@ detect_damage <- function(
 
 .finalise_output <- function(metadata_plot, count_matrix, filter_counts,
                              generate_plot, display_plot, target_damage,
-                             filter_threshold, palette, damaged_cluster_cells, metadata_stored) {
+                             filter_threshold, palette, damaged_cluster_cells,
+                             metadata_stored) {
 
   # Cells with simulated damage scores
   metadata_plot$DamageDetective <-
@@ -506,23 +523,23 @@ detect_damage <- function(
   simulated_output <- metadata_plot[, c("Cells", "features", "counts", "mt.prop", "rb.prop", "malat1", "DamageDetective")]
 
   # Damaged cluster cells qc metrics
-  if (!is.null(damaged_cluster_cells)){
-  damaged_metadata <- metadata_stored[rownames(metadata_stored) %in% damaged_cluster_cells, ]
+  if (!is.null(damaged_cluster_cells)) {
+    damaged_metadata <- metadata_stored[rownames(metadata_stored) %in% damaged_cluster_cells, ]
 
-  damaged_output <- data.frame(
-    Cells = rownames(damaged_metadata),
-    features = damaged_metadata$features,
-    counts = damaged_metadata$counts,
-    mt.prop = damaged_metadata$mt.prop,
-    rb.prop = damaged_metadata$rb.prop,
-    malat1 = damaged_metadata$malat1,
-    DamageDetective = 1
-  )
+    damaged_output <- data.frame(
+      Cells = rownames(damaged_metadata),
+      features = damaged_metadata$features,
+      counts = damaged_metadata$counts,
+      mt.prop = damaged_metadata$mt.prop,
+      rb.prop = damaged_metadata$rb.prop,
+      malat1 = damaged_metadata$malat1,
+      DamageDetective = 1
+    )
 
-  # Combine & reorder
-  metadata_output <- rbind(simulated_output, damaged_output)
-  metadata_output <- metadata_output[match(colnames(count_matrix),
-                                           metadata_output$Cells), ]
+    # Combine & reorder
+    metadata_output <- rbind(simulated_output, damaged_output)
+    metadata_output <- metadata_output[match(colnames(count_matrix),
+                                             metadata_output$Cells), ]
   } else {
     metadata_output <- simulated_output
     metadata_output <- metadata_output[match(colnames(count_matrix),
@@ -558,4 +575,3 @@ detect_damage <- function(
 
   return(output)
 }
-
