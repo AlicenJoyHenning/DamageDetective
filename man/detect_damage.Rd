@@ -16,7 +16,7 @@ detect_damage(
   beta_shape_parameters = NULL,
   damage_proportion = 0.15,
   seed = 7,
-  kN = NULL,
+  pK = 0.3,
   resolution = 0.1,
   mad_coef = 3,
   generate_plot = TRUE,
@@ -135,10 +135,11 @@ is run multiple times with the same input data and parameters.
 \item Default is 7.
 }}
 
-\item{kN}{Numeric describing how many nearest neighbours are considered
-for pANN calculations. kN cannot exceed the total cell number.
+\item{pK}{Numeric describing how many nearest neighbours are considered
+for pANN calculations. Note that pK is expressed as a proportion of the
+total cell number.
 \itemize{
-\item Default is one third of the total cell number.
+\item Default is 0.3.
 }}
 
 \item{resolution}{Numeric controlling the number of communities found during

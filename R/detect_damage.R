@@ -61,10 +61,11 @@
 #'   - malat1
 #'
 #' Default is c("log.features", "log.counts", "mt.prop", "rb.prop").
-#' @param kN Numeric describing how many nearest neighbours are considered
-#'  for pANN calculations. kN cannot exceed the total cell number.
+#' @param pK Numeric describing how many nearest neighbours are considered
+#'  for pANN calculations. Note that pK is expressed as a proportion of the
+#'   total cell number.
 #'
-#'  * Default is one third of the total cell number.
+#'  * Default is 0.3.
 #' @param filter_counts Boolean specifying whether the output matrix
 #'  should be filtered, returned containing only cells that fall below
 #'  the filter threshold. Alternatively, a data frame containing cell
@@ -118,7 +119,7 @@ detect_damage <- function(
     beta_shape_parameters = NULL,
     damage_proportion = 0.15,
     seed = 7,
-    kN = NULL,
+    pK = 0.3,
     resolution = 0.1,
     mad_coef = 3,
     generate_plot = TRUE,
@@ -129,7 +130,7 @@ detect_damage <- function(
     verbose = TRUE
 ) {
   # Data preparation
-  .check_inputs(filter_threshold, count_matrix)
+  .check_inputs(pK, damage_proportion, filter_threshold, count_matrix)
   gene_idx <- get_organism_indices(count_matrix, organism)
 
   # Cluster cells
@@ -146,7 +147,8 @@ detect_damage <- function(
   damaged_matrices <- .simulate_damage(
     count_matrix, cluster_cells, damaged_cluster_cells,
     damage_proportion, ribosome_penalty, organism,
-    damage_distribution, target_damage, distribution_steepness, seed, verbose
+    damage_distribution, target_damage, distribution_steepness,
+    seed, verbose
   )
   matrix_combined <- .combine_matrices(damaged_matrices, count_matrix)
 
@@ -157,13 +159,13 @@ detect_damage <- function(
   ]
 
   # Perform PCA and nearest neighbour search
-  kN <- .find_knn(count_matrix, kN)
-  neighbour_indices <- .perform_pca(metadata_stored_filtered, pca_columns, kN, verbose)
+  neighbour_indices <- .perform_pca(
+    metadata_stored_filtered, pca_columns, pK, verbose)
 
   # Compute pANN and scale damage levels
   metadata_plot <- .compile_pANN(
     metadata_stored, neighbour_indices, ranges,
-    kN, verbose, damaged_cluster_cells
+    pK, verbose, damaged_cluster_cells
   )
 
   # Visualize and filter results
@@ -176,16 +178,25 @@ detect_damage <- function(
   return(output)
 }
 
-.check_inputs <- function(filter_threshold, count_matrix) {
+.check_inputs <- function(pK, damage_proportion,
+                          filter_threshold, count_matrix) {
+  if (pK > 1 || pK <= 0) {
+    stop("pK must lie between 0 and 1.")
+  }
+
+  if (damage_proportion > 1) {
+    stop("damage_proportion must lie between 0 and 1.")
+  }
+
+  if (!inherits(count_matrix, "Matrix")) {
+    stop("count_matrix must be a matrix or a sparse matrix.")
+  }
+
   if (!is.numeric(filter_threshold) ||
       filter_threshold <= 0 ||
       filter_threshold > 1
   ) {
     stop("filter_threshold must be a numeric value between 0 and 1.")
-  }
-
-  if (!inherits(count_matrix, "Matrix")) {
-    stop("count_matrix must be a matrix or a sparse matrix.")
   }
 }
 
@@ -222,7 +233,8 @@ detect_damage <- function(
 }
 
 .check_clusters <- function(
-    cluster_cells, seurat_object, gene_idx, mad_coef, verbose) {
+    cluster_cells, seurat_object,
+    gene_idx, mad_coef, verbose) {
   if (verbose) message("Checking clusters...")
 
   Seurat::Idents(seurat_object) <- "seurat_clusters"
@@ -282,18 +294,16 @@ detect_damage <- function(
 .simulate_damage <- function(
     count_matrix, cluster_cells, damaged_cluster_cells,
     damage_proportion, ribosome_penalty, organism,
-    damage_distribution, target_damage, distribution_steepness, seed, verbose
+    damage_distribution, target_damage, distribution_steepness,
+    seed, verbose
 ){
   if (verbose) {
     message("Simulating damage...")
   }
+
   damaged_matrices <- list()
 
-  # Find the total number of cells across clusters
-  total_cells <- sum(vapply(cluster_cells, length, 1L))
-  total_to_simulate <- round(total_cells * damage_proportion)
-
-  # Skip clusters with damaged signature
+  # Skip clusters with immediate damaged signature
   for (cluster_name in names(cluster_cells)) {
     cells_to_simulate <- setdiff(cluster_cells[[cluster_name]], damaged_cluster_cells)
     if (length(cells_to_simulate) == 0) {
@@ -301,19 +311,6 @@ detect_damage <- function(
     }
 
     matrix_subset <- count_matrix[, cells_to_simulate, drop = FALSE]
-    cluster_size <- ncol(matrix_subset)
-
-    # Calculate proportion of damage so that proportion is met
-    cluster_to_simulate <- round(
-      (cluster_size / total_cells) * total_to_simulate)
-    # damage_proportion <- 1000 / ncol(count_matrix) # alt
-
-    # Simulate all if very few cells available
-    if (cluster_size <= 1000) {
-      cluster_damage_proportion <- 1
-    } else {
-      cluster_damage_proportion <- min(1, cluster_to_simulate / cluster_size)
-    }
 
     damaged_cells <- simulate_counts(
       count_matrix = matrix_subset,
@@ -338,6 +335,7 @@ detect_damage <- function(
 
   return(damaged_matrices)
 }
+
 
 .combine_matrices <- function(damaged_matrices, count_matrix) {
   matrix_updated <- do.call(cbind, damaged_matrices)
@@ -399,14 +397,7 @@ detect_damage <- function(
   return(metadata_stored)
 }
 
-.find_knn <- function(count_matrix, kN) {
-  if (is.null(kN)) {
-    kN <- round(dim(count_matrix)[2] / 5, 0)
-  }
-  return(kN)
-}
-
-.perform_pca <- function(metadata_stored, pca_columns, kN, verbose) {
+.perform_pca <- function(metadata_stored, pca_columns, pK, verbose) {
 
   # Adjust heavily skewed data
   skew_test <- e1071::skewness(metadata_stored$mt.prop) > 1.5
@@ -423,10 +414,11 @@ detect_damage <- function(
   qc_pcs <- length(pca_columns)
   metadata_pca <- metadata_stored[, pca_columns]
   pca_result <- prcomp(metadata_pca, center = TRUE, scale. = TRUE)
-  RcppHNSW::hnsw_knn(pca_result$x[, 1:qc_pcs], k = kN)$idx
+  k <- round(pK * nrow(metadata_stored), 0)
+  RcppHNSW::hnsw_knn(pca_result$x[, 1:qc_pcs], k)$idx
 }
 
-.compute_pANN <- function(barcode_set, metadata_stored, neighbour_indices, kN) {
+.compute_pANN <- function(barcode_set, metadata_stored, neighbour_indices, pK) {
   vapply(rownames(metadata_stored), function(cell) {
 
     # Get the neighbours for the cell (excluding itself)
@@ -435,13 +427,14 @@ detect_damage <- function(
     neighbour_barcodes <- rownames(metadata_stored)[neighbours]
 
     # Compute proportion of neighbours in the barcode set
-    sum(neighbour_barcodes %in% barcode_set) / kN
+    k <- round(pK * nrow(metadata_stored), 0)
+    sum(neighbour_barcodes %in% barcode_set) / k
   }, FUN.VALUE = numeric(1))
 }
 
 .compile_pANN <- function(
     metadata_stored, neighbour_indices, ranges,
-    kN, verbose, damaged_cluster_cells
+    pK, verbose, damaged_cluster_cells
 ) {
   # Compute proportion of artificial neighbours
   if (verbose) {
@@ -477,7 +470,7 @@ detect_damage <- function(
     pANN_name <- paste0("pANN_", cluster)
     pANN_names <- append(pANN_name, pANN_names)
     metadata_plot[[pANN_name]] <- .compute_pANN(
-      barcodes[[cluster]], metadata_stored, neighbour_indices, kN
+      barcodes[[cluster]], metadata_stored, neighbour_indices, pK
     )
   }
 
