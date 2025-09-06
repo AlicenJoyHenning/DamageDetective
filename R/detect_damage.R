@@ -518,21 +518,25 @@ detect_damage <- function(
   # Damaged cluster cells qc metrics
   if (!is.null(damaged_cluster_cells)) {
     damaged_metadata <- metadata_stored[rownames(metadata_stored) %in% damaged_cluster_cells, ]
-
-    damaged_output <- data.frame(
-      Cells = rownames(damaged_metadata),
-      features = damaged_metadata$features,
-      counts = damaged_metadata$counts,
-      mt.prop = damaged_metadata$mt.prop,
-      rb.prop = damaged_metadata$rb.prop,
-      malat1 = damaged_metadata$malat1,
-      DamageDetective = 1
-    )
-
-    # Combine & reorder
-    metadata_output <- rbind(simulated_output, damaged_output)
-    metadata_output <- metadata_output[match(colnames(count_matrix),
-                                             metadata_output$Cells), ]
+    if (nrow(damaged_metadata) == 0) {
+      metadata_output <- simulated_output
+      metadata_output <- metadata_output[match(colnames(count_matrix),
+                                               metadata_output$Cells), ]
+    } else {
+      damaged_output <- data.frame(
+        Cells = rownames(damaged_metadata),
+        features = damaged_metadata$features,
+        counts = damaged_metadata$counts,
+        mt.prop = damaged_metadata$mt.prop,
+        rb.prop = damaged_metadata$rb.prop,
+        malat1 = damaged_metadata$malat1,
+        DamageDetective = 1
+      )
+      # Combine & reorder
+      metadata_output <- rbind(simulated_output, damaged_output)
+      metadata_output <- metadata_output[match(colnames(count_matrix),
+                                               metadata_output$Cells), ]
+    }
   } else {
     metadata_output <- simulated_output
     metadata_output <- metadata_output[match(colnames(count_matrix),
