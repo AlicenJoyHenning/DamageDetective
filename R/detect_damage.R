@@ -242,7 +242,7 @@ detect_damage <- function(
   if (length(cluster_cells) <= 1) return(NULL)
 
   # Compute mitochondrial and ribosomal proportions for each cell
-  counts <- Seurat::GetAssayData(seurat_object, slot = "counts")
+  counts <- Seurat::GetAssayData(seurat_object, layer = "counts")
   mito_genes <- grep(gene_idx$mito_pattern, rownames(seurat_object), value = TRUE)
   ribo_genes <- grep(gene_idx$ribo_pattern, rownames(seurat_object), value = TRUE)
 
