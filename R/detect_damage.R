@@ -207,29 +207,31 @@ detect_damage <- function(
     message("Clustering cells...")
   }
 
-  # Use Seurat's default workflow to identify clusters
+  # Create Seurat object
   seurat <- suppressWarnings(CreateSeuratObject(counts = count_matrix))
-  seurat <- suppressWarnings(NormalizeData(seurat, verbose = FALSE) %>%
-    ScaleData(verbose = FALSE) %>%
-    FindVariableFeatures(verbose = FALSE) %>%
-    RunPCA(verbose = FALSE) %>%
-    FindNeighbors(verbose = FALSE) %>%
-    FindClusters(resolution = resolution, verbose = FALSE))
 
-  # Retrieve cluster numbers present
-  clusters <- table(seurat$seurat_clusters)
-  cluster_cells <- list()
-  for (cluster in names(clusters)) {
-    cells <- subset(seurat, subset = seurat_clusters == cluster)
-    cells <- rownames(cells@meta.data)
-    cluster_name <- paste0("cluster_", cluster)
-    cluster_cells[[cluster_name]] <- cells
-  }
+  # Standard workflow with reduced memory footprint
+  seurat <- suppressWarnings(NormalizeData(seurat, verbose = FALSE))
+  seurat <- suppressWarnings(FindVariableFeatures(seurat, verbose = FALSE))
+  seurat <- suppressWarnings(ScaleData(seurat,
+                                       features = VariableFeatures(seurat),
+                                       verbose = FALSE))
+  seurat <- suppressWarnings(RunPCA(seurat,
+                                    features = VariableFeatures(seurat),
+                                    verbose = FALSE))
+  seurat <- suppressWarnings(FindNeighbors(seurat, verbose = FALSE))
+  seurat <- suppressWarnings(FindClusters(seurat,
+                                          resolution = resolution,
+                                          verbose = FALSE))
+
+  # Retrieve cluster membership efficiently
+  clusters <- split(rownames(seurat@meta.data), seurat$seurat_clusters)
+  names(clusters) <- paste0("cluster_", names(clusters))
 
   return(list(
-    clusters = cluster_cells,
-    object = seurat)
-  )
+    clusters = clusters,
+    object = seurat
+  ))
 }
 
 .check_clusters <- function(
@@ -274,11 +276,23 @@ detect_damage <- function(
   # Identify damaged clusters
   damaged_clusters <- c()
   for (cl in names(cluster_medians)) {
-    mito_pass <- mito_medians[cl] >= mito_threshold
-    ribo_pass <- ribo_medians[cl] <= ribo_threshold
+    mito_value <- mito_medians[cl]
+    ribo_value <- ribo_medians[cl]
+
+    # Automatic rules
+    if (mito_value > 0.8) {
+      damaged_clusters <- c(damaged_clusters, paste0("cluster_", cl))
+      next
+    }
+    if (mito_value < 0.05) {
+      next  # automatic pass, skip adding
+    }
+
+    # Threshold-based evaluation
+    mito_pass <- mito_value >= mito_threshold
+    ribo_pass <- ribo_value <= ribo_threshold
 
     if (!is.na(mito_pass) && !is.na(ribo_pass) && mito_pass && ribo_pass) {
-      # Match the full cluster name in cluster_cells
       damaged_clusters <- c(damaged_clusters, paste0("cluster_", cl))
     }
   }
