@@ -317,6 +317,7 @@ detect_damage <- function(
       damage_proportion = damage_proportion,
       target_damage = target_damage,
       ribosome_penalty = ribosome_penalty,
+      organism = organism,
       damage_distribution = damage_distribution,
       distribution_steepness = distribution_steepness,
       generate_plot = FALSE,
