@@ -216,11 +216,11 @@ detect_damage <- function(
     Seurat::FindVariableFeatures(seurat, verbose = FALSE))
   seurat <- suppressWarnings(
     Seurat::ScaleData(seurat,
-                      features = VariableFeatures(seurat),
+                      features = Seurat::VariableFeatures(seurat),
                       verbose = FALSE))
   seurat <- suppressWarnings(
     Seurat::RunPCA(seurat,
-                   features = VariableFeatures(seurat),
+                   features = Seurat::VariableFeatures(seurat),
                    verbose = FALSE))
   seurat <- suppressWarnings(
     Seurat::FindNeighbors(seurat, verbose = FALSE))
@@ -274,7 +274,7 @@ detect_damage <- function(
   min_mito_median <- min(mito_medians, na.rm = TRUE)
   max_ribo_median <- max(ribo_medians, na.rm = TRUE)
   mito_mad <- stats::mad(mito_prop, constant = 1, na.rm = TRUE)
-  ribo_mad <- stats::mad(mito_prop, constant = 1, na.rm = TRUE)
+  ribo_mad <- stats::mad(ribo_prop, constant = 1, na.rm = TRUE)
   mito_threshold <- min_mito_median + mad_coef * mito_mad
   ribo_threshold <- max_ribo_median - mad_coef * ribo_mad
 
