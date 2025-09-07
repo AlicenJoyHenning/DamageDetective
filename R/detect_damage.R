@@ -86,7 +86,7 @@
 #' @importFrom e1071 skewness
 #' @importFrom Seurat CreateSeuratObject NormalizeData ScaleData
 #' @importFrom Seurat FindVariableFeatures RunPCA FindNeighbors
-#' @importFrom Seurat FindClusters Idents FindMarkers
+#' @importFrom Seurat VariableFeatures FindClusters Idents FindMarkers
 #' @importFrom stats median
 #' @importFrom Matrix colSums Matrix
 #' @importFrom RcppHNSW hnsw_knn
