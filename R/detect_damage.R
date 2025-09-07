@@ -208,21 +208,26 @@ detect_damage <- function(
   }
 
   # Create Seurat object
-  seurat <- suppressWarnings(CreateSeuratObject(counts = count_matrix))
+  seurat <- suppressWarnings(Seurat::CreateSeuratObject(counts = count_matrix))
 
   # Standard workflow with reduced memory footprint
-  seurat <- suppressWarnings(NormalizeData(seurat, verbose = FALSE))
-  seurat <- suppressWarnings(FindVariableFeatures(seurat, verbose = FALSE))
-  seurat <- suppressWarnings(ScaleData(seurat,
-                                       features = VariableFeatures(seurat),
-                                       verbose = FALSE))
-  seurat <- suppressWarnings(RunPCA(seurat,
-                                    features = VariableFeatures(seurat),
-                                    verbose = FALSE))
-  seurat <- suppressWarnings(FindNeighbors(seurat, verbose = FALSE))
-  seurat <- suppressWarnings(FindClusters(seurat,
-                                          resolution = resolution,
-                                          verbose = FALSE))
+  seurat <- suppressWarnings(Seurat::NormalizeData(seurat, verbose = FALSE))
+  seurat <- suppressWarnings(
+    Seurat::FindVariableFeatures(seurat, verbose = FALSE))
+  seurat <- suppressWarnings(
+    Seurat::ScaleData(seurat,
+                      features = VariableFeatures(seurat),
+                      verbose = FALSE))
+  seurat <- suppressWarnings(
+    Seurat::RunPCA(seurat,
+                   features = VariableFeatures(seurat),
+                   verbose = FALSE))
+  seurat <- suppressWarnings(
+    Seurat::FindNeighbors(seurat, verbose = FALSE))
+  seurat <- suppressWarnings(
+    Seurat::FindClusters(seurat,
+                         resolution = resolution,
+                         verbose = FALSE))
 
   # Retrieve cluster membership efficiently
   clusters <- split(rownames(seurat@meta.data), seurat$seurat_clusters)
