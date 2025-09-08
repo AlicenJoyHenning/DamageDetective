@@ -416,7 +416,8 @@ detect_damage <- function(
 .perform_pca <- function(metadata_stored, pca_columns, pK, verbose) {
 
   # Adjust heavily skewed data
-  skew_test <- e1071::skewness(metadata_stored$mt.prop) >= 1.5
+  skew_val <- e1071::skewness(metadata_stored$mt.prop, na.rm = TRUE)
+  skew_test <- !is.na(skew_val) && skew_val > 1.5
   if (skew_test){
     pca_columns <- c("log.features", "log.counts", "mt.logit", "rb.prop")
   }
