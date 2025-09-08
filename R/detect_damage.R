@@ -188,10 +188,6 @@ detect_damage <- function(
     stop("damage_proportion must lie between 0 and 1.")
   }
 
-  if (!inherits(count_matrix, "Matrix")) {
-    stop("count_matrix must be a matrix or a sparse matrix.")
-  }
-
   if (!is.numeric(filter_threshold) ||
       filter_threshold <= 0 ||
       filter_threshold > 1
@@ -420,13 +416,13 @@ detect_damage <- function(
 .perform_pca <- function(metadata_stored, pca_columns, pK, verbose) {
 
   # Adjust heavily skewed data
-  skew_test <- e1071::skewness(metadata_stored$mt.prop) > 1.5
+  skew_test <- e1071::skewness(metadata_stored$mt.prop) >= 1.5
   if (skew_test){
     pca_columns <- c("log.features", "log.counts", "mt.logit", "rb.prop")
   }
 
   # Test for high expression of MALAT1
-  malat_test <- (max(metadata_stored$malat1.prop) > 0.5)
+  malat_test <- (max(metadata_stored$malat1.prop) >= 0.5)
   if (malat_test){
     pca_columns <- c("log.features", "mt.prop", "malat1.prop")
   }
@@ -567,6 +563,7 @@ detect_damage <- function(
     filtered_cells <- metadata_output$Cells[metadata_output$DamageDetective <= filter_threshold]
     final_filtered_matrix <- count_matrix[, filtered_cells, drop = FALSE]
     output <- final_filtered_matrix
+
   } else {
     final_output <- metadata_output[, c("Cells", "DamageDetective")]
     output <- final_output
