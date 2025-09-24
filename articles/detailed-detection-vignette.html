@@ -57,7 +57,7 @@
   <main id="main" class="col-md-9"><div class="page-header">
       <img src="../logo.svg" class="logo" alt=""><h1>Damage cell quality control</h1>
             
-            <h4 data-toc-skip class="date">Compiled: 2025-09-08</h4>
+            <h4 data-toc-skip class="date">Compiled: 2025-09-24</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/alicenjoyhenning/DamageDetective/blob/main/vignettes/detailed-detection-vignette.Rmd" class="external-link"><code>vignettes/detailed-detection-vignette.Rmd</code></a></small>
       <div class="d-none name"><code>detailed-detection-vignette.Rmd</code></div>
@@ -516,7 +516,6 @@ faster</em>).</li>
 <span>  <span class="fu">theme</span><span class="op">(</span>plot.title <span class="op">=</span> <span class="fu">element_text</span><span class="op">(</span>face <span class="op">=</span> <span class="st">"bold"</span>, hjust <span class="op">=</span> <span class="fl">0.5</span><span class="op">)</span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">no_penalty_plot</span> <span class="op">|</span> <span class="va">med_penalty_plot</span> <span class="op">|</span> <span class="va">high_penalty_plot</span> </span></code></pre></div>
-<p><img src="detailed-detection-vignette_files/figure-html/view_penalty_results-1.png" alt="Scatter plot showing the distribution of quality control  metrics in altered and unaltered counts. " width="768"></p>
 <blockquote>
 <p><math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msup><mi></mi><mo>*</mo></msup><annotation encoding="application/x-tex">^*</annotation></semantics></math>
 ribosome_penalty is a multiplicative reduction factor meaning a value of
@@ -533,7 +532,7 @@ a way that is relevant to the input data can be done through trial and
 error, similar to the plotting exercise above, or in an automated
 fashion using the <code>select_penalty</code> function,</p>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">selected_penalty</span> <span class="op">&lt;-</span> <span class="fu">DamageDetective</span><span class="fu">::</span><span class="fu"><a href="../reference/select_penalty.html">select_penalty</a></span><span class="op">(</span></span>
+<code class="sourceCode R"><span><span class="va">penalty</span> <span class="op">&lt;-</span> <span class="fu">DamageDetective</span><span class="fu">::</span><span class="fu"><a href="../reference/select_penalty.html">select_penalty</a></span><span class="op">(</span></span>
 <span>  count_matrix <span class="op">=</span> <span class="va">alignment_counts</span>,</span>
 <span>  max_penalty_trials <span class="op">=</span> <span class="fl">5</span>, </span>
 <span>  seed <span class="op">=</span> <span class="fl">7</span>, </span>
@@ -544,7 +543,7 @@ fashion using the <code>select_penalty</code> function,</p>
 <span><span class="co">#&gt; Testing penalty of 0.2...</span></span>
 <span><span class="co">#&gt; Testing penalty of 0.25...</span></span>
 <span><span class="co">#&gt; Stopping early: dTNN is no longer improving.</span></span>
-<span><span class="va">selected_penalty</span></span>
+<span><span class="va">penalty</span></span>
 <span><span class="co">#&gt; [1] 0.15</span></span></code></pre></div>
 <p>As seen above, the <code>select_penalty</code> function generates
 artificial cells using different <code>ribosome_penalty</code> estimates
@@ -671,10 +670,11 @@ directly.</p>
 <span><span class="co">#&gt; Clustering cells...</span></span>
 <span><span class="co">#&gt; Checking clusters...</span></span>
 <span><span class="co">#&gt; Simulating damage...</span></span>
-<span><span class="co">#&gt; Computing pANN...</span></span></code></pre></div>
+<span><span class="co">#&gt; Computing pANN...</span></span>
+<span><span class="co">#&gt; Suggested pANN threshold : 0.39039039039039</span></span></code></pre></div>
 <p><img src="detailed-detection-vignette_files/figure-html/run_detection-1.png" alt="Scatter plot showing the outcome damage detection where cells of the input data are coloured according to the estimated level of damage with grey being no damage,  purple being light damage, and red being heavy damage." width="576"></p>
-<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span></span>
+<pre><code><span><span class="co">#&gt; Completed.</span></span>
+<span></span>
 <span><span class="co"># View output</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">detection_output</span><span class="op">$</span><span class="va">output</span><span class="op">)</span></span>
 <span><span class="co">#&gt;                                 Cells DamageDetective</span></span>
@@ -683,7 +683,7 @@ directly.</p>
 <span><span class="co">#&gt; AAAGAACAGACGACTG-1 AAAGAACAGACGACTG-1               0</span></span>
 <span><span class="co">#&gt; AAAGAACCAATGGCAG-1 AAAGAACCAATGGCAG-1               0</span></span>
 <span><span class="co">#&gt; AAAGAACGTCTGCAAT-1 AAAGAACGTCTGCAAT-1               0</span></span>
-<span><span class="co">#&gt; AAAGGATAGTAGACAT-1 AAAGGATAGTAGACAT-1               0</span></span></code></pre></div>
+<span><span class="co">#&gt; AAAGGATAGTAGACAT-1 AAAGGATAGTAGACAT-1               0</span></span></code></pre>
 <p>From here, the matrix can be filtered according to a threshold damage
 value before continuing with the remainder of pre-processing steps
 required for a single cell analysis.</p>
@@ -735,16 +735,16 @@ required for a single cell analysis.</p>
 <span><span class="co">#&gt; [1] stats     graphics  grDevices utils     datasets  methods   base     </span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; other attached packages:</span></span>
-<span><span class="co">#&gt; [1] future_1.67.0          patchwork_1.3.2        ggplot2_3.5.2         </span></span>
-<span><span class="co">#&gt; [4] stringr_1.5.1          Seurat_5.3.0           SeuratObject_5.2.0    </span></span>
+<span><span class="co">#&gt; [1] future_1.67.0          patchwork_1.3.2        ggplot2_4.0.0         </span></span>
+<span><span class="co">#&gt; [4] stringr_1.5.2          Seurat_5.3.0           SeuratObject_5.2.0    </span></span>
 <span><span class="co">#&gt; [7] sp_2.2-0               DamageDetective_2.0.15</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; loaded via a namespace (and not attached):</span></span>
-<span><span class="co">#&gt;   [1] RColorBrewer_1.1-3     jsonlite_2.0.0         magrittr_2.0.3        </span></span>
-<span><span class="co">#&gt;   [4] spatstat.utils_3.1-5   farver_2.1.2           rmarkdown_2.29        </span></span>
+<span><span class="co">#&gt;   [1] RColorBrewer_1.1-3     jsonlite_2.0.0         magrittr_2.0.4        </span></span>
+<span><span class="co">#&gt;   [4] spatstat.utils_3.2-0   farver_2.1.2           rmarkdown_2.29        </span></span>
 <span><span class="co">#&gt;   [7] fs_1.6.6               ragg_1.5.0             vctrs_0.6.5           </span></span>
-<span><span class="co">#&gt;  [10] ROCR_1.0-11            spatstat.explore_3.5-2 rstatix_0.7.2         </span></span>
-<span><span class="co">#&gt;  [13] htmltools_0.5.8.1      broom_1.0.9            Formula_1.2-5         </span></span>
+<span><span class="co">#&gt;  [10] ROCR_1.0-11            spatstat.explore_3.5-3 rstatix_0.7.2         </span></span>
+<span><span class="co">#&gt;  [13] htmltools_0.5.8.1      broom_1.0.10           Formula_1.2-5         </span></span>
 <span><span class="co">#&gt;  [16] sass_0.4.10            sctransform_0.4.2      parallelly_1.45.1     </span></span>
 <span><span class="co">#&gt;  [19] KernSmooth_2.23-26     bslib_0.9.0            htmlwidgets_1.6.4     </span></span>
 <span><span class="co">#&gt;  [22] desc_1.4.3             ica_1.0-3              plyr_1.8.9            </span></span>
@@ -754,34 +754,34 @@ required for a single cell analysis.</p>
 <span><span class="co">#&gt;  [34] fastmap_1.2.0          fitdistrplus_1.2-4     shiny_1.11.1          </span></span>
 <span><span class="co">#&gt;  [37] digest_0.6.37          tensor_1.5.1           RSpectra_0.16-2       </span></span>
 <span><span class="co">#&gt;  [40] irlba_2.3.5.1          textshaping_1.0.3      ggpubr_0.6.1          </span></span>
-<span><span class="co">#&gt;  [43] labeling_0.4.3         progressr_0.15.1       spatstat.sparse_3.1-0 </span></span>
+<span><span class="co">#&gt;  [43] labeling_0.4.3         progressr_0.16.0       spatstat.sparse_3.1-0 </span></span>
 <span><span class="co">#&gt;  [46] httr_1.4.7             polyclip_1.10-7        abind_1.4-8           </span></span>
 <span><span class="co">#&gt;  [49] compiler_4.5.1         proxy_0.4-27           withr_3.0.2           </span></span>
-<span><span class="co">#&gt;  [52] backports_1.5.0        carData_3.0-5          fastDummies_1.7.5     </span></span>
-<span><span class="co">#&gt;  [55] ggsignif_0.6.4         MASS_7.3-65            tools_4.5.1           </span></span>
-<span><span class="co">#&gt;  [58] lmtest_0.9-40          httpuv_1.6.16          future.apply_1.20.0   </span></span>
-<span><span class="co">#&gt;  [61] goftest_1.2-3          glue_1.8.0             nlme_3.1-168          </span></span>
-<span><span class="co">#&gt;  [64] promises_1.3.3         grid_4.5.1             Rtsne_0.17            </span></span>
-<span><span class="co">#&gt;  [67] cluster_2.1.8.1        reshape2_1.4.4         generics_0.1.4        </span></span>
-<span><span class="co">#&gt;  [70] gtable_0.3.6           spatstat.data_3.1-8    class_7.3-23          </span></span>
-<span><span class="co">#&gt;  [73] tidyr_1.3.1            data.table_1.17.8      car_3.1-3             </span></span>
-<span><span class="co">#&gt;  [76] spatstat.geom_3.5-0    RcppAnnoy_0.0.22       ggrepel_0.9.6         </span></span>
-<span><span class="co">#&gt;  [79] RANN_2.6.2             pillar_1.11.0          spam_2.11-1           </span></span>
-<span><span class="co">#&gt;  [82] RcppHNSW_0.6.0         later_1.4.4            splines_4.5.1         </span></span>
-<span><span class="co">#&gt;  [85] dplyr_1.1.4            lattice_0.22-7         survival_3.8-3        </span></span>
-<span><span class="co">#&gt;  [88] deldir_2.0-4           tidyselect_1.2.1       miniUI_0.1.2          </span></span>
-<span><span class="co">#&gt;  [91] pbapply_1.7-4          knitr_1.50             gridExtra_2.3         </span></span>
-<span><span class="co">#&gt;  [94] scattermore_1.2        xfun_0.53              matrixStats_1.5.0     </span></span>
-<span><span class="co">#&gt;  [97] stringi_1.8.7          lazyeval_0.2.2         yaml_2.3.10           </span></span>
-<span><span class="co">#&gt; [100] evaluate_1.0.5         codetools_0.2-20       tibble_3.3.0          </span></span>
-<span><span class="co">#&gt; [103] cli_3.6.5              uwot_0.2.3             xtable_1.8-4          </span></span>
-<span><span class="co">#&gt; [106] reticulate_1.43.0      systemfonts_1.2.3      jquerylib_0.1.4       </span></span>
-<span><span class="co">#&gt; [109] Rcpp_1.1.0             globals_0.18.0         spatstat.random_3.4-1 </span></span>
-<span><span class="co">#&gt; [112] png_0.1-8              spatstat.univar_3.1-4  parallel_4.5.1        </span></span>
-<span><span class="co">#&gt; [115] pkgdown_2.1.3          dotCall64_1.2          listenv_0.9.1         </span></span>
-<span><span class="co">#&gt; [118] viridisLite_0.4.2      scales_1.4.0           ggridges_0.5.7        </span></span>
-<span><span class="co">#&gt; [121] e1071_1.7-16           purrr_1.1.0            rlang_1.1.6           </span></span>
-<span><span class="co">#&gt; [124] cowplot_1.2.0</span></span></code></pre>
+<span><span class="co">#&gt;  [52] S7_0.2.0               backports_1.5.0        carData_3.0-5         </span></span>
+<span><span class="co">#&gt;  [55] fastDummies_1.7.5      ggsignif_0.6.4         MASS_7.3-65           </span></span>
+<span><span class="co">#&gt;  [58] tools_4.5.1            lmtest_0.9-40          httpuv_1.6.16         </span></span>
+<span><span class="co">#&gt;  [61] future.apply_1.20.0    goftest_1.2-3          glue_1.8.0            </span></span>
+<span><span class="co">#&gt;  [64] nlme_3.1-168           promises_1.3.3         grid_4.5.1            </span></span>
+<span><span class="co">#&gt;  [67] Rtsne_0.17             cluster_2.1.8.1        reshape2_1.4.4        </span></span>
+<span><span class="co">#&gt;  [70] generics_0.1.4         gtable_0.3.6           spatstat.data_3.1-8   </span></span>
+<span><span class="co">#&gt;  [73] class_7.3-23           tidyr_1.3.1            data.table_1.17.8     </span></span>
+<span><span class="co">#&gt;  [76] car_3.1-3              spatstat.geom_3.6-0    RcppAnnoy_0.0.22      </span></span>
+<span><span class="co">#&gt;  [79] ggrepel_0.9.6          RANN_2.6.2             pillar_1.11.1         </span></span>
+<span><span class="co">#&gt;  [82] spam_2.11-1            RcppHNSW_0.6.0         later_1.4.4           </span></span>
+<span><span class="co">#&gt;  [85] splines_4.5.1          dplyr_1.1.4            lattice_0.22-7        </span></span>
+<span><span class="co">#&gt;  [88] survival_3.8-3         deldir_2.0-4           tidyselect_1.2.1      </span></span>
+<span><span class="co">#&gt;  [91] miniUI_0.1.2           pbapply_1.7-4          knitr_1.50            </span></span>
+<span><span class="co">#&gt;  [94] gridExtra_2.3          scattermore_1.2        xfun_0.53             </span></span>
+<span><span class="co">#&gt;  [97] matrixStats_1.5.0      stringi_1.8.7          lazyeval_0.2.2        </span></span>
+<span><span class="co">#&gt; [100] yaml_2.3.10            evaluate_1.0.5         codetools_0.2-20      </span></span>
+<span><span class="co">#&gt; [103] tibble_3.3.0           cli_3.6.5              uwot_0.2.3            </span></span>
+<span><span class="co">#&gt; [106] xtable_1.8-4           reticulate_1.43.0      systemfonts_1.2.3     </span></span>
+<span><span class="co">#&gt; [109] jquerylib_0.1.4        Rcpp_1.1.0             globals_0.18.0        </span></span>
+<span><span class="co">#&gt; [112] spatstat.random_3.4-2  png_0.1-8              spatstat.univar_3.1-4 </span></span>
+<span><span class="co">#&gt; [115] parallel_4.5.1         pkgdown_2.1.3          dotCall64_1.2         </span></span>
+<span><span class="co">#&gt; [118] listenv_0.9.1          viridisLite_0.4.2      scales_1.4.0          </span></span>
+<span><span class="co">#&gt; [121] ggridges_0.5.7         e1071_1.7-16           purrr_1.1.0           </span></span>
+<span><span class="co">#&gt; [124] rlang_1.1.6            cowplot_1.2.0</span></span></code></pre>
 </div>
 <div class="section level2">
 <h2 id="references">References<a class="anchor" aria-label="anchor" href="#references"></a>
