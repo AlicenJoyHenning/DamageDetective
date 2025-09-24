@@ -94,7 +94,7 @@
 #' @importFrom dplyr first pull filter
 #' @importFrom ggplot2 ggsave theme element_rect margin
 #' @importFrom rlang expr !!! .data
-#' @importFrom stats prcomp
+#' @importFrom stats density prcomp
 #' @importFrom stringr str_extract
 #' @export
 #' @examples
@@ -125,7 +125,7 @@ detect_damage <- function(
     generate_plot = TRUE,
     display_plot = TRUE,
     palette = c("grey", "#7023FD", "#E60006"),
-    filter_threshold = 0.5,
+    filter_threshold = NA,
     filter_counts = FALSE,
     verbose = TRUE
 ) {
@@ -172,7 +172,8 @@ detect_damage <- function(
   output <- .finalise_output(
     metadata_plot, count_matrix, filter_counts,
     generate_plot, display_plot, target_damage,
-    filter_threshold, palette, damaged_cluster_cells, metadata_stored
+    filter_threshold, palette, damaged_cluster_cells, metadata_stored,
+    verbose
   )
 
   return(output)
@@ -188,9 +189,10 @@ detect_damage <- function(
     stop("damage_proportion must lie between 0 and 1.")
   }
 
-  if (!is.numeric(filter_threshold) ||
-      filter_threshold <= 0 ||
-      filter_threshold > 1
+  if (!is.na(filter_threshold) &&
+      (!is.numeric(filter_threshold) ||
+       filter_threshold <= 0 ||
+       filter_threshold > 1)
   ) {
     stop("filter_threshold must be a numeric value between 0 and 1.")
   }
@@ -523,7 +525,7 @@ detect_damage <- function(
 .finalise_output <- function(metadata_plot, count_matrix, filter_counts,
                              generate_plot, display_plot, target_damage,
                              filter_threshold, palette, damaged_cluster_cells,
-                             metadata_stored) {
+                             metadata_stored, verbose) {
 
   # Cells with simulated damage scores
   metadata_plot$DamageDetective <-
@@ -560,8 +562,42 @@ detect_damage <- function(
                                              metadata_output$Cells), ]
   }
 
+  # Dynamically find  pANN threshold if not specified
+  if (is.na(filter_threshold)){
+    # Find where slope changes sign (peak detection)
+    dens <- density(metadata_output$DamageDetective,
+                    from = 0, to = 1, n = 1000)
+    y <- dens$y
+    x <- dens$x
+    dy <- diff(y)
+    peaks_idx <- which(diff(sign(dy)) == -2) + 1
+
+    # Only keep significant peaks (height > fraction of max)
+    min_height <- max(y) * 0.05
+    peaks_idx <- peaks_idx[y[peaks_idx] > min_height]
+
+    # Define threshold for pANN if no peaks or before second peak
+    if(length(peaks_idx) < 2) {
+      filter_threshold <- 0.5
+    } else {
+      # find local minimum before second peak
+      second_peak_idx <- peaks_idx[2]
+      valley_idx <- which.min(y[1:second_peak_idx])
+      filter_threshold <- x[valley_idx]
+    }
+
+    if (verbose){
+      message("Suggested pANN threshold : ", filter_threshold)
+    }
+
+  }
+
+  # Perform filtering if specified
   if (filter_counts) {
-    filtered_cells <- metadata_output$Cells[metadata_output$DamageDetective <= filter_threshold]
+
+    # Perform filtering
+    filtered_cells <- metadata_output$Cells[
+      metadata_output$DamageDetective <= filter_threshold]
     final_filtered_matrix <- count_matrix[, filtered_cells, drop = FALSE]
     output <- final_filtered_matrix
 
@@ -586,6 +622,10 @@ detect_damage <- function(
       output = output,
       plot = final_plot
     )
+  }
+
+  if (verbose){
+    message("Completed.")
   }
 
   return(output)

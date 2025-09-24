@@ -22,7 +22,7 @@ detect_damage(
   generate_plot = TRUE,
   display_plot = TRUE,
   palette = c("grey", "#7023FD", "#E60006"),
-  filter_threshold = 0.5,
+  filter_threshold = NA,
   filter_counts = FALSE,
   verbose = TRUE
 )
