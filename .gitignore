@@ -1,10 +1,23 @@
+# R session files
 .RData
-.Ruserdata
-.Rproj.user
-DamageDetective.Rproj
-.DS_Store
 .Rhistory
-inst/doc/
+.Ruserdata
+
+# RStudio project files
+.Rproj.user
+*.Rproj
+
+# macOS
+.DS_Store
+
+# pkgdown site (optional if you build docs in-repo)
 docs/
-Meta/
+
+# Build artefacts
+*.tar.gz
+*.Rcheck/
+
+# Vignettes & documentation build artefacts
+inst/doc/
 doc/
+Meta/
