@@ -295,13 +295,13 @@ From the above plots you can see how selecting an unideal `ribosome_penalty` can
 Selecting a `ribosome_penalty` that simulates RNA loss in a way that is relevant to the input data can be done through trial and error, similar to the plotting exercise above, or in an automated fashion using the `select_penalty` function,
 
 ```{r select_penalty}
-selected_penalty <- DamageDetective::select_penalty(
+penalty <- DamageDetective::select_penalty(
   count_matrix = alignment_counts,
   max_penalty_trials = 5, 
   seed = 7, 
   verbose = TRUE
 )
-selected_penalty
+penalty
 ```
 
 As seen above, the `select_penalty` function generates artificial cells using different `ribosome_penalty` estimates and evaluates the similarity of the resulting artificial cells to true cells.
@@ -329,6 +329,7 @@ selected_penalty$selected_penalty
 data(selected_penalty, package = "DamageDetective")
 selected_penalty$penalty_results
 selected_penalty$selected_penalty
+
 ```
 
 Though not strictly necessary, the `select_penalty` function can be adjusted to give a user more control over the testing process. This includes,
