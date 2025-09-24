@@ -280,9 +280,8 @@ no_penalty_plot | med_penalty_plot | high_penalty_plot
 #| fig.alt: >
 #|   Scatter plot showing the distribution of quality control 
 #|   metrics in altered and unaltered counts. 
-data("penalty_plot", package = "DamageDetective")
-plot <- penalty_plot
-plot
+# data("penalty_plot", package = "DamageDetective")
+# penalty_plot
 ```
 
 
