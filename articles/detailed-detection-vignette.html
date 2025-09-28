@@ -57,7 +57,7 @@
   <main id="main" class="col-md-9"><div class="page-header">
       <img src="../logo.svg" class="logo" alt=""><h1>Damage cell quality control</h1>
             
-            <h4 data-toc-skip class="date">Compiled: 2025-09-24</h4>
+            <h4 data-toc-skip class="date">Compiled: 2025-09-28</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/alicenjoyhenning/DamageDetective/blob/main/vignettes/detailed-detection-vignette.Rmd" class="external-link"><code>vignettes/detailed-detection-vignette.Rmd</code></a></small>
       <div class="d-none name"><code>detailed-detection-vignette.Rmd</code></div>
@@ -677,13 +677,13 @@ directly.</p>
 <span></span>
 <span><span class="co"># View output</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">detection_output</span><span class="op">$</span><span class="va">output</span><span class="op">)</span></span>
-<span><span class="co">#&gt;                                 Cells DamageDetective</span></span>
-<span><span class="co">#&gt; AAACCCAAGGAGAGTA-1 AAACCCAAGGAGAGTA-1               0</span></span>
-<span><span class="co">#&gt; AAACGCTTCAGCCCAG-1 AAACGCTTCAGCCCAG-1               0</span></span>
-<span><span class="co">#&gt; AAAGAACAGACGACTG-1 AAAGAACAGACGACTG-1               0</span></span>
-<span><span class="co">#&gt; AAAGAACCAATGGCAG-1 AAAGAACCAATGGCAG-1               0</span></span>
-<span><span class="co">#&gt; AAAGAACGTCTGCAAT-1 AAAGAACGTCTGCAAT-1               0</span></span>
-<span><span class="co">#&gt; AAAGGATAGTAGACAT-1 AAAGGATAGTAGACAT-1               0</span></span></code></pre>
+<span><span class="co">#&gt;                                 Cells DamageDetective pANN</span></span>
+<span><span class="co">#&gt; AAACCCAAGGAGAGTA-1 AAACCCAAGGAGAGTA-1               0 cell</span></span>
+<span><span class="co">#&gt; AAACGCTTCAGCCCAG-1 AAACGCTTCAGCCCAG-1               0 cell</span></span>
+<span><span class="co">#&gt; AAAGAACAGACGACTG-1 AAAGAACAGACGACTG-1               0 cell</span></span>
+<span><span class="co">#&gt; AAAGAACCAATGGCAG-1 AAAGAACCAATGGCAG-1               0 cell</span></span>
+<span><span class="co">#&gt; AAAGAACGTCTGCAAT-1 AAAGAACGTCTGCAAT-1               0 cell</span></span>
+<span><span class="co">#&gt; AAAGGATAGTAGACAT-1 AAAGGATAGTAGACAT-1               0 cell</span></span></code></pre>
 <p>From here, the matrix can be filtered according to a threshold damage
 value before continuing with the remainder of pre-processing steps
 required for a single cell analysis.</p>
