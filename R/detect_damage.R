@@ -603,6 +603,9 @@ detect_damage <- function(
 
   } else {
     final_output <- metadata_output[, c("Cells", "DamageDetective")]
+    final_output$pANN <- ifelse(final_output$DamageDetective <=
+                                  filter_threshold, "cell",
+                                "damaged")
     output <- final_output
   }
 
