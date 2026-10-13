@@ -12,7 +12,8 @@ simulate_counts(
   damage_distribution = "left_skewed",
   distribution_steepness = "steep",
   beta_shape_parameters = NULL,
-  ribosome_penalty = 1,
+  ribosome_penalty = 0.5,
+  depletion_type = "abun_rand",
   generate_plot = TRUE,
   palette = c("grey", "#7023FD", "#E60006"),
   plot_ribosomal_penalty = FALSE,
@@ -83,6 +84,12 @@ probability of loosing a transcript from a ribosomal gene is multiplied by.
 Here, values closer to 0 represent a greater penalty.
 \itemize{
 \item Default is 1.
+}}
+
+\item{depletion_type}{Specify whether the transcript sampling is
+weighted by gene abundance.
+\itemize{
+\item Default is "abun_rand".
 }}
 
 \item{generate_plot}{Boolean specifying whether the QC plot should

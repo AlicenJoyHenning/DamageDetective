@@ -18,7 +18,6 @@ License: AGPL (>= 3)
 Encoding: UTF-8
 Language: en-US
 LazyData: false
-RoxygenNote: 7.3.2
 Depends: 
     R (>= 3.5.0)
 Roxygen: list(markdown = TRUE)
@@ -50,3 +49,4 @@ Config/testthat/edition: 3
 LinkingTo: 
     Rcpp,
     RcppArmadillo
+Config/roxygen2/version: 8.1.0

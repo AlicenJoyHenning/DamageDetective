@@ -5,57 +5,71 @@ export(select_penalty)
 export(simulate_counts)
 import(ggplot2)
 import(patchwork)
-importFrom(Matrix,Matrix)
-importFrom(Matrix,colSums)
+importFrom(Matrix,
+  Matrix,
+  colSums
+)
 importFrom(Rcpp,sourceCpp)
 importFrom(RcppHNSW,hnsw_knn)
-importFrom(Seurat,CreateSeuratObject)
-importFrom(Seurat,FindClusters)
-importFrom(Seurat,FindMarkers)
-importFrom(Seurat,FindNeighbors)
-importFrom(Seurat,FindVariableFeatures)
-importFrom(Seurat,Idents)
-importFrom(Seurat,NormalizeData)
-importFrom(Seurat,RunPCA)
-importFrom(Seurat,ScaleData)
-importFrom(Seurat,VariableFeatures)
-importFrom(cowplot,draw_label)
-importFrom(cowplot,ggdraw)
-importFrom(cowplot,plot_grid)
-importFrom(dplyr,"%>%")
-importFrom(dplyr,bind_rows)
-importFrom(dplyr,case_when)
-importFrom(dplyr,filter)
-importFrom(dplyr,first)
-importFrom(dplyr,group_by)
-importFrom(dplyr,if_else)
-importFrom(dplyr,mutate)
-importFrom(dplyr,pull)
-importFrom(dplyr,rename)
-importFrom(dplyr,select)
-importFrom(dplyr,summarise)
+importFrom(Seurat,
+  CreateSeuratObject,
+  FindClusters,
+  FindMarkers,
+  FindNeighbors,
+  FindVariableFeatures,
+  Idents,
+  NormalizeData,
+  RunPCA,
+  ScaleData,
+  VariableFeatures
+)
+importFrom(cowplot,
+  draw_label,
+  ggdraw,
+  plot_grid
+)
+importFrom(dplyr,
+  "%>%",
+  bind_rows,
+  case_when,
+  filter,
+  first,
+  group_by,
+  if_else,
+  mutate,
+  pull,
+  rename,
+  select,
+  summarise
+)
 importFrom(e1071,skewness)
-importFrom(ggplot2,aes)
-importFrom(ggplot2,element_rect)
-importFrom(ggplot2,facet_wrap)
-importFrom(ggplot2,geom_point)
-importFrom(ggplot2,ggplot)
-importFrom(ggplot2,ggsave)
-importFrom(ggplot2,labs)
-importFrom(ggplot2,margin)
-importFrom(ggplot2,scale_y_continuous)
-importFrom(ggplot2,theme)
-importFrom(ggplot2,theme_minimal)
+importFrom(ggplot2,
+  aes,
+  element_rect,
+  facet_wrap,
+  geom_point,
+  ggplot,
+  ggsave,
+  labs,
+  margin,
+  scale_y_continuous,
+  theme,
+  theme_minimal
+)
 importFrom(ggpubr,get_legend)
-importFrom(rlang,"!!!")
-importFrom(rlang,.data)
-importFrom(rlang,expr)
+importFrom(rlang,
+  "!!!",
+  .data,
+  expr
+)
 importFrom(scales,rescale)
-importFrom(stats,density)
-importFrom(stats,median)
-importFrom(stats,prcomp)
-importFrom(stats,quantile)
-importFrom(stats,rbeta)
+importFrom(stats,
+  density,
+  median,
+  prcomp,
+  quantile,
+  rbeta
+)
 importFrom(stringr,str_extract)
 importFrom(tidyr,pivot_longer)
 importFrom(withr,with_seed)

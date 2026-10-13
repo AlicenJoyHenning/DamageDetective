@@ -6,7 +6,7 @@
 \usage{
 detect_damage(
   count_matrix,
-  ribosome_penalty = 1,
+  ribosome_penalty = 0.5,
   organism = "Hsap",
   annotated_celltypes = FALSE,
   target_damage = c(0.65, 1),
