@@ -12,8 +12,8 @@
 <link rel="icon" sizes="any" href="../favicon.ico">
 <link rel="manifest" href="../site.webmanifest">
 <script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-<link href="../deps/bootstrap-5.3.1/bootstrap.min.css" rel="stylesheet">
-<script src="../deps/bootstrap-5.3.1/bootstrap.bundle.min.js"></script><link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
+<link href="../deps/bootstrap-5.3.8/bootstrap.min.css" rel="stylesheet">
+<script src="../deps/bootstrap-5.3.8/bootstrap.bundle.min.js"></script><link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
 <link href="../deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet">
 <script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="../pkgdown.js"></script><meta property="og:title" content="Damage cell quality control">
 </head>
@@ -57,7 +57,7 @@
   <main id="main" class="col-md-9"><div class="page-header">
       <img src="../logo.svg" class="logo" alt=""><h1>Damage cell quality control</h1>
             
-            <h4 data-toc-skip class="date">Compiled: 2025-10-19</h4>
+            <h4 data-toc-skip class="date">Compiled: 2026-10-13</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/alicenjoyhenning/DamageDetective/blob/main/vignettes/detailed-detection-vignette.Rmd" class="external-link"><code>vignettes/detailed-detection-vignette.Rmd</code></a></small>
       <div class="d-none name"><code>detailed-detection-vignette.Rmd</code></div>
@@ -90,10 +90,11 @@ your R environment to follow along:</p>
 <div class="section level2">
 <h2 id="workflow-overview">Workflow overview<a class="anchor" aria-label="anchor" href="#workflow-overview"></a>
 </h2>
-<p>The <code>DamageDetective</code> workflow is made up of two stages,
-first, creating artificial profiles of damage using the cells of an
-input data set, and second, comparing the input cells to the artificial
-profiles.</p>
+<p>The <code>DamageDetective</code> workflow is made up of three stages,
+first, clustering the cells and performing a quality check at this
+level, second, creating artificial profiles of damage using the cells of
+clusters that have passed the initial quality check, and third,
+comparing the input cells to the artificial profiles.</p>
 <p>This approach is inspired by <code>DoubletFinder</code>—a
 high-performing tool for filtering doublets, another prominent scRNA-seq
 artifact. Here, artificial profiles of doublets are created through the
@@ -120,8 +121,7 @@ demonstrations.</p>
 <p>The loss of plasma membrane integrity is a characteristic of cellular
 damage that has long since been exploited to assess cell viability.
 Compromised membranes allow cellular content, including RNA, to escape,
-leading to shifts in quality control metrics such as a reduction in
-library size and complexity.</p>
+leading to a reduction in library size and complexity.</p>
 <p>An additional and fundamental consequence of membrane integrity loss
 is a shift in library composition. This occurs because not all RNA
 within a cell is equally vulnerable to loss. RNA enclosed by additional
@@ -312,7 +312,7 @@ coming from an individual with a high vaccine responsiveness.</p>
 <span><span class="va">pbmc_counts</span> <span class="op">&lt;-</span> <span class="fu">SummarizedExperiment</span><span class="fu">::</span><span class="fu">assay</span><span class="op">(</span><span class="va">pbmc_sce</span>, <span class="st">"counts"</span><span class="op">)</span></span>
 <span><span class="va">sample_counts</span>  <span class="op">&lt;-</span> <span class="va">pbmc_counts</span><span class="op">[</span>, <span class="va">sample_sce</span><span class="op">]</span></span>
 <span><span class="va">sample_counts</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">as.matrix</a></span><span class="op">(</span><span class="va">sample_counts</span><span class="op">)</span></span>
-<span><span class="va">sample_counts</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/methods/as.html" class="external-link">as</a></span><span class="op">(</span><span class="va">sample_counts</span>, <span class="st">"dgCMatrix"</span><span class="op">)</span></span></code></pre></div>
+<span><span class="va">sample_counts</span> <span class="op">&lt;-</span> <span class="fu">as</span><span class="op">(</span><span class="va">sample_counts</span>, <span class="st">"dgCMatrix"</span><span class="op">)</span></span></code></pre></div>
 <blockquote>
 <p>Note: Like many single cell analysis packages, DamageDetective can
 only operate with one single cell dataset at a time. Hence why we work
@@ -648,7 +648,7 @@ severity.</td>
 <span>  palette <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"grey"</span>, <span class="st">"#BCEEFB"</span>, <span class="st">"#325EF7"</span><span class="op">)</span>,</span>
 <span>  seed <span class="op">=</span> <span class="fl">7</span></span>
 <span><span class="op">)</span></span></code></pre></div>
-<p><img src="detailed-detection-vignette_files/figure-html/palette-1.png" width="700"></p>
+<p><img src="detailed-detection-vignette_files/figure-html/palette-1.png" class="r-plt" alt="" width="700"></p>
 <p><br></p>
 </div>
 </div>
@@ -671,8 +671,8 @@ directly.</p>
 <span><span class="co">#&gt; Checking clusters...</span></span>
 <span><span class="co">#&gt; Simulating damage...</span></span>
 <span><span class="co">#&gt; Computing pANN...</span></span>
-<span><span class="co">#&gt; Suggested pANN threshold : 0.39039039039039</span></span></code></pre></div>
-<p><img src="detailed-detection-vignette_files/figure-html/run_detection-1.png" alt="Scatter plot showing the outcome damage detection where cells of the input data are coloured according to the estimated level of damage with grey being no damage,  purple being light damage, and red being heavy damage." width="576"></p>
+<span><span class="co">#&gt;  ... 0.39 suggested threshold.</span></span></code></pre></div>
+<p><img src="detailed-detection-vignette_files/figure-html/run_detection-1.png" class="r-plt" alt="Scatter plot showing the outcome damage detection where cells of the input data are coloured according to the estimated level of damage with grey being no damage,  purple being light damage, and red being heavy damage." width="576"></p>
 <pre><code><span><span class="co">#&gt; Completed.</span></span>
 <span></span>
 <span><span class="co"># View output</span></span>
@@ -714,9 +714,9 @@ required for a single cell analysis.</p>
 <div class="section level2">
 <h2 id="session-information">Session Information<a class="anchor" aria-label="anchor" href="#session-information"></a>
 </h2>
-<pre><code><span><span class="co">#&gt; R version 4.5.1 (2025-06-13)</span></span>
+<pre><code><span><span class="co">#&gt; R version 4.6.1 (2026-06-24)</span></span>
 <span><span class="co">#&gt; Platform: x86_64-pc-linux-gnu</span></span>
-<span><span class="co">#&gt; Running under: Ubuntu 24.04.3 LTS</span></span>
+<span><span class="co">#&gt; Running under: Ubuntu 24.04.5 LTS</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Matrix products: default</span></span>
 <span><span class="co">#&gt; BLAS:   /usr/lib/x86_64-linux-gnu/openblas-pthread/libblas.so.3 </span></span>
@@ -735,53 +735,53 @@ required for a single cell analysis.</p>
 <span><span class="co">#&gt; [1] stats     graphics  grDevices utils     datasets  methods   base     </span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; other attached packages:</span></span>
-<span><span class="co">#&gt; [1] future_1.67.0          patchwork_1.3.2        ggplot2_4.0.0         </span></span>
-<span><span class="co">#&gt; [4] stringr_1.5.2          Seurat_5.3.0           SeuratObject_5.2.0    </span></span>
-<span><span class="co">#&gt; [7] sp_2.2-0               DamageDetective_2.0.15</span></span>
+<span><span class="co">#&gt; [1] patchwork_1.3.2        ggplot2_4.0.3          stringr_1.6.0         </span></span>
+<span><span class="co">#&gt; [4] Seurat_5.6.0           SeuratObject_5.4.0     sp_2.2-4              </span></span>
+<span><span class="co">#&gt; [7] DamageDetective_2.0.15</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; loaded via a namespace (and not attached):</span></span>
-<span><span class="co">#&gt;   [1] RColorBrewer_1.1-3     jsonlite_2.0.0         magrittr_2.0.4        </span></span>
-<span><span class="co">#&gt;   [4] spatstat.utils_3.2-0   farver_2.1.2           rmarkdown_2.30        </span></span>
-<span><span class="co">#&gt;   [7] fs_1.6.6               ragg_1.5.0             vctrs_0.6.5           </span></span>
-<span><span class="co">#&gt;  [10] ROCR_1.0-11            spatstat.explore_3.5-3 rstatix_0.7.2         </span></span>
-<span><span class="co">#&gt;  [13] htmltools_0.5.8.1      broom_1.0.10           Formula_1.2-5         </span></span>
-<span><span class="co">#&gt;  [16] sass_0.4.10            sctransform_0.4.2      parallelly_1.45.1     </span></span>
-<span><span class="co">#&gt;  [19] KernSmooth_2.23-26     bslib_0.9.0            htmlwidgets_1.6.4     </span></span>
+<span><span class="co">#&gt;   [1] RColorBrewer_1.1-3     jsonlite_2.0.0         magrittr_2.0.5        </span></span>
+<span><span class="co">#&gt;   [4] spatstat.utils_3.2-5   farver_2.1.2           rmarkdown_2.32        </span></span>
+<span><span class="co">#&gt;   [7] fs_2.1.0               ragg_1.5.2             vctrs_0.7.3           </span></span>
+<span><span class="co">#&gt;  [10] ROCR_1.0-12            spatstat.explore_3.8-3 rstatix_1.1.0         </span></span>
+<span><span class="co">#&gt;  [13] htmltools_0.5.9        broom_1.0.13           Formula_1.2-6         </span></span>
+<span><span class="co">#&gt;  [16] sass_0.4.10            sctransform_0.4.3      parallelly_1.48.0     </span></span>
+<span><span class="co">#&gt;  [19] KernSmooth_2.23-26     bslib_0.12.0           htmlwidgets_1.6.4     </span></span>
 <span><span class="co">#&gt;  [22] desc_1.4.3             ica_1.0-3              plyr_1.8.9            </span></span>
-<span><span class="co">#&gt;  [25] plotly_4.11.0          zoo_1.8-14             cachem_1.1.0          </span></span>
-<span><span class="co">#&gt;  [28] igraph_2.2.0           mime_0.13              lifecycle_1.0.4       </span></span>
-<span><span class="co">#&gt;  [31] pkgconfig_2.0.3        Matrix_1.7-3           R6_2.6.1              </span></span>
-<span><span class="co">#&gt;  [34] fastmap_1.2.0          fitdistrplus_1.2-4     shiny_1.11.1          </span></span>
-<span><span class="co">#&gt;  [37] digest_0.6.37          tensor_1.5.1           RSpectra_0.16-2       </span></span>
-<span><span class="co">#&gt;  [40] irlba_2.3.5.1          textshaping_1.0.4      ggpubr_0.6.2          </span></span>
-<span><span class="co">#&gt;  [43] labeling_0.4.3         progressr_0.17.0       spatstat.sparse_3.1-0 </span></span>
-<span><span class="co">#&gt;  [46] httr_1.4.7             polyclip_1.10-7        abind_1.4-8           </span></span>
-<span><span class="co">#&gt;  [49] compiler_4.5.1         proxy_0.4-27           withr_3.0.2           </span></span>
-<span><span class="co">#&gt;  [52] S7_0.2.0               backports_1.5.0        carData_3.0-5         </span></span>
-<span><span class="co">#&gt;  [55] fastDummies_1.7.5      ggsignif_0.6.4         MASS_7.3-65           </span></span>
-<span><span class="co">#&gt;  [58] tools_4.5.1            lmtest_0.9-40          httpuv_1.6.16         </span></span>
-<span><span class="co">#&gt;  [61] future.apply_1.20.0    goftest_1.2-3          glue_1.8.0            </span></span>
-<span><span class="co">#&gt;  [64] nlme_3.1-168           promises_1.3.3         grid_4.5.1            </span></span>
-<span><span class="co">#&gt;  [67] Rtsne_0.17             cluster_2.1.8.1        reshape2_1.4.4        </span></span>
-<span><span class="co">#&gt;  [70] generics_0.1.4         gtable_0.3.6           spatstat.data_3.1-8   </span></span>
-<span><span class="co">#&gt;  [73] class_7.3-23           tidyr_1.3.1            data.table_1.17.8     </span></span>
-<span><span class="co">#&gt;  [76] car_3.1-3              spatstat.geom_3.6-0    RcppAnnoy_0.0.22      </span></span>
-<span><span class="co">#&gt;  [79] ggrepel_0.9.6          RANN_2.6.2             pillar_1.11.1         </span></span>
-<span><span class="co">#&gt;  [82] spam_2.11-1            RcppHNSW_0.6.0         later_1.4.4           </span></span>
-<span><span class="co">#&gt;  [85] splines_4.5.1          dplyr_1.1.4            lattice_0.22-7        </span></span>
-<span><span class="co">#&gt;  [88] survival_3.8-3         deldir_2.0-4           tidyselect_1.2.1      </span></span>
-<span><span class="co">#&gt;  [91] miniUI_0.1.2           pbapply_1.7-4          knitr_1.50            </span></span>
-<span><span class="co">#&gt;  [94] gridExtra_2.3          scattermore_1.2        xfun_0.53             </span></span>
-<span><span class="co">#&gt;  [97] matrixStats_1.5.0      stringi_1.8.7          lazyeval_0.2.2        </span></span>
-<span><span class="co">#&gt; [100] yaml_2.3.10            evaluate_1.0.5         codetools_0.2-20      </span></span>
-<span><span class="co">#&gt; [103] tibble_3.3.0           cli_3.6.5              uwot_0.2.3            </span></span>
-<span><span class="co">#&gt; [106] xtable_1.8-4           reticulate_1.43.0      systemfonts_1.3.1     </span></span>
-<span><span class="co">#&gt; [109] jquerylib_0.1.4        Rcpp_1.1.0             globals_0.18.0        </span></span>
-<span><span class="co">#&gt; [112] spatstat.random_3.4-2  png_0.1-8              spatstat.univar_3.1-4 </span></span>
-<span><span class="co">#&gt; [115] parallel_4.5.1         pkgdown_2.1.3          dotCall64_1.2         </span></span>
-<span><span class="co">#&gt; [118] listenv_0.9.1          viridisLite_0.4.2      scales_1.4.0          </span></span>
-<span><span class="co">#&gt; [121] ggridges_0.5.7         e1071_1.7-16           purrr_1.1.0           </span></span>
-<span><span class="co">#&gt; [124] rlang_1.1.6            cowplot_1.2.0</span></span></code></pre>
+<span><span class="co">#&gt;  [25] plotly_4.12.1          zoo_1.9-1              cachem_1.1.0          </span></span>
+<span><span class="co">#&gt;  [28] igraph_2.3.4           mime_0.13              lifecycle_1.0.5       </span></span>
+<span><span class="co">#&gt;  [31] pkgconfig_2.0.3        Matrix_1.7-5           R6_2.6.1              </span></span>
+<span><span class="co">#&gt;  [34] fastmap_1.2.0          fitdistrplus_1.2-6     future_1.76.0         </span></span>
+<span><span class="co">#&gt;  [37] shiny_1.14.0           digest_0.6.39          tensor_1.5.1          </span></span>
+<span><span class="co">#&gt;  [40] RSpectra_0.16-2        irlba_2.4.1            textshaping_1.0.5     </span></span>
+<span><span class="co">#&gt;  [43] ggpubr_1.0.0           labeling_0.4.3         progressr_1.0.0       </span></span>
+<span><span class="co">#&gt;  [46] spatstat.sparse_3.2-0  httr_1.4.9             polyclip_1.10-7       </span></span>
+<span><span class="co">#&gt;  [49] abind_1.4-8            compiler_4.6.1         proxy_0.4-29          </span></span>
+<span><span class="co">#&gt;  [52] withr_3.0.3            S7_0.2.2               backports_1.5.1       </span></span>
+<span><span class="co">#&gt;  [55] carData_3.0-6          fastDummies_1.7.6      ggsignif_0.6.4        </span></span>
+<span><span class="co">#&gt;  [58] MASS_7.3-65            tools_4.6.1            lmtest_0.9-40         </span></span>
+<span><span class="co">#&gt;  [61] otel_0.2.0             httpuv_1.6.17          future.apply_1.20.2   </span></span>
+<span><span class="co">#&gt;  [64] goftest_1.2-3          glue_1.8.1             nlme_3.1-169          </span></span>
+<span><span class="co">#&gt;  [67] promises_1.5.0         grid_4.6.1             Rtsne_0.17            </span></span>
+<span><span class="co">#&gt;  [70] cluster_2.1.8.2        reshape2_1.4.5         generics_0.1.4        </span></span>
+<span><span class="co">#&gt;  [73] gtable_0.3.6           spatstat.data_3.1-9    class_7.3-23          </span></span>
+<span><span class="co">#&gt;  [76] tidyr_1.3.2            data.table_1.18.6.1    car_3.1-5             </span></span>
+<span><span class="co">#&gt;  [79] spatstat.geom_3.8-3    RcppAnnoy_0.0.23       ggrepel_0.9.8         </span></span>
+<span><span class="co">#&gt;  [82] RANN_2.6.3             pillar_1.11.1          spam_2.11-4           </span></span>
+<span><span class="co">#&gt;  [85] RcppHNSW_0.7.0         later_1.4.8            splines_4.6.1         </span></span>
+<span><span class="co">#&gt;  [88] dplyr_1.2.1            lattice_0.22-9         survival_3.8-6        </span></span>
+<span><span class="co">#&gt;  [91] deldir_2.0-4           tidyselect_1.2.1       miniUI_0.1.2          </span></span>
+<span><span class="co">#&gt;  [94] pbapply_1.7-5          knitr_1.52             gridExtra_2.3.1       </span></span>
+<span><span class="co">#&gt;  [97] scattermore_1.2        xfun_0.61              matrixStats_1.5.0     </span></span>
+<span><span class="co">#&gt; [100] stringi_1.8.9          yaml_2.3.12            evaluate_1.0.5        </span></span>
+<span><span class="co">#&gt; [103] codetools_0.2-20       tibble_3.3.1           cli_3.6.6             </span></span>
+<span><span class="co">#&gt; [106] uwot_0.2.5             xtable_1.8-8           reticulate_1.47.0     </span></span>
+<span><span class="co">#&gt; [109] systemfonts_1.3.2      jquerylib_0.1.4        Rcpp_1.1.2            </span></span>
+<span><span class="co">#&gt; [112] globals_0.20.0         spatstat.random_3.5-2  png_0.1-9             </span></span>
+<span><span class="co">#&gt; [115] spatstat.univar_3.2-0  parallel_4.6.1         pkgdown_2.2.1         </span></span>
+<span><span class="co">#&gt; [118] dotCall64_1.2          listenv_1.1.0          viridisLite_0.4.3     </span></span>
+<span><span class="co">#&gt; [121] scales_1.4.0           ggridges_0.5.7         e1071_1.7-17          </span></span>
+<span><span class="co">#&gt; [124] purrr_1.2.2            rlang_1.3.0            cowplot_1.2.0</span></span></code></pre>
 </div>
 <div class="section level2">
 <h2 id="references">References<a class="anchor" aria-label="anchor" href="#references"></a>
@@ -813,7 +813,7 @@ Springer-Verlag New York, 2016.</li>
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.3.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.1.</p>
 </div>
 
     </footer>

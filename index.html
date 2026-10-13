@@ -12,8 +12,8 @@
 <link rel="icon" sizes="any" href="favicon.ico">
 <link rel="manifest" href="site.webmanifest">
 <script src="deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-<link href="deps/bootstrap-5.3.1/bootstrap.min.css" rel="stylesheet">
-<script src="deps/bootstrap-5.3.1/bootstrap.bundle.min.js"></script><link href="deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
+<link href="deps/bootstrap-5.3.8/bootstrap.min.css" rel="stylesheet">
+<script src="deps/bootstrap-5.3.8/bootstrap.bundle.min.js"></script><link href="deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
 <link href="deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet">
 <script src="deps/headroom-0.11.0/headroom.min.js"></script><script src="deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="deps/search-1.0.0/fuse.min.js"></script><script src="deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="pkgdown.js"></script><meta property="og:title" content="Detecting Damaged Cells in Single-Cell RNA Sequencing Data">
 <meta name="description" content="Detects and filters damaged cells in single-cell RNA sequencing (scRNA-seq) data using a novel approach inspired by DoubletFinder. Damage is assessed by measuring how much each cell deviates from an artificially damaged version of itself, simulated through the probabilistic loss of cytoplasmic RNA. The method outputs a damage score ranging from 0 (viable, intact cell) to 1 (broken, non-viable cell), providing an intuitive scale for filtering that is standardised across cell types, sample origin, and experimental design.">
@@ -70,10 +70,10 @@
 <h2 id="description">Description<a class="anchor" aria-label="anchor" href="#description"></a>
 </h2>
 <p><a href="https://alicenjoyhenning.github.io/DamageDetective/"><strong>Jump to the DamageDetective website</strong></a></p>
-<p>Damaged cells are an artifact of single-cell RNA sequencing (scRNA-seq) formed when cells succumb to stress before being sequenced. As a result, the gene expression data captured does not reflect biologically viable cells and introduces technical variability that is indistinguishable from functionally relevant variability. Filtering these cells is a standard task in scRNA-seq quality control (QC), though lacks standardisation in practice.</p>
-<p>The majority of approaches filter damaged cells according to deviations in cell-level QC metrics. This outlier-based detection implicitly assumes viable cells follow unimodal distributions across QC metrics, where deviation is synonymous with damage. This assumption falters in the context of heterogeneous data and risks introducing filtering bias related to cell type abundance. Recent methods address this by defining damage within distinct distributions, representing cell populations, independently. This, however, assumes all distinct distributions are associated with viable cell populations and risks leaving abundant damage undetected and ultimately misclassified.</p>
-<p><code>DamageDetective</code> takes a different approach, rather than detecting damage by measuring the extent to which cells deviate from one another, it measures the extent to which cells deviate from artificially damaged profiles of themselves, created through simulating cytoplasmic RNA escape–a characteristic of damage resulting from the loss of plasma membrane integrity. This is inspired by the approach of <code>DoubletFinder</code>—a high-performing tool of another prominent scRNA-seq artifact.</p>
-<p>Like <code>DoubletFinder</code>, <code>DamageDetective</code> uses principal component analysis to compute the proximity of true cells to artificial cells. This is calculated as a proportion (pANN) of a cell’s nearest neighbours that are of artificial origin, reflecting the likelihood that the cell has experienced the same cytoplasmic RNA loss as its artificial neighbours, i.e., is damaged. This score, ranging from 0 to 1, provides an intuitive scale for filtering that is standardised across cell types, sample origin, and experimental design.</p>
+<p>Damaged cells are an artifact of scRNA-seq formed when cells succumb to stress before being sequenced. As a result, the gene expression they capture distorts downstream analysis by introducing technical variability that compromises the annotation of cell types and confounds their expression profiles. Filtering damaged cells is therefore a standard task in scRNA-seq quality control (QC), though it remains poorly standardised in practice.</p>
+<p>Current approaches filter damage according to deviations in cell-level QC metrics. This outlier-based detection implicitly assumes that viable cells follow a unimodal distribution across QC metrics where deviation is synonymous with damage—an assumption challenged by true biological heterogeneity. Recent methods address this by defining damage within distinct distributions, representing cell populations, independently. However, this assumes all distinct distributions correspond to viable cell populations and risks leaving abundant damage undetected.</p>
+<p><code>DamageDetective</code> takes a different approach, rather than detecting damage by measuring the extent to which cells deviate from one another, it measures the extent to which cells deviate from artificially damaged profiles of themselves, an approach inspired by top-performing tools in doublet detection, including <code>DoubletFinder</code>. In this case, damaged cell profiles are generated by simulating the loss of cytoplasmic RNA resulting from a loss of plasma membrane integrity—a fundamental characteristic of irreversible cell damage.</p>
+<p>Like <code>DoubletFinder</code>, <code>DamageDetective</code> uses principal component analysis to compute the proximity of true cells to artificial cells, calculated as a proportion of a cell’s nearest neighbours that are of artificial origin (pANN). This measure, ranging from 0 to 1, reflects the likelihood that a cell has experienced the same cytoplasmic RNA loss providing an intuitive scale for filtering that is standardised across cell types, sample origin, and experimental design.</p>
 <p><br></p>
 </div>
 <div class="section level2">
@@ -83,88 +83,76 @@
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html" class="external-link">install.packages</a></span><span class="op">(</span><span class="st">'DamageDetective'</span><span class="op">)</span></span></code></pre></div>
 <p>Or the latest development version on GitHub (R &gt;= 3.5.0),</p>
-<pre><code><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://devtools.r-lib.org/" class="external-link">devtools</a></span><span class="op">)</span></span>
-<span><span class="fu">devtools</span><span class="fu">::</span><span class="fu">install_github</span><span class="op">(</span><span class="st">"AlicenJoyHenning/DamageDetective"</span>, build_vignettes <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre>
+<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://devtools.r-lib.org/" class="external-link">devtools</a></span><span class="op">)</span></span>
+<span><span class="fu">devtools</span><span class="fu">::</span><span class="fu">install_github</span><span class="op">(</span><span class="st">"AlicenJoyHenning/DamageDetective"</span>, build_vignettes <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
 <p>To verify installation, run the following to see if you can view the package vignette and the function help pages,</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://alicenjoyhenning.github.io/DamageDetective/">DamageDetective</a></span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/utils/help.html" class="external-link">help</a></span><span class="op">(</span>package <span class="op">=</span> <span class="st">"DamageDetective"</span><span class="op">)</span></span></code></pre></div>
-<p><br><br></p>
+<p><br></p>
 </div>
 <div class="section level2">
 <h2 id="quick-start">Quick start<a class="anchor" aria-label="anchor" href="#quick-start"></a>
 </h2>
-<p>This demonstration can be followed immediately after loading the package using the internal dummy dataset. For examples with true data and more detailed explanations, please refer to the package articles <a href="https://alicenjoyhenning.github.io/DamageDetective/">website</a>.</p>
-<div class="section level3">
-<h3 id="prepare-input">Prepare input<a class="anchor" aria-label="anchor" href="#prepare-input"></a>
-</h3>
-<p>Damage detection is carried out by the <code>detect_damage</code> function that accepts count matrices, <code>Seurat</code> or <code>SingleCellExperiment</code> objects, or alignment files (<a href="https://alicenjoyhenning.github.io/DamageDetective/articles/detection-vignette.html">package tutorials</a>) as input. We will demonstrate using a dummy count matrix, <code>test_counts</code>, a subset of the <a href="10.1038/s41591-020-0769-8%5D">(kotliarov-pbmc-2020)</a> PBMC dataset provided in the <code>scRNAseq</code> package.</p>
+<div class="section level4">
+<h4 id="load-data">Load data<a class="anchor" aria-label="anchor" href="#load-data"></a>
+</h4>
+<p>Damage detection is carried out by the <code>detect_damage</code> function that accepts count matrices as input. <br> To follow with the demonstration, load the internal dummy dataset, <code>test_counts</code>,</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://alicenjoyhenning.github.io/DamageDetective/">DamageDetective</a></span><span class="op">)</span></span>
-<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://Matrix.R-forge.R-project.org" class="external-link">Matrix</a></span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/utils/data.html" class="external-link">data</a></span><span class="op">(</span><span class="st">"test_counts"</span>, package <span class="op">=</span> <span class="st">"DamageDetective"</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/dim.html" class="external-link">dim</a></span><span class="op">(</span><span class="va">test_counts</span><span class="op">)</span></span></code></pre></div>
-<blockquote>
 <p>Expected outcome,</p>
-<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" tabindex="-1"></a>[<span class="dv">1</span>] <span class="dv">32738</span>   <span class="dv">500</span></span></code></pre></div>
-</blockquote>
-<p><br></p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" tabindex="-1"></a><span class="sc">&gt;</span> [<span class="dv">1</span>] <span class="dv">32738</span>   <span class="dv">500</span></span></code></pre></div>
+<p>For examples with true data and more detailed explanations, please refer to the package articles (<a href="https://alicenjoyhenning.github.io/DamageDetective/articles/detection-vignette.html">package tutorials</a>) <br><br></p>
 </div>
-<div class="section level3">
-<h3 id="select-parameters-for-damage-detection">Select parameters for damage detection<a class="anchor" aria-label="anchor" href="#select-parameters-for-damage-detection"></a>
-</h3>
 <div class="section level4">
-<h4 id="ribosome_penalty">
-<code>ribosome_penalty</code><a class="anchor" aria-label="anchor" href="#ribosome_penalty"></a>
+<h4 id="select-parameters-for-damage-detection">Select parameters for damage detection<a class="anchor" aria-label="anchor" href="#select-parameters-for-damage-detection"></a>
 </h4>
-<p>While <code>detect_damage</code> requires only a count matrix as input, additional parameters control aspects of the function’s computations. Of these, we recommend <code>ribosome_penalty</code> be adjusted for each dataset using the <code>select_penalty</code> function as shown below,</p>
+<p>While <code>detect_damage</code> requires only a count matrix as input, additional parameters control aspects of the function’s computation. <br> Of these, we recommend <code>ribosome_penalty</code> be adjusted for each dataset using the <code>select_penalty</code> function as shown below,</p>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">penalty</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/select_penalty.html">select_penalty</a></span><span class="op">(</span>count_matrix <span class="op">=</span> <span class="va">test_counts</span><span class="op">)</span></span>
 <span><span class="va">penalty</span></span></code></pre></div>
-<blockquote>
 <p>Expected outcome,</p>
-<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" tabindex="-1"></a>Testing penalty of <span class="dv">0</span>.<span class="dv">1</span>...</span>
-<span id="cb7-2"><a href="#cb7-2" tabindex="-1"></a>Testing penalty of <span class="dv">0</span>.<span class="dv">15</span>...</span>
-<span id="cb7-3"><a href="#cb7-3" tabindex="-1"></a>Testing penalty of <span class="dv">0</span>.<span class="dv">2</span>...</span>
-<span id="cb7-4"><a href="#cb7-4" tabindex="-1"></a>Testing penalty of <span class="dv">0</span>.<span class="dv">25</span>...</span>
-<span id="cb7-5"><a href="#cb7-5" tabindex="-1"></a>Stopping early<span class="sc">:</span> dTNN is no longer improving.</span>
-<span id="cb7-6"><a href="#cb7-6" tabindex="-1"></a></span>
-<span id="cb7-7"><a href="#cb7-7" tabindex="-1"></a><span class="fl">0.1</span></span></code></pre></div>
-</blockquote>
-</div>
-<div class="section level4">
-<h4 id="filter_threshold">
-<code>filter_threshold</code><a class="anchor" aria-label="anchor" href="#filter_threshold"></a>
-</h4>
-<p><code>DamageDetective</code> performs filtering using the proximity scores according to a threshold. By default, <code>DamageDetective</code> offers the threshold of <code>0.5</code> where values greater than <code>0.5</code> reflect more permissive filtering and values closer to <code>0</code> reflect more stringent filtering. We recommend the default, but suggest that if adjustments are made, they are informed by the output <code>detect_damage</code> plots, <code>generate_plot = TRUE</code>.</p>
+<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" tabindex="-1"></a><span class="sc">&gt;</span> Testing penalty of <span class="dv">0</span>.<span class="dv">1</span>...</span>
+<span id="cb7-2"><a href="#cb7-2" tabindex="-1"></a><span class="sc">&gt;</span> Testing penalty of <span class="dv">0</span>.<span class="dv">15</span>...</span>
+<span id="cb7-3"><a href="#cb7-3" tabindex="-1"></a><span class="sc">&gt;</span> Testing penalty of <span class="dv">0</span>.<span class="dv">2</span>...</span>
+<span id="cb7-4"><a href="#cb7-4" tabindex="-1"></a><span class="sc">&gt;</span> Testing penalty of <span class="dv">0</span>.<span class="dv">25</span>...</span>
+<span id="cb7-5"><a href="#cb7-5" tabindex="-1"></a><span class="sc">&gt;</span> Stopping early<span class="sc">:</span> dTNN is no longer improving.</span>
+<span id="cb7-6"><a href="#cb7-6" tabindex="-1"></a><span class="sc">&gt;</span></span>
+<span id="cb7-7"><a href="#cb7-7" tabindex="-1"></a><span class="er">&gt;</span> <span class="fl">0.15</span></span></code></pre></div>
 <p><br></p>
 </div>
-</div>
-<div class="section level3">
-<h3 id="run-damage-detection">Run damage detection<a class="anchor" aria-label="anchor" href="#run-damage-detection"></a>
-</h3>
-<p>Damage detection is run as shown below, using the count matrix and ribosomal penalty as inputs. Below, we have additionally specified for <code>filter_counts</code> parameter to be <code>TRUE</code>. This will use the default <code>filter_threshold</code> to detect damaged cells for removal and return the filtered count matrix that can be used immediately afterwards for the remainder of pre-processing. Though implemented in R, <code>DamageDetective</code> provides output that is platform-agnostic and can be integrated into any existing single-cell analysis workflow.</p>
+<div class="section level4">
+<h4 id="run-damaged-cell-detection">Run damaged cell detection<a class="anchor" aria-label="anchor" href="#run-damaged-cell-detection"></a>
+</h4>
+<p>This <code>penalty</code> value is used as input for <code>detect_damage</code> to ensure damaged cells simulated best align with dataset-specific ribosomal gene expression patterns. <br><br><code>detect_damage</code> will then compute pANN values using the simulated cells in order to filter true cells. This filtering is done using a pANN threshold above which it is most likely for a true cell to be damaged. By default, <code>detect_damage</code> will calculate a filtering threshold dynamically using the distribution of pANN values among true cells. <br></p>
 <div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># Perform damage detection</span></span>
-<span><span class="va">detection_results</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/detect_damage.html">detect_damage</a></span><span class="op">(</span></span>
+<code class="sourceCode R"><span><span class="va">detection_results</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/detect_damage.html">detect_damage</a></span><span class="op">(</span></span>
 <span>  count_matrix <span class="op">=</span> <span class="va">test_counts</span>,</span>
 <span>  ribosome_penalty <span class="op">=</span> <span class="va">penalty</span>,</span>
 <span>  filter_counts <span class="op">=</span> <span class="cn">TRUE</span></span>
-<span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># View the resulting count matrix</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/dim.html" class="external-link">dim</a></span><span class="op">(</span><span class="va">detection_results</span><span class="op">$</span><span class="va">output</span><span class="op">)</span></span></code></pre></div>
-<blockquote>
+<span><span class="op">)</span></span></code></pre></div>
 <p>Expected outcome,</p>
-<div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" tabindex="-1"></a>Clustering cells...</span>
-<span id="cb9-2"><a href="#cb9-2" tabindex="-1"></a>Simulating damage...</span>
-<span id="cb9-3"><a href="#cb9-3" tabindex="-1"></a>Computing pANN...</span>
-<span id="cb9-4"><a href="#cb9-4" tabindex="-1"></a></span>
-<span id="cb9-5"><a href="#cb9-5" tabindex="-1"></a> <span class="dv">32738</span>   <span class="dv">461</span></span></code></pre></div>
-</blockquote>
-<p><br></p>
-<p>Alternatively, if <code>filter_counts</code> is set to <code>FALSE</code>, a data frame will be given as output containing the damage scores for each cell. This is provided for the user if they wish to interact with the <code>DamageDetective</code> results directly. From here, a user can filter their data manually, as is done by <code>filter_counts=TRUE</code> automatically.</p>
+<div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" tabindex="-1"></a><span class="sc">&gt;</span> Clustering cells...</span>
+<span id="cb9-2"><a href="#cb9-2" tabindex="-1"></a><span class="sc">&gt;</span> Simulating damage...</span>
+<span id="cb9-3"><a href="#cb9-3" tabindex="-1"></a><span class="sc">&gt;</span> Computing pANN... </span>
+<span id="cb9-4"><a href="#cb9-4" tabindex="-1"></a><span class="sc">&gt;</span> ... <span class="fl">0.5</span> suggested threshold.</span>
+<span id="cb9-5"><a href="#cb9-5" tabindex="-1"></a><span class="sc">&gt;</span> Completed.</span></code></pre></div>
+<p>Above, we have specified for <code>filter_counts</code> to be <code>TRUE</code>. This will return the filtered count matrix according to the default pANN threshold. By default, a plot of the cells shaded according to the pANN value is also provided to visualise outcomes, <code>detection_results$plot</code>, but can be avoided using <code>display_plot = FALSE</code>. <br></p>
 <div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># View the resulting count matrix</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/dim.html" class="external-link">dim</a></span><span class="op">(</span><span class="va">detection_results</span><span class="op">$</span><span class="va">output</span><span class="op">)</span></span></code></pre></div>
+<p>Expected outcome,</p>
+<div class="sourceCode" id="cb11"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" tabindex="-1"></a><span class="sc">&gt;</span>  <span class="dv">32738</span>   <span class="dv">458</span></span></code></pre></div>
+<p><br></p>
+</div>
+<div class="section level4">
+<h4 id="adjust-additional-damaged-cell-detection-parameters">Adjust additional damaged cell detection parameters<a class="anchor" aria-label="anchor" href="#adjust-additional-damaged-cell-detection-parameters"></a>
+</h4>
+<p>Alternatively, if <code>filter_counts</code> is set to <code>FALSE</code>, the data will not be filtered and a data frame will be given containing the damage scores—pANN values— for each cell. From here, a user can filter their data manually, as is done by <code>filter_counts=TRUE</code> automatically.</p>
+<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Perform damage detection</span></span>
 <span><span class="va">detection_results</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/detect_damage.html">detect_damage</a></span><span class="op">(</span></span>
 <span>  count_matrix <span class="op">=</span> <span class="va">test_counts</span>,</span>
@@ -177,25 +165,28 @@
 <span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">detection_results</span><span class="op">$</span><span class="va">output</span><span class="op">)</span>, row.names <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># Filter matrix </span></span>
-<span><span class="va">undamaged_cells</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/subset.html" class="external-link">subset</a></span><span class="op">(</span><span class="va">detection_results</span><span class="op">$</span><span class="va">output</span>, <span class="va">DamageDetective</span> <span class="op">&lt;</span> <span class="fl">0.7</span><span class="op">)</span></span>
+<span><span class="va">undamaged_cells</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/subset.html" class="external-link">subset</a></span><span class="op">(</span><span class="va">detection_results</span><span class="op">$</span><span class="va">output</span>, <span class="va">DamageDetective</span> <span class="op">&lt;</span> <span class="fl">0.5</span><span class="op">)</span></span>
 <span><span class="va">filtered_matrix</span> <span class="op">&lt;-</span> <span class="va">test_counts</span><span class="op">[</span>, <span class="va">undamaged_cells</span><span class="op">$</span><span class="va">Cells</span><span class="op">]</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/dim.html" class="external-link">dim</a></span><span class="op">(</span><span class="va">filtered_matrix</span><span class="op">)</span></span></code></pre></div>
-<blockquote>
 <p>Expected outcome,</p>
-<div class="sourceCode" id="cb11"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" tabindex="-1"></a>Clustering cells...</span>
-<span id="cb11-2"><a href="#cb11-2" tabindex="-1"></a>Simulating damage...</span>
-<span id="cb11-3"><a href="#cb11-3" tabindex="-1"></a>Computing pANN...</span>
-<span id="cb11-4"><a href="#cb11-4" tabindex="-1"></a></span>
-<span id="cb11-5"><a href="#cb11-5" tabindex="-1"></a>                     Cells DamageDetective</span>
-<span id="cb11-6"><a href="#cb11-6" tabindex="-1"></a>TCTGGAAAGCCCAACC_H1B2ln6               <span class="dv">0</span></span>
-<span id="cb11-7"><a href="#cb11-7" tabindex="-1"></a>CCGTTCATCGTGGGAA_H1B2ln2               <span class="dv">0</span></span>
-<span id="cb11-8"><a href="#cb11-8" tabindex="-1"></a>CTTCTCTTCAGCCTAA_H1B2ln1               <span class="dv">0</span></span>
-<span id="cb11-9"><a href="#cb11-9" tabindex="-1"></a>GGATTACAGGGATGGG_H1B2ln1               <span class="dv">0</span></span>
-<span id="cb11-10"><a href="#cb11-10" tabindex="-1"></a>TCTATTGTCTGGTATG_H1B2ln2               <span class="dv">0</span></span>
-<span id="cb11-11"><a href="#cb11-11" tabindex="-1"></a>ACGGGTCAGACAAGCC_H1B2ln6               <span class="dv">0</span></span>
-<span id="cb11-12"><a href="#cb11-12" tabindex="-1"></a></span>
-<span id="cb11-13"><a href="#cb11-13" tabindex="-1"></a><span class="dv">32738</span>   <span class="dv">461</span></span></code></pre></div>
-</blockquote>
+<div class="sourceCode" id="cb13"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" tabindex="-1"></a><span class="sc">&gt;</span> Clustering cells...</span>
+<span id="cb13-2"><a href="#cb13-2" tabindex="-1"></a><span class="sc">&gt;</span> Simulating damage...</span>
+<span id="cb13-3"><a href="#cb13-3" tabindex="-1"></a><span class="sc">&gt;</span> Computing pANN...</span>
+<span id="cb13-4"><a href="#cb13-4" tabindex="-1"></a><span class="sc">&gt;</span>  ... <span class="fl">0.5</span> suggested threshold.</span>
+<span id="cb13-5"><a href="#cb13-5" tabindex="-1"></a><span class="sc">&gt;</span> Completed.</span>
+<span id="cb13-6"><a href="#cb13-6" tabindex="-1"></a><span class="sc">&gt;</span></span>
+<span id="cb13-7"><a href="#cb13-7" tabindex="-1"></a><span class="er">&gt;</span>                      Cells          pANN DamageDetective</span>
+<span id="cb13-8"><a href="#cb13-8" tabindex="-1"></a><span class="sc">&gt;</span> TCTGGAAAGCCCAACC_H1B2ln6               <span class="dv">0</span>  cell</span>
+<span id="cb13-9"><a href="#cb13-9" tabindex="-1"></a><span class="sc">&gt;</span> CCGTTCATCGTGGGAA_H1B2ln2               <span class="dv">0</span>  cell</span>
+<span id="cb13-10"><a href="#cb13-10" tabindex="-1"></a><span class="sc">&gt;</span> CTTCTCTTCAGCCTAA_H1B2ln1               <span class="dv">0</span>  cell</span>
+<span id="cb13-11"><a href="#cb13-11" tabindex="-1"></a><span class="sc">&gt;</span> GGATTACAGGGATGGG_H1B2ln1               <span class="dv">0</span>  cell</span>
+<span id="cb13-12"><a href="#cb13-12" tabindex="-1"></a><span class="sc">&gt;</span> TCTATTGTCTGGTATG_H1B2ln2               <span class="dv">0</span>  cell</span>
+<span id="cb13-13"><a href="#cb13-13" tabindex="-1"></a><span class="sc">&gt;</span> ACGGGTCAGACAAGCC_H1B2ln6               <span class="dv">0</span>  cell</span>
+<span id="cb13-14"><a href="#cb13-14" tabindex="-1"></a><span class="sc">&gt;</span></span>
+<span id="cb13-15"><a href="#cb13-15" tabindex="-1"></a><span class="er">&gt;</span> <span class="dv">32738</span>   <span class="dv">458</span></span></code></pre></div>
+<p><br></p>
+<p>If a user wishes to adjust the pANN filtering threshold they are able to do so using the <code>filter_threshold</code> parameter, a numeric between <code>0</code> and <code>1</code> where values greater than <code>0.5</code> reflect more permissive filtering and values closer to <code>0</code> reflect more stringent filtering. <br> We recommend the default pANN calculated but suggest that if adjustments are made they are informed by the <code>detect_damage</code> plots, <code>generate_plot = TRUE</code>.</p>
+<p><br></p>
 </div>
 </div>
 <div class="section level2">
@@ -275,7 +266,7 @@ Bioinformatics and Computational Biology</p>
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.3.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.1.</p>
 </div>
 
     </footer>
