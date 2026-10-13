@@ -43,7 +43,8 @@ library(patchwork)
 
 # Workflow overview
 
-The `DamageDetective` workflow is made up of two stages, first, creating artificial profiles of damage using the cells of an input data set, and second, comparing the input cells to the artificial profiles. 
+The `DamageDetective` workflow is made up of three stages, first, clustering the cells and performing a quality check at this level, second, creating artificial profiles of damage using the cells of clusters that have 
+passed the initial quality check, and third, comparing the input cells to the artificial profiles. 
 
 This approach is inspired by `DoubletFinder`—a high-performing tool for filtering doublets, another prominent scRNA-seq artifact. Here, artificial profiles of doublets are created through the random combination of existing cells. All cells are processed before being compared in a principal component analysis (PCA) from which proximity measures are taken and used to determine the proportion of a true cell's neighbours that are of artificial origin (proportion of artificial nearest neighbours, or pANN). Cells that show the highest pANN, i.e., have the highest proximity to artificial profiles, are ultimately labelled as doublets in accordance to anticipated doublet formation rate. 
 
@@ -53,7 +54,7 @@ In `DamageDetective`, a score is similarly calculated for each cell based on PCA
 
 ### Creating artificial damage
 
-The loss of plasma membrane integrity is a characteristic of cellular damage that has long since been exploited to assess cell viability. Compromised membranes allow cellular content, including RNA, to escape, leading to shifts in quality control metrics such as a reduction in library size and complexity.  
+The loss of plasma membrane integrity is a characteristic of cellular damage that has long since been exploited to assess cell viability. Compromised membranes allow cellular content, including RNA, to escape, leading to a reduction in library size and complexity.  
 
 An additional and fundamental consequence of membrane integrity loss is a shift in library composition. This occurs because not all RNA within a cell is equally vulnerable to loss. RNA enclosed by additional membranes, such as within mitochondria or nuclear speckles, is more protected than RNA freely present in the cytoplasm. As a result, viable cells have a higher proportion of cytoplasmic RNA, whereas damaged cells—where RNA has escaped—appear to have an elevated proportion of protected RNA. This forms the basis for simulating damage in `DamageDetective`.
 
@@ -68,7 +69,7 @@ Simulations are grouped by cluster from the input data to generate cell type–s
 
 Using Euclidean distances between the PCA embeddings of cells, a set of $k$ nearest neighbours is identified for each cell via the HNSW (Hierarchical Navigable Small World) algorithm. This is optimized for high-dimensional data and implemented in R using C++ through the `RcppHNSW` package. 
 
-The proportions of a cell's nearest neighbours that originate from each artificial profile (pANN) are calculated. In other words, if there are five clusters in a dataset, there will be five sets of artificial profiles and five pANN scores for each cell. After scaling according to the size of each artificial profile, the maximum pANN is retrieved for each cell. This score naturally lies between 0 and 1 and indicates the similarity of true cells to damaged profiles.
+The proportions of a cell's nearest neighbours that originate from each artificial profile (pANN) are calculated. In other words, if there are five clusters in a dataset, there will be five sets of artificial profiles and five pANN scores for each cell. After scaling according to the size of each artificial profile, the maximum pANN is retrieved for each cell. This score naturally lies between 0 and 1 and indicates the similarity of true cells to damaged profiles. 
 
 The proximity score forms the main output of `DamageDetective` and can be thought of as answering the question: on a scale of 0 to 1, how likely is it that this cell has lost a considerable amount of cytoplasmic RNA? Or, equivalently, how likely is it that this cell is damaged and should be filtered?
 

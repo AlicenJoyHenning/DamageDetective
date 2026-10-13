@@ -109,12 +109,12 @@
 #'
 detect_damage <- function(
     count_matrix,
-    ribosome_penalty = 1,
+    ribosome_penalty = 0.5,
     organism = "Hsap",
     annotated_celltypes = FALSE,
     target_damage = c(0.65, 1),
     damage_distribution = "left_skewed",
-    distribution_steepness = "steep",
+    distribution_steepness =  "steep",
     pca_columns = c("log.features", "log.counts", "mt.prop", "rb.prop"),
     beta_shape_parameters = NULL,
     damage_proportion = 0.2,
@@ -562,32 +562,53 @@ detect_damage <- function(
                                              metadata_output$Cells), ]
   }
 
-  # Dynamically find  pANN threshold if not specified
+  # Dynamically find pANN threshold if not specified
   if (is.na(filter_threshold)){
-    # Find where slope changes sign (peak detection)
-    dens <- density(metadata_output$DamageDetective,
-                    from = 0, to = 1, n = 1000)
+    # Compute pANN density
+    dens <- density(metadata_output$DamageDetective, from = 0, to = 1, n = 1000)
     y <- dens$y
     x <- dens$x
     dy <- diff(y)
+
+    # Identify peaks
     peaks_idx <- which(diff(sign(dy)) == -2) + 1
 
-    # Only keep significant peaks (height > fraction of max)
-    min_height <- max(y) * 0.05
-    peaks_idx <- peaks_idx[y[peaks_idx] > min_height]
-
-    # Define threshold for pANN if no peaks or before second peak
-    if(length(peaks_idx) < 2) {
+    # Handle case with no peaks
+    if (length(peaks_idx) < 1) {
+      warning("No pANN peaks detected.")
       filter_threshold <- 0.5
+      valley_idx <- which.min(y)
     } else {
-      # find local minimum before second peak
-      second_peak_idx <- peaks_idx[2]
-      valley_idx <- which.min(y[1:second_peak_idx])
+      # Find local minimum after first peak
+      first_peak_idx <- peaks_idx[1]
+      search_end <- if (length(peaks_idx) > 1) peaks_idx[2] else length(y)
+      valley_idx <- which.min(y[first_peak_idx:search_end]) + first_peak_idx - 1
       filter_threshold <- x[valley_idx]
     }
 
+    if (generate_plot){
+      plot_data <- data.frame(x = x, y = y)
+
+      ggplot(plot_data, aes(x = x, y = y)) +
+        geom_line(size = 1) +
+        geom_vline(aes(xintercept = filter_threshold),
+                   color = "red", linetype = "dashed", size = 0.8) +
+        theme_classic(base_size = 17) +
+        theme(
+          axis.ticks = element_blank(),
+          axis.title = element_text(size = 15, face = "bold"),
+          plot.title = element_text(size = 17, face = "bold", hjust = 0.5),
+          panel.background = element_rect(fill = "#F1F1F1", colour = "black")
+        ) +
+        labs(
+          title = "pANN threshold determination",
+          x = "pANN",
+          y = "Density"
+        )
+    }
+
     if (verbose){
-      message("Suggested pANN threshold : ", filter_threshold)
+      message(" ... ", round(filter_threshold, 2), " suggested threshold.")
     }
 
   }
@@ -633,3 +654,4 @@ detect_damage <- function(
 
   return(output)
 }
+

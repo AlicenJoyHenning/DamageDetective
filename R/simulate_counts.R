@@ -146,7 +146,7 @@ simulate_counts <- function(
     damage_distribution = "left_skewed",
     distribution_steepness = "steep",
     beta_shape_parameters = NULL,
-    ribosome_penalty = 1,
+    ribosome_penalty = 0.5,
     generate_plot = TRUE,
     palette = c("grey", "#7023FD", "#E60006"),
     plot_ribosomal_penalty = FALSE,
@@ -486,3 +486,4 @@ simulate_counts <- function(
 
   return(qc_summary)
 }
+
