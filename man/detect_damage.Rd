@@ -8,7 +8,7 @@ detect_damage(
   count_matrix,
   ribosome_penalty = 0.5,
   organism = "Hsap",
-  annotated_celltypes = FALSE,
+  annotated_celltypes = NULL,
   target_damage = c(0.65, 1),
   damage_distribution = "left_skewed",
   distribution_steepness = "steep",
@@ -57,10 +57,12 @@ nuclear = c("NEAT1","XIST", "MALAT1"))
 \item Default is "Hsap"
 }}
 
-\item{annotated_celltypes}{Boolean specifying whether input matrix has
-cell type information stored.
+\item{annotated_celltypes}{Data frame containing cell type annotations,
+with cell barcodes as row names and the cell type of each cell stored in a
+column named 'annotation'. If provided, simulation is performed within each
+cell type rather than within each cluster identified by the cluster check.
 \itemize{
-\item Default is FALSE
+\item Default is NULL.
 }}
 
 \item{target_damage}{Numeric vector specifying the upper and lower range of
@@ -149,10 +151,8 @@ be found.
 \item Default is 0.1
 }}
 
-\item{mad_coef}{Numeric scalar specifying the multiplier for the
-Median Absolute Deviation (MAD) used to define thresholds for
-quality control metrics of damaged clusters, allowing flexibility to make
-the detection more or less stringent.
+\item{mad_coef}{Numeric. No longer used by the cluster check (retained so
+existing calls do not break).
 \itemize{
 \item Default is 3.
 }}
@@ -201,7 +201,12 @@ should be displayed in the console.
 }}
 }
 \value{
-Filtered matrix or data frame containing damage labels.
+Filtered matrix or data frame containing damage labels ('cell',
+'damaged' or 'divergent'). If
+\code{generate_plot = TRUE}, a list containing \code{output}, \code{plot} (the detection
+outcome), \code{pann_plot} (the pANN threshold density, only when the threshold
+is determined automatically) and \code{presim_plot} (the pre-simulation cluster
+check).
 }
 \description{
 Quality control function to identify and filter damaged cells from an
@@ -227,6 +232,15 @@ artificial cells (pANN) is calculated across all damage levels and the
 damage level with the highest pANN is assigned to the true cell.
 Finally, cells exceeding a specified damage threshold, \code{filter_threshold},
 are marked as damaged.
+
+Before simulation, cells are clustered on their mitochondrial and ribosomal
+gene expression and each cluster is labelled as 'viable', 'divergent' or
+'depleted' by comparing its median QC metrics to those of the cluster with
+the lowest non-trivial mitochondrial percentage. Only viable cells are used
+for simulation. Cells in depleted or divergent clusters are excluded from
+simulation and the pANN search, and are assigned the maximum damage score;
+cells in divergent clusters are additionally labelled 'divergent' in the
+output.
 
 This filtering method is inspired by approaches developed for DoubletFinder
 (McGinnis et al., 2019) to detect doublets in single-cell data.
