@@ -36,7 +36,7 @@ Or the latest development version on GitHub (R \>= 3.5.0),
 
 ``` r        
 library(devtools)
-devtools::install_github("AlicenJoyHenning/DamageDetective", build_vignettes = TRUE)
+pak::pak("AlicenJoyHenning/DamageDetective", build_vignettes = TRUE)
 ```
 
 To verify installation, run the following to see if you can view the package vignette and the function help pages,

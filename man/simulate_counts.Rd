@@ -13,7 +13,7 @@ simulate_counts(
   distribution_steepness = "steep",
   beta_shape_parameters = NULL,
   ribosome_penalty = 0.5,
-  depletion_type = "abun_rand",
+  depletion_type = "abun_random",
   generate_plot = TRUE,
   palette = c("grey", "#7023FD", "#E60006"),
   plot_ribosomal_penalty = FALSE,
@@ -89,7 +89,7 @@ Here, values closer to 0 represent a greater penalty.
 \item{depletion_type}{Specify whether the transcript sampling is
 weighted by gene abundance.
 \itemize{
-\item Default is "abun_rand".
+\item Default is "abun_random".
 }}
 
 \item{generate_plot}{Boolean specifying whether the QC plot should
