@@ -140,7 +140,7 @@ detect_damage <- function(
     damage_proportion = 0.2,
     seed = 7,
     pK = 0.25,
-    resolution = 0.1,
+    resolution = 0.2,
     mad_coef = 3,
     generate_plot = TRUE,
     display_plot = TRUE,
@@ -261,9 +261,6 @@ detect_damage <- function(
   # Reduce dimensions to mt-rb
   seurat_reduced <- subset(seurat, features = mt_rb_genes)
 
-  # Number of dimensions limited by the (small) number of genes retained
-  n_dims <- max(2, min(20, length(mt_rb_genes) - 1, ncol(seurat_reduced) - 1))
-
   # Standard workflow with reduced memory footprint
   seurat_reduced <- suppressWarnings(
     Seurat::NormalizeData(seurat_reduced, verbose = FALSE))
@@ -272,13 +269,20 @@ detect_damage <- function(
   seurat_reduced <- suppressWarnings(
     Seurat::ScaleData(seurat_reduced, verbose = FALSE))
   seurat_reduced <- suppressWarnings(
-    Seurat::RunPCA(seurat_reduced, npcs = n_dims, verbose = FALSE))
+    Seurat::RunPCA(seurat_reduced, verbose = FALSE))
   seurat_reduced <- suppressWarnings(
-    Seurat::FindNeighbors(seurat_reduced, dims = 1:n_dims, verbose = FALSE))
+    Seurat::FindNeighbors(seurat_reduced, dims = 1:20, verbose = FALSE))
   seurat_reduced <- suppressWarnings(
     Seurat::FindClusters(seurat_reduced,
                          resolution = resolution,
                          verbose = FALSE))
+  seurat_reduced <- suppressWarnings(
+    Seurat::RunUMAP(seurat_reduced, dims = 1:20, verbose = FALSE))
+  
+
+  seurat_reduced$nFeature_RNA <- seurat$nFeature_RNA[
+    colnames(seurat_reduced)
+  ]
 
   if (verbose) message("Checking clusters...")
 
@@ -348,11 +352,11 @@ detect_damage <- function(
       panel.border = ggplot2::element_rect(fill = NA, colour = "black")
     )
     pctMT_view <- Seurat::FeaturePlot(
-      seurat_reduced, features = "pctMT", reduction = "pca") + plot_theme
+      seurat_reduced, features = "pctMT") + plot_theme
     feature_view <- Seurat::FeaturePlot(
-      seurat_reduced, features = "nFeature_RNA", reduction = "pca") + plot_theme
+      seurat_reduced, features = "nFeature_RNA") + plot_theme
     labelled_view <- Seurat::DimPlot(
-      seurat_reduced, group.by = "QC_label", reduction = "pca") + plot_theme
+      seurat_reduced, group.by = "QC_label") + plot_theme
     presim_plot <- patchwork::wrap_plots(
       pctMT_view, feature_view, labelled_view, nrow = 1)
   }
@@ -384,7 +388,6 @@ detect_damage <- function(
     divergent_cells = unique(divergent_cells)
   ))
 }
-
 
 .simulate_damage <- function(
     count_matrix, cluster_cells, cells_to_simulate, annotated_celltypes,
@@ -735,14 +738,17 @@ detect_damage <- function(
     output <- final_filtered_matrix
 
   } else {
-
     final_output <- metadata_output[, c("Cells", "DamageDetective")]
-    final_output$pANN <- ifelse(final_output$DamageDetective <=
-                                  filter_threshold, "cell",
-                                "damaged")
+    colnames(final_output)[2] <- "pANN"   # numeric score
+
+    final_output$DamageDetective <- ifelse(
+      final_output$pANN <= filter_threshold, "cell", "damaged"
+    )
 
     # Cells from divergent clusters are labelled separately
-    final_output$pANN[final_output$Cells %in% divergent_cells] <- "divergent"
+    final_output$DamageDetective[final_output$Cells %in% divergent_cells] <- "divergent"
+
+    final_output <- final_output[, c("Cells", "pANN", "DamageDetective")]
     output <- final_output
   }
 

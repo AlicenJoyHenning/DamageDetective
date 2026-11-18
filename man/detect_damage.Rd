@@ -17,7 +17,7 @@ detect_damage(
   damage_proportion = 0.2,
   seed = 7,
   pK = 0.25,
-  resolution = 0.1,
+  resolution = 0.2,
   mad_coef = 3,
   generate_plot = TRUE,
   display_plot = TRUE,

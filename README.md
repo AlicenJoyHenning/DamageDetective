@@ -10,7 +10,7 @@
 
 [Description](#description) \| [Installation](#installation) \| [Quick start](#quick-start) \| [Contribute](#contribute) \| [Authors](#authors) \| [License](#license) \| [References](#references)
 
-## Description {#description}
+## Description
 
 [**Jump to the DamageDetective website**](https://alicenjoyhenning.github.io/DamageDetective/)
 
@@ -36,7 +36,7 @@ Or the latest development version on GitHub (R \>= 3.5.0),
 
 ``` r        
 library(devtools)
-pak::pak("AlicenJoyHenning/DamageDetective", build_vignettes = TRUE)
+pak::pak("AlicenJoyHenning/DamageDetective")
 ```
 
 To verify installation, run the following to see if you can view the package vignette and the function help pages,

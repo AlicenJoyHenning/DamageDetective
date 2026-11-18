@@ -41,13 +41,13 @@ test_that("correctness of detect_damage unfiltered output", {
   expect_equal(length(unfiltered_output$Cells), dim(test_counts)[2])
 
   # Are the correct columns present?
-  expect_true(all(c('Cells', 'DamageDetective') %in%
-                    colnames(unfiltered_output))
-  )
+  expect_true(all(c('Cells', 'pANN', 'DamageDetective') %in%
+                    colnames(unfiltered_output)))
 
-  # Are damage scores within valid range?
-  expect_true(all(unfiltered_output$DamageDetective <= 1))
-  expect_true(all(unfiltered_output$DamageDetective >= 0))
+  expect_true(all(unfiltered_output$pANN <= 1))
+  expect_true(all(unfiltered_output$pANN >= 0))
+  expect_true(all(unfiltered_output$DamageDetective %in%
+                    c("cell", "damaged", "divergent")))
 
 })
 
@@ -69,7 +69,6 @@ test_that("Testing detect_damage seed", {
     verbose = FALSE, generate_plot = FALSE,
     filter_counts = FALSE, seed = 778)
 
-  expect_identical(scores_1$DamageDetective, scores_2$DamageDetective)
-  expect_false(isTRUE(all.equal(scores_1$DamageDetective,
-                                scores_3$DamageDetective)))
+  expect_identical(scores_1$pANN, scores_2$pANN)
+  expect_false(isTRUE(all.equal(scores_1$pANN, scores_3$pANN)))
 })
