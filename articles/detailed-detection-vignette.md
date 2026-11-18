@@ -506,13 +506,21 @@ detection_output <- DamageDetective::detect_damage(
 #> Checking clusters...
 #> Simulating damage...
 #> Computing pANN...
-#>  ... 0.39 suggested threshold.
+#>  ... 0.44 suggested threshold.
 ```
 
 ![Scatter plot showing the outcome damage detection where cells of the
 input data are coloured according to the estimated level of damage with
 grey being no damage, purple being light damage, and red being heavy
-damage.](detailed-detection-vignette_files/figure-html/run_detection-1.png)
+damage.](detailed-detection-vignette_files/figure-html/run_detection-1.png)![Scatter
+plot showing the outcome damage detection where cells of the input data
+are coloured according to the estimated level of damage with grey being
+no damage, purple being light damage, and red being heavy
+damage.](detailed-detection-vignette_files/figure-html/run_detection-2.png)![Scatter
+plot showing the outcome damage detection where cells of the input data
+are coloured according to the estimated level of damage with grey being
+no damage, purple being light damage, and red being heavy
+damage.](detailed-detection-vignette_files/figure-html/run_detection-3.png)
 
     #> Completed.
 
@@ -537,7 +545,7 @@ filtered_matrix <- alignment_counts[, row.names(undamaged_cells)]
 dim(alignment_counts)
 #> [1] 13287  1222
 dim(filtered_matrix)
-#> [1] 13287  1102
+#> [1] 13287  1101
 ```
 
   
@@ -559,7 +567,7 @@ filtered_output <- DamageDetective::detect_damage(
 dim(filtered_output)
 ```
 
-    #> [1] 13287  1102
+    #> [1] 13287  1101
 
 ## Session Information
 
