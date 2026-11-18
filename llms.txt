@@ -61,7 +61,7 @@ Or the latest development version on GitHub (R \>= 3.5.0),
 ``` r
 
 library(devtools)
-pak::pak("AlicenJoyHenning/DamageDetective", build_vignettes = TRUE)
+pak::pak("AlicenJoyHenning/DamageDetective")
 ```
 
 To verify installation, run the following to see if you can view the

@@ -145,12 +145,12 @@ detection_results <- detect_damage(
 #> Checking clusters...
 #> Simulating damage...
 #> Computing pANN...
-#>  ... 0.68 suggested threshold.
+#>  ... 1 suggested threshold.
 #> Completed.
 
 # View the resulting count matrix
 dim(detection_results$output)
-#> [1] 32738   453
+#> [1] 32738   500
 
 # View the plot 
 detection_results$plot

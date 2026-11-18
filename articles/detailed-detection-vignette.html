@@ -671,19 +671,19 @@ directly.</p>
 <span><span class="co">#&gt; Checking clusters...</span></span>
 <span><span class="co">#&gt; Simulating damage...</span></span>
 <span><span class="co">#&gt; Computing pANN...</span></span>
-<span><span class="co">#&gt;  ... 0.44 suggested threshold.</span></span></code></pre></div>
+<span><span class="co">#&gt;  ... 0.43 suggested threshold.</span></span></code></pre></div>
 <p><img src="detailed-detection-vignette_files/figure-html/run_detection-1.png" class="r-plt" alt="Scatter plot showing the outcome damage detection where cells of the input data are coloured according to the estimated level of damage with grey being no damage,  purple being light damage, and red being heavy damage." width="576"><img src="detailed-detection-vignette_files/figure-html/run_detection-2.png" class="r-plt" alt="Scatter plot showing the outcome damage detection where cells of the input data are coloured according to the estimated level of damage with grey being no damage,  purple being light damage, and red being heavy damage." width="576"><img src="detailed-detection-vignette_files/figure-html/run_detection-3.png" class="r-plt" alt="Scatter plot showing the outcome damage detection where cells of the input data are coloured according to the estimated level of damage with grey being no damage,  purple being light damage, and red being heavy damage." width="576"></p>
 <pre><code><span><span class="co">#&gt; Completed.</span></span>
 <span></span>
 <span><span class="co"># View output</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">detection_output</span><span class="op">$</span><span class="va">output</span><span class="op">)</span></span>
-<span><span class="co">#&gt;                                 Cells DamageDetective pANN</span></span>
-<span><span class="co">#&gt; AAACCCAAGGAGAGTA-1 AAACCCAAGGAGAGTA-1               0 cell</span></span>
-<span><span class="co">#&gt; AAACGCTTCAGCCCAG-1 AAACGCTTCAGCCCAG-1               0 cell</span></span>
-<span><span class="co">#&gt; AAAGAACAGACGACTG-1 AAAGAACAGACGACTG-1               0 cell</span></span>
-<span><span class="co">#&gt; AAAGAACCAATGGCAG-1 AAAGAACCAATGGCAG-1               0 cell</span></span>
-<span><span class="co">#&gt; AAAGAACGTCTGCAAT-1 AAAGAACGTCTGCAAT-1               0 cell</span></span>
-<span><span class="co">#&gt; AAAGGATAGTAGACAT-1 AAAGGATAGTAGACAT-1               0 cell</span></span></code></pre>
+<span><span class="co">#&gt;                                 Cells pANN DamageDetective</span></span>
+<span><span class="co">#&gt; AAACCCAAGGAGAGTA-1 AAACCCAAGGAGAGTA-1    0            cell</span></span>
+<span><span class="co">#&gt; AAACGCTTCAGCCCAG-1 AAACGCTTCAGCCCAG-1    0            cell</span></span>
+<span><span class="co">#&gt; AAAGAACAGACGACTG-1 AAAGAACAGACGACTG-1    0            cell</span></span>
+<span><span class="co">#&gt; AAAGAACCAATGGCAG-1 AAAGAACCAATGGCAG-1    0            cell</span></span>
+<span><span class="co">#&gt; AAAGAACGTCTGCAAT-1 AAAGAACGTCTGCAAT-1    0            cell</span></span>
+<span><span class="co">#&gt; AAAGGATAGTAGACAT-1 AAAGGATAGTAGACAT-1    0            cell</span></span></code></pre>
 <p>From here, the matrix can be filtered according to a threshold damage
 value before continuing with the remainder of pre-processing steps
 required for a single cell analysis.</p>
@@ -693,7 +693,7 @@ required for a single cell analysis.</p>
 <span><span class="fu"><a href="https://rdrr.io/r/base/dim.html" class="external-link">dim</a></span><span class="op">(</span><span class="va">alignment_counts</span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1] 13287  1222</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/dim.html" class="external-link">dim</a></span><span class="op">(</span><span class="va">filtered_matrix</span><span class="op">)</span></span>
-<span><span class="co">#&gt; [1] 13287  1101</span></span></code></pre></div>
+<span><span class="co">#&gt; [1] 13287     0</span></span></code></pre></div>
 <p><br></p>
 <p>This could be done automatically if
 <code>filter_counts=TRUE</code>.</p>
@@ -709,7 +709,7 @@ required for a single cell analysis.</p>
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/dim.html" class="external-link">dim</a></span><span class="op">(</span><span class="va">filtered_output</span><span class="op">)</span></span></code></pre></div>
-<pre><code><span><span class="co">#&gt; [1] 13287  1101</span></span></code></pre>
+<pre><code><span><span class="co">#&gt; [1] 13287     0</span></span></code></pre>
 </div>
 <div class="section level2">
 <h2 id="session-information">Session Information<a class="anchor" aria-label="anchor" href="#session-information"></a>

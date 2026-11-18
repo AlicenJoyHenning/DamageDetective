@@ -506,7 +506,7 @@ detection_output <- DamageDetective::detect_damage(
 #> Checking clusters...
 #> Simulating damage...
 #> Computing pANN...
-#>  ... 0.44 suggested threshold.
+#>  ... 0.43 suggested threshold.
 ```
 
 ![Scatter plot showing the outcome damage detection where cells of the
@@ -526,13 +526,13 @@ damage.](detailed-detection-vignette_files/figure-html/run_detection-3.png)
 
     # View output
     head(detection_output$output)
-    #>                                 Cells DamageDetective pANN
-    #> AAACCCAAGGAGAGTA-1 AAACCCAAGGAGAGTA-1               0 cell
-    #> AAACGCTTCAGCCCAG-1 AAACGCTTCAGCCCAG-1               0 cell
-    #> AAAGAACAGACGACTG-1 AAAGAACAGACGACTG-1               0 cell
-    #> AAAGAACCAATGGCAG-1 AAAGAACCAATGGCAG-1               0 cell
-    #> AAAGAACGTCTGCAAT-1 AAAGAACGTCTGCAAT-1               0 cell
-    #> AAAGGATAGTAGACAT-1 AAAGGATAGTAGACAT-1               0 cell
+    #>                                 Cells pANN DamageDetective
+    #> AAACCCAAGGAGAGTA-1 AAACCCAAGGAGAGTA-1    0            cell
+    #> AAACGCTTCAGCCCAG-1 AAACGCTTCAGCCCAG-1    0            cell
+    #> AAAGAACAGACGACTG-1 AAAGAACAGACGACTG-1    0            cell
+    #> AAAGAACCAATGGCAG-1 AAAGAACCAATGGCAG-1    0            cell
+    #> AAAGAACGTCTGCAAT-1 AAAGAACGTCTGCAAT-1    0            cell
+    #> AAAGGATAGTAGACAT-1 AAAGGATAGTAGACAT-1    0            cell
 
 From here, the matrix can be filtered according to a threshold damage
 value before continuing with the remainder of pre-processing steps
@@ -545,7 +545,7 @@ filtered_matrix <- alignment_counts[, row.names(undamaged_cells)]
 dim(alignment_counts)
 #> [1] 13287  1222
 dim(filtered_matrix)
-#> [1] 13287  1101
+#> [1] 13287     0
 ```
 
   
@@ -567,7 +567,7 @@ filtered_output <- DamageDetective::detect_damage(
 dim(filtered_output)
 ```
 
-    #> [1] 13287  1101
+    #> [1] 13287     0
 
 ## Session Information
 
