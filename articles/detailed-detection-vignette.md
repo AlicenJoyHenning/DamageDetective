@@ -160,6 +160,8 @@ following the link named “Feature / cell matrix (filtered)”. This should
 begin the download of a 9.6 MB directory containing
 ‘filtered_feature_bc_matrix’ sub-directory housing the alignment files.
 
+    #> Using Matrix::readMM(); install R.utils for faster reading.
+
 ``` r
 
 # Set the file paths relative to location on your device
@@ -561,13 +563,13 @@ dim(filtered_output)
 
 ## Session Information
 
-    #> R version 4.6.1 (2026-06-24)
+    #> R version 4.6.2 (2026-10-29)
     #> Platform: x86_64-pc-linux-gnu
-    #> Running under: Ubuntu 24.04.5 LTS
+    #> Running under: Ubuntu 26.04.1 LTS
     #> 
     #> Matrix products: default
     #> BLAS:   /usr/lib/x86_64-linux-gnu/openblas-pthread/libblas.so.3 
-    #> LAPACK: /usr/lib/x86_64-linux-gnu/openblas-pthread/libopenblasp-r0.3.26.so;  LAPACK version 3.12.0
+    #> LAPACK: /usr/lib/x86_64-linux-gnu/openblas-pthread/libopenblasp-r0.3.32.so;  LAPACK version 3.12.0
     #> 
     #> locale:
     #>  [1] LC_CTYPE=C.UTF-8       LC_NUMERIC=C           LC_TIME=C.UTF-8       
@@ -582,53 +584,44 @@ dim(filtered_output)
     #> [1] stats     graphics  grDevices utils     datasets  methods   base     
     #> 
     #> other attached packages:
-    #> [1] patchwork_1.3.2        ggplot2_4.0.3          stringr_1.6.0         
-    #> [4] Seurat_5.6.0           SeuratObject_5.4.0     sp_2.2-4              
+    #> [1] patchwork_1.3.2        ggplot2_4.0.4          stringr_1.6.0         
+    #> [4] Seurat_6.0.0           SeuratObject_5.4.0     sp_2.2-4              
     #> [7] DamageDetective_2.0.15
     #> 
     #> loaded via a namespace (and not attached):
-    #>   [1] RColorBrewer_1.1-3     jsonlite_2.0.0         magrittr_2.0.5        
-    #>   [4] spatstat.utils_3.2-5   farver_2.1.2           rmarkdown_2.32        
-    #>   [7] fs_2.1.0               ragg_1.5.2             vctrs_0.7.3           
-    #>  [10] ROCR_1.0-12            spatstat.explore_3.8-3 rstatix_1.1.0         
-    #>  [13] htmltools_0.5.9        broom_1.0.13           Formula_1.2-6         
-    #>  [16] sass_0.4.10            sctransform_0.4.3      parallelly_1.48.0     
-    #>  [19] KernSmooth_2.23-26     bslib_0.12.0           htmlwidgets_1.6.4     
-    #>  [22] desc_1.4.3             ica_1.0-3              plyr_1.8.9            
-    #>  [25] plotly_4.12.1          zoo_1.9-1              cachem_1.1.0          
-    #>  [28] igraph_2.3.4           mime_0.13              lifecycle_1.0.5       
-    #>  [31] pkgconfig_2.0.3        Matrix_1.7-5           R6_2.6.1              
-    #>  [34] fastmap_1.2.0          fitdistrplus_1.2-6     future_1.76.0         
-    #>  [37] shiny_1.14.0           digest_0.6.39          tensor_1.5.1          
-    #>  [40] RSpectra_0.16-2        irlba_2.4.1            textshaping_1.0.5     
-    #>  [43] ggpubr_1.0.0           labeling_0.4.3         progressr_1.0.0       
-    #>  [46] spatstat.sparse_3.2-0  httr_1.4.9             polyclip_1.10-7       
-    #>  [49] abind_1.4-8            compiler_4.6.1         proxy_0.4-29          
-    #>  [52] withr_3.0.3            S7_0.2.2               backports_1.5.1       
-    #>  [55] carData_3.0-6          fastDummies_1.7.6      ggsignif_0.6.4        
-    #>  [58] MASS_7.3-65            tools_4.6.1            lmtest_0.9-40         
-    #>  [61] otel_0.2.0             httpuv_1.6.17          future.apply_1.20.2   
-    #>  [64] goftest_1.2-3          glue_1.8.1             nlme_3.1-169          
-    #>  [67] promises_1.5.0         grid_4.6.1             Rtsne_0.17            
-    #>  [70] cluster_2.1.8.2        reshape2_1.4.5         generics_0.1.4        
-    #>  [73] gtable_0.3.6           spatstat.data_3.1-9    class_7.3-23          
-    #>  [76] tidyr_1.3.2            data.table_1.18.6.1    car_3.1-5             
-    #>  [79] spatstat.geom_3.8-3    RcppAnnoy_0.0.23       ggrepel_0.9.8         
-    #>  [82] RANN_2.6.3             pillar_1.11.1          spam_2.11-4           
-    #>  [85] RcppHNSW_0.7.0         later_1.4.8            splines_4.6.1         
-    #>  [88] dplyr_1.2.1            lattice_0.22-9         survival_3.8-6        
-    #>  [91] deldir_2.0-4           tidyselect_1.2.1       miniUI_0.1.2          
-    #>  [94] pbapply_1.7-5          knitr_1.52             gridExtra_2.3.1       
-    #>  [97] scattermore_1.2        xfun_0.61              matrixStats_1.5.0     
-    #> [100] stringi_1.8.9          yaml_2.3.12            evaluate_1.0.5        
-    #> [103] codetools_0.2-20       tibble_3.3.1           cli_3.6.6             
-    #> [106] uwot_0.2.5             xtable_1.8-8           reticulate_1.47.0     
-    #> [109] systemfonts_1.3.2      jquerylib_0.1.4        Rcpp_1.1.2            
-    #> [112] globals_0.20.0         spatstat.random_3.5-2  png_0.1-9             
-    #> [115] spatstat.univar_3.2-0  parallel_4.6.1         pkgdown_2.2.1         
-    #> [118] dotCall64_1.2          listenv_1.1.0          viridisLite_0.4.3     
-    #> [121] scales_1.4.0           ggridges_0.5.7         e1071_1.7-17          
-    #> [124] purrr_1.2.2            rlang_1.3.0            cowplot_1.2.0
+    #>  [1] tidyselect_1.2.1    dplyr_1.2.1         farver_2.1.2       
+    #>  [4] S7_0.2.2            fastmap_1.2.0       RANN_2.6.3         
+    #>  [7] digest_0.6.39       dotCall64_1.2       lifecycle_1.0.5    
+    #> [10] cluster_2.1.8.3     magrittr_2.0.5      compiler_4.6.2     
+    #> [13] rlang_1.3.0         sass_0.4.10         tools_4.6.2        
+    #> [16] igraph_2.3.4        yaml_2.3.12         data.table_1.18.6.1
+    #> [19] ggsignif_0.6.4      knitr_1.52          labeling_0.4.3     
+    #> [22] plyr_1.8.9          RColorBrewer_1.1-3  abind_1.4-8        
+    #> [25] KernSmooth_2.23-27  Rtsne_0.17          withr_3.0.3        
+    #> [28] purrr_1.2.2         desc_1.4.3          grid_4.6.2         
+    #> [31] ggpubr_1.0.0        RcppHNSW_0.7.0      fastDummies_1.7.6  
+    #> [34] e1071_1.7-17        future_1.82.0       progressr_1.1.0    
+    #> [37] globals_0.20.0      scales_1.4.0        MASS_7.3-66        
+    #> [40] ggridges_0.5.7      cli_3.6.6           rmarkdown_2.32     
+    #> [43] ragg_1.5.2          generics_0.1.4      otel_0.3.0         
+    #> [46] ica_1.0-3           future.apply_1.21.0 RSpectra_0.16-2    
+    #> [49] sctransform_0.4.3   httr_1.4.9          reshape2_1.4.5     
+    #> [52] pbapply_1.7-5       cachem_1.1.0        proxy_0.4-29       
+    #> [55] parallel_4.6.2      matrixStats_1.5.0   vctrs_0.7.3        
+    #> [58] Matrix_1.7-6        carData_3.0-6       jsonlite_2.0.0     
+    #> [61] car_3.1-5           rstatix_1.1.0       ggrepel_0.9.8      
+    #> [64] Formula_1.2-6       irlba_2.4.1         scattermore_1.2    
+    #> [67] listenv_1.1.0       systemfonts_1.3.3   tidyr_1.3.2        
+    #> [70] jquerylib_0.1.4     pls_2.9-0           glue_1.8.1         
+    #> [73] parallelly_1.50.0   spam_2.11-4         pkgdown_2.2.1      
+    #> [76] codetools_0.2-20    cowplot_1.2.0       uwot_0.2.5         
+    #> [79] RcppAnnoy_0.0.23    stringi_1.8.9       gtable_0.3.6       
+    #> [82] tibble_3.3.1        pillar_1.11.1       htmltools_0.5.9    
+    #> [85] R6_2.6.1            textshaping_1.0.5   evaluate_1.0.5     
+    #> [88] lattice_0.23-1      backports_1.5.1     png_0.1-9          
+    #> [91] broom_1.0.13        bslib_0.12.0        class_7.3-24       
+    #> [94] Rcpp_1.1.2          gridExtra_2.3.1     xfun_0.62          
+    #> [97] fs_2.1.0            pkgconfig_2.0.3
 
 ## References
 
