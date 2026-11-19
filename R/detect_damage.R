@@ -233,7 +233,6 @@ detect_damage <- function(
   }
 }
 
-
 .check_clusters <- function(
     count_matrix, resolution, gene_idx, generate_plot, verbose
 ){
@@ -244,22 +243,41 @@ detect_damage <- function(
   # Create Seurat object
   seurat <- suppressWarnings(Seurat::CreateSeuratObject(counts = count_matrix))
 
-  # Isolate genes of interest
-  mito_genes <- grep(gene_idx$mito_pattern, rownames(seurat), value = TRUE)
-  ribo_genes <- grep(gene_idx$ribo_pattern, rownames(seurat), value = TRUE)
-  mt_rb_genes <- unique(c(mito_genes, ribo_genes))
+  # Isolate genes of interest (mitochondrial, ribosomal & nuclear)
+  gene_names <- rownames(seurat)
+  mito_genes <- grep(gene_idx$mito_pattern, gene_names, value = TRUE)
+  ribo_genes <- grep(gene_idx$ribo_pattern, gene_names, value = TRUE)
+  nuclear_genes <- gene_idx$nuclear[gene_idx$nuclear %in% gene_names]
+  gene_set <- unique(c(mito_genes, ribo_genes, nuclear_genes))
 
   # Compute QC stats per cell
   counts <- Seurat::GetAssayData(seurat, layer = "counts")
   total_counts <- Matrix::colSums(counts)
-  mt_exp <- Matrix::colSums(counts[mito_genes, , drop = FALSE])
-  pctMT <- (mt_exp / total_counts) * 100
-  pctMT[is.na(pctMT)] <- 0
-  seurat$pctMT <- as.numeric(pctMT)
-  seurat$mt_exp <- as.numeric(mt_exp)
 
-  # Reduce dimensions to mt-rb
-  seurat_reduced <- subset(seurat, features = mt_rb_genes)
+  mt_exp <- Matrix::colSums(counts[mito_genes, , drop = FALSE])
+  rb_exp <- Matrix::colSums(counts[ribo_genes, , drop = FALSE])
+  if (gene_idx$MALAT1 %in% gene_names) {
+    MALAT1_exp <- Matrix::colSums(
+      counts[gene_idx$MALAT1, , drop = FALSE])
+  } else {
+    MALAT1_exp <- rep(0, ncol(counts))
+  }
+
+  .pct <- function(x) {
+    pct <- (x / total_counts) * 100
+    pct[is.na(pct)] <- 0
+    as.numeric(pct)
+  }
+
+  seurat$pctMT <- .pct(mt_exp)
+  seurat$pctRB <- .pct(rb_exp)
+  seurat$pctMALAT1 <- .pct(MALAT1_exp)
+  seurat$mt_exp <- as.numeric(mt_exp)
+  seurat$rb_exp <- as.numeric(rb_exp)
+  seurat$MALAT1_exp <- as.numeric(MALAT1_exp)
+
+  # Reduce dimensions to mt-rb-nuclear genes
+  seurat_reduced <- subset(seurat, features = gene_set)
 
   # Standard workflow with reduced memory footprint
   seurat_reduced <- suppressWarnings(
@@ -278,7 +296,6 @@ detect_damage <- function(
                          verbose = FALSE))
   seurat_reduced <- suppressWarnings(
     Seurat::RunUMAP(seurat_reduced, dims = 1:20, verbose = FALSE))
-  
 
   seurat_reduced$nFeature_RNA <- seurat$nFeature_RNA[
     colnames(seurat_reduced)
@@ -290,48 +307,53 @@ detect_damage <- function(
   cluster_QC <- seurat_reduced@meta.data %>%
     dplyr::group_by(.data$seurat_clusters) %>%
     dplyr::summarise(
-      pct_MT   = stats::median(.data$pctMT, na.rm = TRUE),
-      mt_exp   = stats::median(.data$mt_exp, na.rm = TRUE),
-      features = stats::median(.data$nFeature_RNA, na.rm = TRUE)
+      pct_MT     = stats::median(.data$pctMT, na.rm = TRUE),
+      mt_exp     = stats::median(.data$mt_exp, na.rm = TRUE),
+      pct_RB     = stats::median(.data$pctRB, na.rm = TRUE),
+      rb_exp     = stats::median(.data$rb_exp, na.rm = TRUE),
+      pct_MALAT1 = stats::median(.data$pctMALAT1, na.rm = TRUE),
+      MALAT1_exp = stats::median(.data$MALAT1_exp, na.rm = TRUE),
+      features   = stats::median(.data$nFeature_RNA, na.rm = TRUE),
+      .groups = "drop"
     )
 
-  # Isolate cluster with lowest non-trivial pctMT
+  # Isolate the reference (highest-quality) cluster, the one with the lowest
+  # non-trivial pctMT
   highQC_cluster <- cluster_QC %>%
     dplyr::filter(.data$pct_MT >= 1) %>%
     dplyr::slice_min(.data$pct_MT, n = 1, with_ties = FALSE)
 
+  # Fallback if no cluster has pct_MT >= 1
   if (nrow(highQC_cluster) == 0) {
-    # No cluster has a non-trivial pctMT, so there is nothing to compare to
-    cluster_QC$QC_label <- "viable"
-  } else {
-
-    # Define cluster-level thresholds
-    pctMT_threshold  <- highQC_cluster$pct_MT * 2
-    mt_exp_threshold <- highQC_cluster$mt_exp * 2
-    feature_threshold <- highQC_cluster$features * 0.5
-
-    # Classify clusters
-    cluster_QC <- cluster_QC %>%
-      dplyr::mutate(
-        QC_label = dplyr::case_when(
-          # Passive depletion
-          pct_MT >= 50 & ((features < 100) |
-                            (features <= feature_threshold)) ~ "depleted",
-          # Active depletion
-          pct_MT >= pctMT_threshold &
-            ((features <= feature_threshold) |
-               (abs(features - highQC_cluster$features) >
-                  abs(features - feature_threshold))) ~ "depleted",
-          # Active dysregulation
-          (pct_MT >= pctMT_threshold) |
-            ((abs(pct_MT - highQC_cluster$pct_MT) >
-                abs(pct_MT - pctMT_threshold)) &
-               mt_exp >= mt_exp_threshold &
-               features >= feature_threshold) ~ "divergent",
-          TRUE ~ "viable"
-        )
-      )
+    highQC_cluster <- cluster_QC %>%
+      dplyr::slice_min(.data$pct_MT, n = 1, with_ties = FALSE)
   }
+
+  # Define cluster-level thresholds
+  pctMT_threshold   <- highQC_cluster$pct_MT * 3
+  mt_exp_threshold  <- max(highQC_cluster$mt_exp * 2, 1000)
+  feature_threshold <- highQC_cluster$features * 0.5
+  pctRB_threshold   <- highQC_cluster$pct_RB * 0.5
+
+  # Classify clusters
+  cluster_QC <- cluster_QC %>%
+    dplyr::mutate(
+      QC_label = dplyr::case_when(
+
+        # Passive depletion: very high mitochondrial proportion and either
+        # very few features or substantially reduced ribosomal proportion
+        pct_MT >= 50 &
+          (features <= 100 | pct_RB <= pctRB_threshold) ~ "depleted",
+
+        # Divergent metabolism: elevated mitochondrial proportion and
+        # expression while retaining a reasonable number of features
+        pct_MT >= pctMT_threshold &
+          mt_exp >= mt_exp_threshold &
+          features > feature_threshold ~ "divergent",
+
+        TRUE ~ "viable"
+      )
+    )
 
   # Assign cluster QC_labels
   cluster_to_label <- stats::setNames(
@@ -349,16 +371,26 @@ detect_damage <- function(
       axis.ticks = ggplot2::element_blank(),
       axis.title = ggplot2::element_blank(),
       axis.text = ggplot2::element_blank(),
+      legend.position = "bottom",
+      legend.justification = "center",
+      legend.box.just = "center",
       panel.border = ggplot2::element_rect(fill = NA, colour = "black")
     )
     pctMT_view <- Seurat::FeaturePlot(
       seurat_reduced, features = "pctMT") + plot_theme
+    mt_exp_view <- Seurat::FeaturePlot(
+      seurat_reduced, features = "mt_exp") + plot_theme
+    pctRB_view <- Seurat::FeaturePlot(
+      seurat_reduced, features = "pctRB") + plot_theme
+    MALAT1_view <- Seurat::FeaturePlot(
+      seurat_reduced, features = "MALAT1_exp") + plot_theme
     feature_view <- Seurat::FeaturePlot(
       seurat_reduced, features = "nFeature_RNA") + plot_theme
     labelled_view <- Seurat::DimPlot(
       seurat_reduced, group.by = "QC_label") + plot_theme
     presim_plot <- patchwork::wrap_plots(
-      pctMT_view, feature_view, labelled_view, nrow = 1)
+      pctMT_view, mt_exp_view, pctRB_view, MALAT1_view,
+      feature_view, labelled_view, nrow = 2)
   }
 
   # Transfer labels to seurat

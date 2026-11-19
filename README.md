@@ -24,7 +24,7 @@ Like `DoubletFinder`, `DamageDetective` uses principal component analysis to com
 
 <br>
 
-## Installation {#installation}
+## Installation 
 
 Install `DamageDetective` from CRAN (R \>= 4.4.0),
 
@@ -48,7 +48,7 @@ help(package = "DamageDetective")
 
 <br>
 
-## Quick start {#quick-start}
+## Quick start 
 
 #### Load data
 
@@ -202,15 +202,15 @@ made they are informed by the `detect_damage` plots, `generate_plot = TRUE`.
 
 <br>
 
-## Contribute {#contribute}
+## Contribute 
 
 We are committed to the improvement of `DamageDetective` and encourage users to report any bugs or difficulties they encounter. Contributions that refine or challenge the assumptions and heuristics used to detect damaged cells are also welcome. Please reach out via the maintainer's email listed in the `DESCRIPTION` file or start a public discussion [![Issue](https://img.shields.io/badge/Issues-blue?style=flat&logo=github)](https://github.com/AlicenJoyHenning/DamageDetective/issues).
 
-## License {#license}
+## License 
 
 `DamageDetective` is made available for public use through the [GNU AGPL-3.0](https://opensource.org/license/agpl-v3)
 
-## Authors {#authors}
+## Authors 
 
 **Alicen Henning**\
 Stellenbosch University, Cape Town, South Africa\
@@ -218,7 +218,7 @@ Bioinformatics and Computational Biology
 
 This work was done under the supervision of Prof Marlo Möller, Prof Gian van der Spuy, and Prof André Loxton.
 
-## References {#references}
+## References
 
 -   McGinnis, C. S., Murrow, L. M., & Gartner, Z. J. (2019). DoubletFinder: Doublet Detection in Single-Cell RNA Sequencing Data Using Artificial Nearest Neighbors. *Cell Systems, 8*(4), 329-337.e4. <https://doi.org/10.1016/j.cels.2019.03.003>
 
