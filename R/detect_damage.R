@@ -387,7 +387,7 @@ detect_damage <- function(
     pctRB_view <- Seurat::FeaturePlot(
       seurat_reduced, features = "pctRB", raster = TRUE) + plot_theme
     MALAT1_view <- Seurat::FeaturePlot(
-      seurat_reduced, features = "MALAT1", raster = TRUE) + plot_theme
+      seurat_reduced, features = "pctMALAT1", raster = TRUE) + plot_theme
     feature_view <- Seurat::FeaturePlot(
       seurat_reduced, features = "nFeature_RNA", raster = TRUE) + plot_theme
     labelled_view <- Seurat::DimPlot(
