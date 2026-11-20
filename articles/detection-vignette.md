@@ -144,13 +144,15 @@ detection_results <- detect_damage(
 #> Clustering cells...
 #> Checking clusters...
 #> Simulating damage...
+#> 18:58:40 Building HNSW index with metric 'euclidean' ef = 200 M = 16 using 0 threads
+#> 18:58:40 Finished building index
 #> Computing pANN...
-#>  ... 0.7 suggested threshold.
+#>  ... 0.39 suggested threshold.
 #> Completed.
 
 # View the resulting count matrix
 dim(detection_results$output)
-#> [1] 32738   462
+#> [1] 32738   470
 
 # View the plot 
 detection_results$plot
