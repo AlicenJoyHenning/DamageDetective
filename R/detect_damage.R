@@ -109,7 +109,7 @@
 #' @importFrom stats median setNames
 #' @importFrom Matrix colSums Matrix
 #' @importFrom RcppHNSW hnsw_knn
-#' @importFrom dplyr %>% group_by summarise mutate case_when
+#' @importFrom dplyr |> group_by summarise mutate case_when
 #' @importFrom dplyr first pull filter slice_min
 #' @importFrom ggplot2 ggsave theme element_rect element_blank margin
 #' @importFrom patchwork wrap_plots
@@ -304,8 +304,8 @@ detect_damage <- function(
   if (verbose) message("Checking clusters...")
 
   # Compute cluster QC
-  cluster_QC <- seurat_reduced@meta.data %>%
-    dplyr::group_by(.data$seurat_clusters) %>%
+  cluster_QC <- seurat_reduced@meta.data |>
+    dplyr::group_by(.data$seurat_clusters) |>
     dplyr::summarise(
       pct_MT     = stats::median(.data$pctMT, na.rm = TRUE),
       mt_exp     = stats::median(.data$mt_exp, na.rm = TRUE),
@@ -319,13 +319,13 @@ detect_damage <- function(
 
   # Isolate the reference (highest-quality) cluster, the one with the lowest
   # non-trivial pctMT
-  highQC_cluster <- cluster_QC %>%
-    dplyr::filter(.data$pct_MT >= 1) %>%
+  highQC_cluster <- cluster_QC |>
+    dplyr::filter(.data$pct_MT >= 1) |>
     dplyr::slice_min(.data$pct_MT, n = 1, with_ties = FALSE)
 
   # Fallback if no cluster has pct_MT >= 1
   if (nrow(highQC_cluster) == 0) {
-    highQC_cluster <- cluster_QC %>%
+    highQC_cluster <- cluster_QC |>
       dplyr::slice_min(.data$pct_MT, n = 1, with_ties = FALSE)
   }
 
@@ -336,7 +336,7 @@ detect_damage <- function(
   pctRB_threshold   <- highQC_cluster$pct_RB * 0.5
 
   # Classify clusters
-  cluster_QC <- cluster_QC %>%
+  cluster_QC <- cluster_QC |>
     dplyr::mutate(
       QC_label = dplyr::case_when(
 
@@ -383,7 +383,7 @@ detect_damage <- function(
     pctRB_view <- Seurat::FeaturePlot(
       seurat_reduced, features = "pctRB") + plot_theme
     MALAT1_view <- Seurat::FeaturePlot(
-      seurat_reduced, features = "MALAT1_exp") + plot_theme
+      seurat_reduced, features = "MALAT1") + plot_theme
     feature_view <- Seurat::FeaturePlot(
       seurat_reduced, features = "nFeature_RNA") + plot_theme
     labelled_view <- Seurat::DimPlot(
@@ -465,8 +465,8 @@ detect_damage <- function(
       seed = seed
     )
 
-    barcodes <- damaged_cells$qc_summary %>%
-      dplyr::filter(.data$Damaged_Level != 0) %>%
+    barcodes <- damaged_cells$qc_summary |>
+      dplyr::filter(.data$Damaged_Level != 0) |>
       dplyr::pull(.data$Cell)
 
     damaged_matrix <- damaged_cells$matrix[, barcodes, drop = FALSE]
@@ -543,7 +543,6 @@ detect_damage <- function(
     Damage_level = Damage_level,
     row.names = colnames(matrix_combined)
   )
-
   return(metadata_stored)
 }
 
@@ -553,14 +552,12 @@ detect_damage <- function(
   # Adjust heavily skewed data
   skew_val <- e1071::skewness(metadata_stored$mt.prop, na.rm = TRUE)
   skew_test <- !is.na(skew_val) && skew_val > 1.5
-
   if (skew_test){
     pca_columns <- c("log.features", "log.counts", "mt.logit", "rb.prop")
   }
 
   # Test for high expression of MALAT1
   malat_test <- (max(metadata_stored$malat1.prop) >= 0.5)
-
   if (malat_test){
     pca_columns <- c("log.features", "mt.prop", "malat1.prop")
   }
@@ -638,7 +635,7 @@ detect_damage <- function(
   cluster_proportions <- cluster_sizes / n_artificial
 
   # Isolate true cells & define relevant columns
-  metadata_plot <- metadata_plot %>%
+  metadata_plot <- metadata_plot |>
     dplyr::filter(.data$Damage_level == "true")
 
   for (cluster in clusters){
@@ -721,14 +718,28 @@ detect_damage <- function(
     # Handle case with no peaks
     if (length(peaks_idx) < 1) {
       warning("No pANN peaks detected.")
-      filter_threshold <- 0.5
-      valley_idx <- which.min(y)
+      filter_threshold <- 0.7
     } else {
-      # Find local minimum after first peak
-      first_peak_idx <- peaks_idx[1]
-      search_end <- if (length(peaks_idx) > 1) peaks_idx[2] else length(y)
-      valley_idx <- which.min(y[first_peak_idx:search_end]) + first_peak_idx - 1
+    # Identify the first run of at least 3 consecutive positive slopes
+    first_peak_idx <- peaks_idx[1]
+    search_end <- if (length(peaks_idx) > 1) peaks_idx[2] else length(y)
+    n_consecutive <- 3
+    positive_slopes <- dy[first_peak_idx:search_end] > 0
+      
+    runs <- rle(positive_slopes)
+    run_ends <- cumsum(runs$lengths)
+    run_starts <- run_ends - runs$lengths + 1
+    valid_runs <- which(runs$values & runs$lengths >= n_consecutive)
+    
+    # Index of the first positive slope in the qualifying run
+    if (length(valid_runs) > 0) {
+      positive_slope_idx <- run_starts[valid_runs[1]]
+      valley_idx <- positive_slope_idx + first_peak_idx - 1
       filter_threshold <- x[valley_idx]
+
+    } else {
+      filter_threshold <- 0.7
+    }
     }
 
     if (generate_plot){
