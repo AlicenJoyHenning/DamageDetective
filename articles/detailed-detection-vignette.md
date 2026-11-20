@@ -505,10 +505,10 @@ detection_output <- DamageDetective::detect_damage(
 #> Clustering cells...
 #> Checking clusters...
 #> Simulating damage...
-#> 20:28:28 Building HNSW index with metric 'euclidean' ef = 200 M = 16 using 0 threads
-#> 20:28:28 Finished building index
+#> 22:47:43 Building HNSW index with metric 'euclidean' ef = 200 M = 16 using 0 threads
+#> 22:47:43 Finished building index
 #> Computing pANN...
-#>  ... 0.35 suggested threshold.
+#>  ... 0.7 suggested threshold.
 ```
 
 ![Scatter plot showing the outcome damage detection where cells of the
