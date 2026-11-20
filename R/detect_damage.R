@@ -751,37 +751,7 @@ detect_damage <- function(
     dens <- density(metadata_output$DamageDetective, from = 0, to = 1, n = 1000)
     y <- dens$y
     x <- dens$x
-    dy <- diff(y)
-
-    # Identify peaks
-    peaks_idx <- which(diff(sign(dy)) == -2) + 1
-
-    # Handle case with no peaks
-    if (length(peaks_idx) < 1) {
-      warning("No pANN peaks detected.")
-      filter_threshold <- 0.7
-    } else {
-    # Identify the first run of at least 3 consecutive positive slopes
-    first_peak_idx <- peaks_idx[1]
-    search_end <- if (length(peaks_idx) > 1) peaks_idx[2] else length(y)
-    n_consecutive <- 3
-    positive_slopes <- dy[first_peak_idx:search_end] > 0
-      
-    runs <- rle(positive_slopes)
-    run_ends <- cumsum(runs$lengths)
-    run_starts <- run_ends - runs$lengths + 1
-    valid_runs <- which(runs$values & runs$lengths >= n_consecutive)
-    
-    # Index of the first positive slope in the qualifying run
-    if (length(valid_runs) > 0) {
-      positive_slope_idx <- run_starts[valid_runs[1]]
-      valley_idx <- positive_slope_idx + first_peak_idx - 1
-      filter_threshold <- x[valley_idx]
-
-    } else {
-      filter_threshold <- 0.7
-    }
-    }
+    filter_threshold <- .find_pann_threshold(x, y, default = 0.7)
 
     if (generate_plot){
       plot_data <- data.frame(x = x, y = y)
@@ -863,4 +833,47 @@ detect_damage <- function(
   }
 
   return(output)
+}
+
+.find_pann_threshold <- function(x, y, default = 0.7,
+                                 min_height = 0.1,   
+                                 min_depth  = 0.5) { 
+  dy <- diff(y)
+
+  # Interior peaks, plus the edges if the density is highest there
+  peaks <- which(diff(sign(dy)) == -2) + 1
+  if (dy[1] < 0) peaks <- c(1, peaks)
+  if (dy[length(dy)] > 0) peaks <- c(peaks, length(y))
+
+  if (length(peaks) < 2) return(default)
+
+  # Drop negligible bumps
+  peaks <- peaks[y[peaks] >= min_height * max(y[peaks])]
+
+  # Merge peaks separated by shallow valleys until only distinct peaks remain
+  repeat {
+    if (length(peaks) < 2) break
+
+    valleys <- vapply(seq_len(length(peaks) - 1), function(i) {
+      idx <- peaks[i]:peaks[i + 1]
+      idx[which.min(y[idx])]
+    }, integer(1))
+
+    # Ratio of valley height to the smaller of its two flanking peaks
+    # (close to 1 = shallow dip, close to 0 = deep valley)
+    depth <- y[valleys] / pmin(y[peaks[-length(peaks)]], y[peaks[-1]])
+
+    worst <- which.max(depth)
+    if (depth[worst] < min_depth) break      # every remaining valley is deep enough
+
+    # Merge across the shallowest valley by dropping the lower flanking peak
+    drop <- if (y[peaks[worst]] < y[peaks[worst + 1]]) worst else worst + 1
+    peaks <- peaks[-drop]
+  }
+
+  # Only trust the valley when there are exactly two distinct peaks
+  if (length(peaks) != 2) return(default)
+
+  idx <- peaks[1]:peaks[2]
+  x[idx[which.min(y[idx])]]
 }
