@@ -15,7 +15,7 @@ detect_damage(
   target_damage = c(0.65, 1),
   damage_distribution = "left_skewed",
   distribution_steepness = "steep",
-  pca_columns = c("log.features", "log.counts", "mt.prop", "rb.prop"),
+  pca_columns = c("features", "mt.prop", "rb.prop"),
   beta_shape_parameters = NULL,
   damage_proportion = 0.2,
   seed = 7,
@@ -305,8 +305,8 @@ test <- detect_damage(
 #> Clustering cells...
 #> Checking clusters...
 #> Simulating damage...
-#> 18:58:03 Building HNSW index with metric 'euclidean' ef = 200 M = 16 using 0 threads
-#> 18:58:03 Finished building index
+#> 19:09:09 Building HNSW index with metric 'euclidean' ef = 200 M = 16 using 0 threads
+#> 19:09:09 Finished building index
 #> Computing pANN...
 #>  ... 0.74 suggested threshold.
 #> Completed.
