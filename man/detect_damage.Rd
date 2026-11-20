@@ -12,7 +12,7 @@ detect_damage(
   target_damage = c(0.65, 1),
   damage_distribution = "left_skewed",
   distribution_steepness = "steep",
-  pca_columns = c("log.features", "log.counts", "mt.prop", "rb.prop"),
+  pca_columns = c("features", "mt.prop", "rb.prop"),
   beta_shape_parameters = NULL,
   damage_proportion = 0.2,
   seed = 7,
