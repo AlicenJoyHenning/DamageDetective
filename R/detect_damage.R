@@ -381,17 +381,17 @@ detect_damage <- function(
     )
 
     pctMT_view <- Seurat::FeaturePlot(
-      seurat_reduced, features = "pctMT", raster = TRUE) + plot_theme
+      seurat_reduced, features = "pctMT") + plot_theme
     mt_exp_view <- Seurat::FeaturePlot(
-      seurat_reduced, features = "mt_exp", raster = TRUE) + plot_theme
+      seurat_reduced, features = "mt_exp") + plot_theme
     pctRB_view <- Seurat::FeaturePlot(
-      seurat_reduced, features = "pctRB", raster = TRUE) + plot_theme
+      seurat_reduced, features = "pctRB") + plot_theme
     MALAT1_view <- Seurat::FeaturePlot(
-      seurat_reduced, features = "pctMALAT1", raster = TRUE) + plot_theme
+      seurat_reduced, features = "pctMALAT1") + plot_theme
     feature_view <- Seurat::FeaturePlot(
-      seurat_reduced, features = "nFeature_RNA", raster = TRUE) + plot_theme
+      seurat_reduced, features = "nFeature_RNA") + plot_theme
     labelled_view <- Seurat::DimPlot(
-      seurat_reduced, group.by = "QC_label", raster = TRUE) + plot_theme
+      seurat_reduced, group.by = "QC_label") + plot_theme
     presim_plot <- patchwork::wrap_plots(
       pctMT_view, mt_exp_view, pctRB_view, MALAT1_view,
       feature_view, labelled_view, nrow = 2)
