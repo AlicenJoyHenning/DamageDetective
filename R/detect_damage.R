@@ -240,27 +240,22 @@ detect_damage <- function(
     message("Clustering cells...")
   }
 
-  # Create Seurat object
-  seurat <- suppressWarnings(Seurat::CreateSeuratObject(counts = count_matrix))
-
   # Isolate genes of interest (mitochondrial, ribosomal & nuclear)
-  gene_names <- rownames(seurat)
+  gene_names <- rownames(count_matrix)
   mito_genes <- grep(gene_idx$mito_pattern, gene_names, value = TRUE)
   ribo_genes <- grep(gene_idx$ribo_pattern, gene_names, value = TRUE)
   nuclear_genes <- gene_idx$nuclear[gene_idx$nuclear %in% gene_names]
   gene_set <- unique(c(mito_genes, ribo_genes, nuclear_genes))
 
   # Compute QC stats per cell
-  counts <- Seurat::GetAssayData(seurat, layer = "counts")
-  total_counts <- Matrix::colSums(counts)
-
-  mt_exp <- Matrix::colSums(counts[mito_genes, , drop = FALSE])
-  rb_exp <- Matrix::colSums(counts[ribo_genes, , drop = FALSE])
+  total_counts <- Matrix::colSums(count_matrix)
+  nFeature_RNA <- Matrix::colSums(count_matrix > 0)
+  mt_exp <- Matrix::colSums(count_matrix[mito_genes, , drop = FALSE])
+  rb_exp <- Matrix::colSums(count_matrix[ribo_genes, , drop = FALSE])
   if (gene_idx$MALAT1 %in% gene_names) {
-    MALAT1_exp <- Matrix::colSums(
-      counts[gene_idx$MALAT1, , drop = FALSE])
+    MALAT1_exp <- Matrix::colSums(count_matrix[gene_idx$MALAT1, , drop = FALSE])
   } else {
-    MALAT1_exp <- rep(0, ncol(counts))
+    MALAT1_exp <- rep(0, ncol(count_matrix))
   }
 
   .pct <- function(x) {
@@ -269,15 +264,23 @@ detect_damage <- function(
     as.numeric(pct)
   }
 
-  seurat$pctMT <- .pct(mt_exp)
-  seurat$pctRB <- .pct(rb_exp)
-  seurat$pctMALAT1 <- .pct(MALAT1_exp)
-  seurat$mt_exp <- as.numeric(mt_exp)
-  seurat$rb_exp <- as.numeric(rb_exp)
-  seurat$MALAT1_exp <- as.numeric(MALAT1_exp)
+  pctMT <- .pct(mt_exp)
+  pctRB <- .pct(rb_exp)
+  pctMALAT1 <- .pct(MALAT1_exp)
 
   # Reduce dimensions to mt-rb-nuclear genes
-  seurat_reduced <- subset(seurat, features = gene_set)
+  count_matrix_reduced <- count_matrix[gene_set, , drop = FALSE]
+  
+  # Add QC metadata to seurat object 
+  seurat_reduced <- suppressWarnings(Seurat::CreateSeuratObject(
+      counts = count_matrix_reduced
+    ))
+  seurat_reduced$pctMT <- pctMT
+  seurat_reduced$pctRB <- pctRB
+  seurat_reduced$pctMALAT1 <- pctMALAT1
+  seurat_reduced$mt_exp <- as.numeric(mt_exp)
+  seurat_reduced$rb_exp <- as.numeric(rb_exp)
+  seurat_reduced$MALAT1_exp <- as.numeric(MALAT1_exp)
 
   # Standard workflow with reduced memory footprint
   seurat_reduced <- suppressWarnings(
@@ -287,19 +290,15 @@ detect_damage <- function(
   seurat_reduced <- suppressWarnings(
     Seurat::ScaleData(seurat_reduced, verbose = FALSE))
   seurat_reduced <- suppressWarnings(
-    Seurat::RunPCA(seurat_reduced, verbose = FALSE))
+    Seurat::RunPCA(seurat_reduced, npcs = 20, verbose = FALSE))
   seurat_reduced <- suppressWarnings(
     Seurat::FindNeighbors(seurat_reduced, dims = 1:20, verbose = FALSE))
   seurat_reduced <- suppressWarnings(
     Seurat::FindClusters(seurat_reduced,
                          resolution = resolution,
                          verbose = FALSE))
-  seurat_reduced <- suppressWarnings(
-    Seurat::RunUMAP(seurat_reduced, dims = 1:20, verbose = FALSE))
 
-  seurat_reduced$nFeature_RNA <- seurat$nFeature_RNA[
-    colnames(seurat_reduced)
-  ]
+  seurat_reduced$nFeature_RNA <- as.numeric(nFeature_RNA)
 
   if (verbose) message("Checking clusters...")
 
@@ -367,6 +366,10 @@ detect_damage <- function(
   # Visualise
   presim_plot <- NULL
   if (generate_plot){
+    seurat_reduced <- suppressWarnings(
+      Seurat::RunUMAP(seurat_reduced, dims = 1:20, verbose = FALSE)
+    )
+
     plot_theme <- ggplot2::theme(
       axis.ticks = ggplot2::element_blank(),
       axis.title = ggplot2::element_blank(),
@@ -376,44 +379,44 @@ detect_damage <- function(
       legend.box.just = "center",
       panel.border = ggplot2::element_rect(fill = NA, colour = "black")
     )
+
     pctMT_view <- Seurat::FeaturePlot(
-      seurat_reduced, features = "pctMT") + plot_theme
+      seurat_reduced, features = "pctMT", raster = TRUE) + plot_theme
     mt_exp_view <- Seurat::FeaturePlot(
-      seurat_reduced, features = "mt_exp") + plot_theme
+      seurat_reduced, features = "mt_exp", raster = TRUE) + plot_theme
     pctRB_view <- Seurat::FeaturePlot(
-      seurat_reduced, features = "pctRB") + plot_theme
+      seurat_reduced, features = "pctRB", raster = TRUE) + plot_theme
     MALAT1_view <- Seurat::FeaturePlot(
-      seurat_reduced, features = "MALAT1") + plot_theme
+      seurat_reduced, features = "MALAT1", raster = TRUE) + plot_theme
     feature_view <- Seurat::FeaturePlot(
-      seurat_reduced, features = "nFeature_RNA") + plot_theme
+      seurat_reduced, features = "nFeature_RNA", raster = TRUE) + plot_theme
     labelled_view <- Seurat::DimPlot(
-      seurat_reduced, group.by = "QC_label") + plot_theme
+      seurat_reduced, group.by = "QC_label", raster = TRUE) + plot_theme
     presim_plot <- patchwork::wrap_plots(
       pctMT_view, mt_exp_view, pctRB_view, MALAT1_view,
       feature_view, labelled_view, nrow = 2)
   }
-
-  # Transfer labels to seurat
-  seurat$cluster_QC <- seurat_reduced$QC_label[match(
-    colnames(seurat), colnames(seurat_reduced)
-  )]
-  seurat$seurat_clusters <- seurat_reduced$seurat_clusters[match(
-    colnames(seurat), colnames(seurat_reduced)
-  )]
-
+  seurat_reduced$QC_label <- unname(cluster_to_label[as.character(
+    seurat_reduced$seurat_clusters)]
+  )
   # Isolate cells to simulate damage in (viable) and cells to exclude from
   # simulation (depleted & divergent), keeping track of the divergent cells
-  cells_to_simulate <- colnames(seurat)[seurat$cluster_QC == "viable"]
-  damaged_cells <- colnames(seurat)[seurat$cluster_QC != "viable"]
-  divergent_cells <- colnames(seurat)[seurat$cluster_QC == "divergent"]
+  cells_to_simulate <- colnames(seurat_reduced)[seurat_reduced$QC_label == "viable"]
+  damaged_cells <- colnames(seurat_reduced)[seurat_reduced$QC_label != "viable"]
+  divergent_cells <- colnames(seurat_reduced)[seurat_reduced$QC_label == "divergent"]
 
   # Retrieve cluster membership efficiently
-  clusters <- split(rownames(seurat@meta.data), seurat$seurat_clusters)
+  clusters <- split(
+    rownames(seurat_reduced@meta.data),
+    seurat_reduced$seurat_clusters
+  )
   names(clusters) <- paste0("cluster_", names(clusters))
+
+  # Remove intermediate objects
+  rm(count_matrix_reduced, cluster_QC, highQC_cluster, cluster_to_label)
 
   return(list(
     presim_plot = presim_plot,
-    object = seurat,
     clusters = clusters,
     cells_to_simulate = unique(cells_to_simulate),
     damaged_cells = unique(damaged_cells),
@@ -490,9 +493,16 @@ detect_damage <- function(
 .compute_qc_metrics <- function(matrix_combined, gene_idx, ranges) {
 
   # Mark damaged cells as 1 and true as 0
-  Damage_level <- str_extract(
-    colnames(matrix_combined), "(cluster_\\d+|cell_type_.+)$")
+  Damage_level <- stringr::str_extract(
+    colnames(matrix_combined), "(cluster_\\d+|cell_type_.+)$"
+  )
   Damage_level <- ifelse(is.na(Damage_level), "true", Damage_level)
+
+  # Identify mitochondrial and ribosomal genes using indicator vectors
+  gene_names <- rownames(matrix_combined)
+
+  mito_idx <- grepl(gene_idx$mito_pattern, gene_names)
+  ribo_idx <- grepl(gene_idx$ribo_pattern, gene_names)
 
   # Compute QC metrics
   features <- Matrix::colSums(matrix_combined > 0)
@@ -501,29 +511,40 @@ detect_damage <- function(
   total_counts <- Matrix::colSums(matrix_combined)
   log.counts <- log10(total_counts)
 
-  mt.prop <- Matrix::colSums(
-    matrix_combined[
-      grep(gene_idx$mito_pattern, rownames(matrix_combined)), , drop = FALSE
-    ]
-  ) / total_counts
+  # Compute mitochondrial and ribosomal counts using crossprod
+  mt_counts <- Matrix::crossprod(
+    as.numeric(mito_idx),
+    matrix_combined
+  )
 
+  rb_counts <- Matrix::crossprod(
+    as.numeric(ribo_idx),
+    matrix_combined
+  )
+
+  mt.prop <- as.numeric(mt_counts) / total_counts
+  rb.prop <- as.numeric(rb_counts) / total_counts
+
+  # Mitochondrial logit transformation
   epsilon <- 1e-6
-  mt.logit <- log((mt.prop + epsilon) / (1 - mt.prop + epsilon))
+  mt.logit <- log(
+    (mt.prop + epsilon) / (1 - mt.prop + epsilon)
+  )
 
-  rb.prop <- Matrix::colSums(
-    matrix_combined[
-      grep(gene_idx$ribo_pattern, rownames(matrix_combined)), , drop = FALSE]
-  ) / total_counts
+  # Extract MALAT1 expression
+  malat1_idx <- match(gene_idx$MALAT1, gene_names)
 
-  if (gene_idx$MALAT1 %in% seq_len(nrow(matrix_combined))) {
-    malat1_expr <- matrix_combined[gene_idx$MALAT1, , drop = FALSE]
-    malat1 <- as.vector(malat1_expr)
-    malat1.prop <- Matrix::colSums(malat1_expr) / total_counts
+  if (!is.na(malat1_idx)) {
+
+    malat1_expr <- matrix_combined[malat1_idx, , drop = FALSE]
+    malat1 <- as.numeric(malat1_expr)
+    malat1.prop <- malat1 / total_counts
+
   } else {
-    # Create zero values if MALAT1 is not in the count matrix
-    malat1_expr <- Matrix::Matrix(0, nrow = 1, ncol = ncol(matrix_combined), sparse = TRUE)
+
     malat1 <- rep(0, ncol(matrix_combined))
     malat1.prop <- rep(0, ncol(matrix_combined))
+
   }
 
   malat1.arcsin <- asin(sqrt(malat1.prop))
@@ -543,22 +564,21 @@ detect_damage <- function(
     Damage_level = Damage_level,
     row.names = colnames(matrix_combined)
   )
+
   return(metadata_stored)
 }
-
 
 .perform_pca <- function(metadata_stored, pca_columns, pK, verbose) {
 
   # Adjust heavily skewed data
   skew_val <- e1071::skewness(metadata_stored$mt.prop, na.rm = TRUE)
   skew_test <- !is.na(skew_val) && skew_val > 1.5
-  if (skew_test){
+  if (skew_test) {
     pca_columns <- c("log.features", "log.counts", "mt.logit", "rb.prop")
   }
 
-  # Test for high expression of MALAT1
   malat_test <- (max(metadata_stored$malat1.prop) >= 0.5)
-  if (malat_test){
+  if (malat_test) {
     pca_columns <- c("log.features", "mt.prop", "malat1.prop")
   }
 
@@ -566,9 +586,32 @@ detect_damage <- function(
   metadata_pca <- metadata_stored[, pca_columns]
   pca_result <- prcomp(metadata_pca, center = TRUE, scale. = TRUE)
   k <- round(pK * nrow(metadata_stored), 0)
-  RcppHNSW::hnsw_knn(pca_result$x[, 1:qc_pcs], k)$idx
-}
 
+  pca_data <- pca_result$x[, 1:qc_pcs, drop = FALSE]
+  ann <- RcppHNSW::hnsw_build(
+    pca_data,
+    distance = "euclidean",
+    M = 16,
+    ef = 200,
+    verbose = verbose
+  )
+
+  # Query neighbours in blocks
+  batch_size <- 1000
+  n_cells <- nrow(pca_data)
+  idx <- matrix(NA_integer_, nrow = n_cells, ncol = k)
+  for (start in seq(1, n_cells, by = batch_size)) {
+
+    end <- min(start + batch_size - 1, n_cells)
+    batch <- start:end
+
+    neighbours <- RcppHNSW::hnsw_search(
+      pca_data[batch, , drop = FALSE], ann, k = k, verbose = FALSE)
+    idx[batch, ] <- neighbours$idx
+    rm(neighbours)
+  }
+  idx
+}
 
 .compute_pANN <- function(barcode_set, metadata_stored, neighbour_indices, pK) {
   vapply(rownames(metadata_stored), function(cell) {
@@ -583,7 +626,6 @@ detect_damage <- function(
     sum(neighbour_barcodes %in% barcode_set) / k
   }, FUN.VALUE = numeric(1))
 }
-
 
 .compile_pANN <- function(
     metadata_stored, neighbour_indices, ranges,
@@ -655,7 +697,6 @@ detect_damage <- function(
 
   return(metadata_plot)
 }
-
 
 .finalise_output <- function(metadata_plot, count_matrix, filter_counts,
                              generate_plot, display_plot, target_damage,
