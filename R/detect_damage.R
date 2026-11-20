@@ -835,9 +835,9 @@ detect_damage <- function(
   return(output)
 }
 
-.find_pann_threshold <- function(x, y, default = 0.7,
+.find_pann_threshold <- function(x, y, default = 0.5,
                                  min_height = 0.1,   
-                                 min_depth  = 0.5) { 
+                                 min_depth  = 0.2) { 
   dy <- diff(y)
 
   # Interior peaks, plus the edges if the density is highest there
