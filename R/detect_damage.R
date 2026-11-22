@@ -709,7 +709,9 @@ detect_damage <- function(
     (metadata_plot$pANN - min(metadata_plot$pANN, na.rm = TRUE)) /
     (max(metadata_plot$pANN, na.rm = TRUE) - min(metadata_plot$pANN, na.rm = TRUE))
 
-  simulated_output <- metadata_plot[, c("Cells", "features", "counts", "mt.prop", "rb.prop", "malat1", "DamageDetective")]
+  simulated_output <- metadata_plot[, 
+    c("Cells", "features", "counts", "mt.prop", 
+    "rb.prop", "malat1", "DamageDetective")]
 
   # Damaged cluster cells qc metrics
   if (!is.null(damaged_cluster_cells)) {
@@ -747,8 +749,9 @@ detect_damage <- function(
 
   if (is.na(filter_threshold)){
 
-    # Compute pANN density
-    dens <- density(metadata_output$DamageDetective, from = 0, to = 1, n = 1000)
+    # Compute pANN density using only cells that passed the cluster check
+    # i.e. excludes depleted/divergent cells (uninformative peak at 1)
+    dens <- density(simulated_output$DamageDetective, from = 0, to = 1, n = 1000)
     y <- dens$y
     x <- dens$x
     filter_threshold <- .find_pann_threshold(x, y, default = 0.7)
