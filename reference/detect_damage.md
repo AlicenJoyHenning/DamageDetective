@@ -25,7 +25,7 @@ detect_damage(
   generate_plot = TRUE,
   display_plot = TRUE,
   palette = c("grey", "#7023FD", "#E60006"),
-  filter_threshold = NA,
+  filter_threshold = 0.3,
   filter_counts = FALSE,
   verbose = TRUE
 )
@@ -305,9 +305,8 @@ test <- detect_damage(
 #> Clustering cells...
 #> Checking clusters...
 #> Simulating damage...
-#> 14:20:55 Building HNSW index with metric 'euclidean' ef = 200 M = 16 using 0 threads
-#> 14:20:55 Finished building index
+#> 19:54:05 Building HNSW index with metric 'euclidean' ef = 200 M = 16 using 0 threads
+#> 19:54:05 Finished building index
 #> Computing pANN...
-#>  ... 0.7 suggested threshold.
 #> Completed.
 ```

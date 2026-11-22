@@ -505,10 +505,9 @@ detection_output <- DamageDetective::detect_damage(
 #> Clustering cells...
 #> Checking clusters...
 #> Simulating damage...
-#> 14:21:22 Building HNSW index with metric 'euclidean' ef = 200 M = 16 using 0 threads
-#> 14:21:22 Finished building index
+#> 19:54:36 Building HNSW index with metric 'euclidean' ef = 200 M = 16 using 0 threads
+#> 19:54:37 Finished building index
 #> Computing pANN...
-#>  ... 0.7 suggested threshold.
 ```
 
 ![Scatter plot showing the outcome damage detection where cells of the
@@ -518,11 +517,7 @@ damage.](detailed-detection-vignette_files/figure-html/run_detection-1.png)![Sca
 plot showing the outcome damage detection where cells of the input data
 are coloured according to the estimated level of damage with grey being
 no damage, purple being light damage, and red being heavy
-damage.](detailed-detection-vignette_files/figure-html/run_detection-2.png)![Scatter
-plot showing the outcome damage detection where cells of the input data
-are coloured according to the estimated level of damage with grey being
-no damage, purple being light damage, and red being heavy
-damage.](detailed-detection-vignette_files/figure-html/run_detection-3.png)
+damage.](detailed-detection-vignette_files/figure-html/run_detection-2.png)
 
     #> Completed.
 
