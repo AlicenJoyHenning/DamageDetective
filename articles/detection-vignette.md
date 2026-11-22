@@ -144,8 +144,8 @@ detection_results <- detect_damage(
 #> Clustering cells...
 #> Checking clusters...
 #> Simulating damage...
-#> 22:54:32 Building HNSW index with metric 'euclidean' ef = 200 M = 16 using 0 threads
-#> 22:54:32 Finished building index
+#> 14:21:35 Building HNSW index with metric 'euclidean' ef = 200 M = 16 using 0 threads
+#> 14:21:35 Finished building index
 #> Computing pANN...
 #>  ... 0.7 suggested threshold.
 #> Completed.
@@ -190,7 +190,7 @@ detection_results$plot
     #>   [4] S7_1.0.0            fastmap_1.2.0       RANN_2.6.3         
     #>   [7] digest_0.6.39       dotCall64_1.2       lifecycle_1.0.5    
     #>  [10] cluster_2.1.8.3     SeuratObject_5.4.0  magrittr_2.0.5     
-    #>  [13] compiler_4.6.2      rlang_1.3.0         sass_0.4.10        
+    #>  [13] compiler_4.6.2      rlang_1.3.0         sass_0.5.0         
     #>  [16] tools_4.6.2         igraph_2.3.4        yaml_2.3.12        
     #>  [19] ggsignif_0.6.4      knitr_1.52          labeling_0.4.3     
     #>  [22] sp_2.2-4            plyr_1.8.9          RColorBrewer_1.1-3 
@@ -209,13 +209,13 @@ detection_results$plot
     #>  [61] vctrs_0.7.3         carData_3.0-6       jsonlite_2.0.0     
     #>  [64] car_3.1-5           patchwork_1.3.2     rstatix_1.1.0      
     #>  [67] ggrepel_0.9.8       Formula_1.2-6       irlba_2.4.1        
-    #>  [70] scattermore_1.2     listenv_1.1.0       systemfonts_1.3.3  
+    #>  [70] scattermore_1.2     listenv_1.1.0       systemfonts_1.3.4  
     #>  [73] tidyr_1.3.2         jquerylib_0.1.4     pls_2.9-0          
     #>  [76] glue_1.8.1          parallelly_1.50.0   spam_2.11-4        
     #>  [79] pkgdown_2.2.1       codetools_0.2-20    cowplot_1.2.0      
     #>  [82] uwot_0.2.5          RcppAnnoy_0.0.23    stringi_1.8.9      
     #>  [85] gtable_0.3.6        tibble_3.3.1        pillar_1.11.1      
-    #>  [88] htmltools_0.5.9     R6_2.6.1            textshaping_1.0.5  
+    #>  [88] htmltools_0.5.9     R6_2.6.1            textshaping_1.1.0  
     #>  [91] evaluate_1.0.5      lattice_0.23-1      backports_1.5.1    
     #>  [94] png_0.1-9           broom_1.0.13        bslib_0.12.0       
     #>  [97] class_7.3-24        Rcpp_1.1.2          gridExtra_2.3.1    
