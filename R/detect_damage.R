@@ -145,7 +145,7 @@ detect_damage <- function(
     generate_plot = TRUE,
     display_plot = TRUE,
     palette = c("grey", "#7023FD", "#E60006"),
-    filter_threshold = NA,
+    filter_threshold = 0.3,
     filter_counts = FALSE,
     verbose = TRUE
 ) {
@@ -754,7 +754,7 @@ detect_damage <- function(
     dens <- density(simulated_output$DamageDetective, from = 0, to = 1, n = 1000)
     y <- dens$y
     x <- dens$x
-    filter_threshold <- .find_pann_threshold(x, y, default = 0.7)
+    filter_threshold <- .find_pann_threshold(x, y, default = 0.3)
 
     if (generate_plot){
       plot_data <- data.frame(x = x, y = y)
@@ -838,9 +838,11 @@ detect_damage <- function(
   return(output)
 }
 
-.find_pann_threshold <- function(x, y, default = 0.5,
-                                 min_height = 0.1,   
-                                 min_depth  = 0.2) { 
+.find_pann_threshold <- function(x, y, default = 0.3,
+                                 min_height = 0.1,
+                                 min_depth  = 0.2,
+                                 flat_height = 0.3,   # secondary peaks must reach this (density scaled to max = 1)
+                                 flat_default = 0.7) {
   dy <- diff(y)
 
   # Interior peaks, plus the edges if the density is highest there
@@ -848,7 +850,15 @@ detect_damage <- function(
   if (dy[1] < 0) peaks <- c(1, peaks)
   if (dy[length(dy)] > 0) peaks <- c(peaks, length(y))
 
-  if (length(peaks) < 2) return(default)
+  # Flat distribution: scale density to a maximum of 1 and check whether any
+  # peak other than the dominant one rises to flat_height. If none does
+  # (a single mode with a flat tail or only small bumps), use the higher default.
+  y_norm <- y / max(y)
+  dominant <- peaks[which.max(y[peaks])]
+  others <- setdiff(peaks, dominant)
+  if (length(others) == 0 || all(y_norm[others] < flat_height)) {
+    return(flat_default)
+  }
 
   # Drop negligible bumps
   peaks <- peaks[y[peaks] >= min_height * max(y[peaks])]
