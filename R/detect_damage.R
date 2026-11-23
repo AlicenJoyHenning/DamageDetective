@@ -132,7 +132,7 @@ detect_damage <- function(
     ribosome_penalty = 0.5,
     organism = "Hsap",
     annotated_celltypes = NULL,
-    target_damage = c(0.65, 1),
+    target_damage = c(0.7, 1),
     damage_distribution = "left_skewed",
     distribution_steepness = "steep",
     pca_columns = c("features", "mt.prop", "rb.prop"),
@@ -185,6 +185,11 @@ detect_damage <- function(
   # Perform PCA and nearest neighbour search
   neighbour_indices <- .perform_pca(
     metadata_stored_filtered, pca_columns, pK, verbose)
+  
+  PCA_plot <- if (generate_plot) {
+  .plot_pca(attr(neighbour_indices, "pca"), metadata_stored_filtered,
+            attr(neighbour_indices, "var_explained"), palette)
+}
 
   # Compute pANN and scale damage levels
   metadata_plot <- .compile_pANN(
@@ -197,7 +202,7 @@ detect_damage <- function(
     metadata_plot, count_matrix, filter_counts,
     generate_plot, display_plot, target_damage,
     filter_threshold, palette, damaged_cluster_cells, metadata_stored,
-    presim_plot, divergent_cells, verbose
+    presim_plot, divergent_cells, verbose, PCA_plot
   )
 
   return(output)
@@ -310,8 +315,8 @@ detect_damage <- function(
       mt_exp     = stats::median(.data$mt_exp, na.rm = TRUE),
       pct_RB     = stats::median(.data$pctRB, na.rm = TRUE),
       rb_exp     = stats::median(.data$rb_exp, na.rm = TRUE),
-      pct_MALAT1 = stats::median(.data$pctMALAT1, na.rm = TRUE),
-      MALAT1_exp = stats::median(.data$MALAT1_exp, na.rm = TRUE),
+     # pct_MALAT1 = stats::median(.data$pctMALAT1, na.rm = TRUE),
+     # MALAT1_exp = stats::median(.data$MALAT1_exp, na.rm = TRUE),
       features   = stats::median(.data$nFeature_RNA, na.rm = TRUE),
       .groups = "drop"
     )
@@ -335,6 +340,13 @@ detect_damage <- function(
   pctRB_threshold   <- highQC_cluster$pct_RB * 0.5
 
   # Classify clusters
+  # Passive depletion present in any cluster?
+  passive_depletion <- any(
+    cluster_QC$pct_MT >= 50 &
+      (cluster_QC$features <= 100 | cluster_QC$pct_RB <= pctRB_threshold)
+  )
+
+  # Classify clusters
   cluster_QC <- cluster_QC |>
     dplyr::mutate(
       QC_label = dplyr::case_when(
@@ -343,6 +355,12 @@ detect_damage <- function(
         # very few features or substantially reduced ribosomal proportion
         pct_MT >= 50 &
           (features <= 100 | pct_RB <= pctRB_threshold) ~ "depleted",
+
+        # Active depletion: only checked if no cluster is passively depleted
+        !passive_depletion &
+          pct_MT >= pctMT_threshold &
+          features <= feature_threshold &
+          pct_RB <= pctRB_threshold ~ "depleted",
 
         # Divergent metabolism: elevated mitochondrial proportion and
         # expression while retaining a reasonable number of features
@@ -568,6 +586,43 @@ detect_damage <- function(
   return(metadata_stored)
 }
 
+.plot_pca <- function(pca_data, metadata_stored, var_explained, palette) {
+ 
+  # Real vs simulated cells, with simulated cells drawn on top
+  cell_type <- ifelse(
+    metadata_stored[rownames(pca_data), "Damage_level"] == "true",
+    "Real", "Simulated"
+  )
+  plot_data <- data.frame(
+    PC1 = pca_data[, 1],
+    PC2 = pca_data[, 2],
+    Cell = factor(cell_type, levels = c("Real", "Simulated"))
+  )
+  plot_data <- plot_data[order(plot_data$Cell), ]
+ 
+  ggplot2::ggplot(plot_data, ggplot2::aes(
+    x = .data$PC1, y = .data$PC2, colour = .data$Cell)) +
+    ggplot2::geom_point(size = 0.8, alpha = 0.7) +
+    ggplot2::scale_colour_manual(
+      values = c(Real = palette[1], Simulated = palette[3])) +
+    ggplot2::labs(
+      title = "PCA of real and simulated cells",
+      x = paste0("PC1 (", round(var_explained[1] * 100, 1), "%)"),
+      y = paste0("PC2 (", round(var_explained[2] * 100, 1), "%)"),
+      colour = NULL
+    ) +
+    ggplot2::theme_classic(base_size = 17) +
+    ggplot2::theme(
+      axis.ticks = ggplot2::element_blank(),
+      axis.title = ggplot2::element_text(size = 15, face = "bold"),
+      plot.title = ggplot2::element_text(size = 17, face = "bold", hjust = 0.5),
+      panel.border = ggplot2::element_rect(fill = NA, colour = "black"),
+      legend.position = "bottom"
+    ) +
+    ggplot2::guides(colour = ggplot2::guide_legend(
+      override.aes = list(size = 3, alpha = 1)))
+}
+
 .perform_pca <- function(metadata_stored, pca_columns, pK, verbose) {
 
   # Adjust heavily skewed data
@@ -610,6 +665,8 @@ detect_damage <- function(
     idx[batch, ] <- neighbours$idx
     rm(neighbours)
   }
+  attr(idx, "pca") <- pca_data
+  attr(idx, "var_explained") <- pca_result$sdev^2 / sum(pca_result$sdev^2)
   idx
 }
 
@@ -702,7 +759,8 @@ detect_damage <- function(
                              generate_plot, display_plot, target_damage,
                              filter_threshold, palette, damaged_cluster_cells,
                              metadata_stored, presim_plot, divergent_cells,
-                             verbose) {
+                             verbose, PCA_plot
+                            ) {
 
   # Cells with simulated damage scores
   metadata_plot$DamageDetective <-
@@ -819,6 +877,7 @@ detect_damage <- function(
 
     if (display_plot) {
       if (!is.null(presim_plot)) print(presim_plot)
+      if (!is.null(PCA_plot)) print(PCA_plot)
       if (!is.null(pann_plot)) print(pann_plot)
       print(final_plot)
     }
@@ -827,6 +886,7 @@ detect_damage <- function(
       output = output,
       plot = final_plot,
       pann_plot = pann_plot,
+      PCA_plot = PCA_plot,
       presim_plot = presim_plot
     )
   }

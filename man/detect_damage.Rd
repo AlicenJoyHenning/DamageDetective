@@ -9,7 +9,7 @@ detect_damage(
   ribosome_penalty = 0.5,
   organism = "Hsap",
   annotated_celltypes = NULL,
-  target_damage = c(0.65, 1),
+  target_damage = c(0.7, 1),
   damage_distribution = "left_skewed",
   distribution_steepness = "steep",
   pca_columns = c("features", "mt.prop", "rb.prop"),
