@@ -12,7 +12,7 @@ detect_damage(
   ribosome_penalty = 0.5,
   organism = "Hsap",
   annotated_celltypes = NULL,
-  target_damage = c(0.65, 1),
+  target_damage = c(0.7, 1),
   damage_distribution = "left_skewed",
   distribution_steepness = "steep",
   pca_columns = c("features", "mt.prop", "rb.prop"),
@@ -305,8 +305,8 @@ test <- detect_damage(
 #> Clustering cells...
 #> Checking clusters...
 #> Simulating damage...
-#> 19:54:05 Building HNSW index with metric 'euclidean' ef = 200 M = 16 using 0 threads
-#> 19:54:05 Finished building index
+#> 05:23:20 Building HNSW index with metric 'euclidean' ef = 200 M = 16 using 0 threads
+#> 05:23:20 Finished building index
 #> Computing pANN...
 #> Completed.
 ```
